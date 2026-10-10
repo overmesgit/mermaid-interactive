@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Mermaid</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="title">
+      <p class="eyebrow">Mermaid in the browser</p>
+      <h1>Interactive diagrams</h1>
+    </div>
+    <div class="tools">
+      <label class="search">
+        <span>Find</span>
+        <input id="search" type="search" placeholder="Node, fact, or detail" autocomplete="off" />
+      </label>
+      <button id="copy" type="button">Copy source</button>
+      <button id="export" type="button">Export HTML</button>
+    </div>
+  </header>
+
+  <nav id="tabs" aria-label="Diagrams"></nav>
+
+  <div class="workspace" id="workspace">
+    <section class="stage-wrap">
+      <div class="stage-bar">
+        <div class="stage-meta">
+          <nav id="crumbs" aria-label="Zoom path"></nav>
+          <p id="summary"></p>
+        </div>
+        <div class="camera-controls" aria-label="Camera">
+          <button id="zoom-out" type="button" title="Zoom out camera">−</button>
+          <button id="fit" type="button" title="Fit diagram">Fit</button>
+          <button id="zoom-in" type="button" title="Zoom in camera">+</button>
+        </div>
+      </div>
+      <div id="viewport">
+        <div id="camera"></div>
+      </div>
+      <p id="hint">Click a node or an arrow for details. Double-click a + or a marked arrow to open its diagram. Drag empty space to pan, scroll to zoom.</p>
+    </section>
+
+    <aside id="panel" hidden aria-hidden="true" aria-label="Details">
+      <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
+      <div class="panel-scroll">
+        <div class="panel-top">
+          <p id="panel-kicker"></p>
+          <button id="panel-close" type="button">Close</button>
+        </div>
+        <h2 id="panel-title"></h2>
+        <p id="panel-lead"></p>
+        <p id="panel-body"></p>
+        <pre id="panel-code" hidden></pre>
+        <dl id="panel-facts"></dl>
+        <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
+      </div>
+    </aside>
+  </div>
+
+  <div id="tooltip" role="tooltip" hidden></div>
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script src="diagrams.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

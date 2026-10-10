@@ -1,0 +1,57 @@
+# Context
+
+Read this before changing the product. It is the shared context for the page: what it is, what it must keep doing, and where the rest of the knowledge lives.
+
+## What this is
+
+A static page that draws Mermaid diagrams in the browser and adds the interactions Mermaid does not provide: a tooltip, a details panel, drill-down into another diagram, and camera pan and zoom. The same page can export one HTML file.
+
+The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence, State, and How. How explains this page.
+
+## Who it is for
+
+A, a software engineer. The useful way to work is in the code, in small steps, with the page still running after each step.
+
+## Requirements that still hold
+
+- It runs in the browser.
+- A click on a node or an arrow opens a side panel with the notes for that shape.
+- Hover shows a tooltip.
+- If a shape has its own diagram, a double-click or the + badge opens that diagram.
+- Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `zoom` is set.
+- Hover may dim unrelated shapes. The dim stays light.
+- Double-click drills in without selecting the label. Text in the panel stays selectable.
+- Export produces one HTML file. That file still loads Mermaid from the network.
+- The How tab explains the page as a series of diagrams, with the code in the panel.
+
+## How it runs
+
+There is no build and no framework. The page is `index.html`, `styles.css`, `app.js`, and `diagrams.js`. Mermaid 11 loads from jsDelivr. `securityLevel` is `strict`, so Mermaid's own click syntax is off and this page binds the finished SVG.
+
+Open it through a local server. Export fails on `file://` because it has to read the CSS and scripts. On this machine Python and Node were not available, so the preview server is a PowerShell `HttpListener` on `http://127.0.0.1:8765/`.
+
+## Where knowledge lives
+
+| Kind | Where |
+| --- | --- |
+| Shared context | `CONTEXT.md` |
+| Decisions | `docs/decisions/`. Append-only. A later file supersedes an earlier one. |
+| Feedback | `docs/feedback.md`. The words used while shaping the page. |
+| Implementation | The source, and the How tab inside the running page. |
+
+There is no ticket system, chat archive, or wiki connected to this repo. The conversation that produced the page is captured in the decision log and the feedback log.
+
+## How to keep the docs
+
+1. Put context here when it would otherwise have to be repeated in every task. Business nuance, constraints, and the requirements above belong in this file.
+2. Record a decision as a new ADR. Do not rewrite an accepted ADR. When a choice changes, add a new ADR and set the old status to superseded.
+3. Keep the files in this repo, in Markdown, next to the code they describe.
+4. Do not keep a second manual of functions. The How tab and the source are the implementation record. A behavior change that the How tab describes should update that view in the same change.
+5. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
+
+## What a change should assume
+
+- One binder for flowcharts, C4, sequence, and state. It runs after `mermaid.render`.
+- Drill-down calls `show(id)` and replaces the SVG. The wheel only changes the camera.
+- The panel width is chosen by dragging its left border.
+- A click must not draw a frame around the label.
