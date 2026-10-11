@@ -15,7 +15,7 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 
 ## Who it is for
 
-- A, a software engineer, who builds the tool. The useful way to work is in the code, in small steps, with the page still running after each step.
+- The author, a software engineer, who builds the tool. The feedback log calls them A. The useful way to work is in the code, in small steps, with the page still running after each step.
 - The reader of an explanation. For a PR that is a reviewer who opens the link cold and has a few minutes.
 - The agent that writes an explanation. It does not see the page, so everything it needs is written in `skill/`.
 
@@ -38,9 +38,22 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 
 ## How it runs
 
-There is no build and no framework. The page is `index.html`, `styles.css`, `diagrams.js`, and the scripts in `js/`. Mermaid 11 and marked 15 load from jsDelivr. How notes are markdown strings in `diagrams.js`. A fence such as `~~~js source=show` shows that function as the page loaded it, so a whole function is named, not copied. `securityLevel` is `strict`, so Mermaid's own click syntax is off and this page binds the finished SVG. `show()` in `js/nav.js` is the only way to change the diagram. A panel note is markdown. `marked.lexer` turns it into elements, and the text is set with `textContent`.
+There is no build and no framework, so a change shows up on reload.
 
-Open it through a local server. Export fails on `file://` because it has to read the CSS and scripts. On this machine Python and Node were not available, so the preview server is a PowerShell `HttpListener` on `http://127.0.0.1:8765/`.
+- **Files.** `index.html`, `styles.css`, `diagrams.js` (the content), and the scripts in `js/` (the engine).
+- **Libraries.** Mermaid 11 and marked 15 load from jsDelivr.
+- **Drawing.** Mermaid draws the SVG. `securityLevel` is `strict`, so Mermaid's own click handlers are off, and this page adds its own to the finished SVG.
+- **Changing the diagram.** `show()` in `js/nav.js` is the only way.
+- **Notes.** A panel note is markdown. `marked.lexer` splits it into pieces, and the page sets the text with `textContent`, so a note cannot inject HTML.
+- **Code in How notes.** A fence such as `~~~js source=show` shows that function as the page loaded it, so the note cannot fall out of date.
+
+Open it through a local server, because export reads the CSS and scripts, and a browser blocks that on `file://`. From the repo folder:
+
+```bash
+python3 -m http.server 8765
+```
+
+Then open `http://127.0.0.1:8765/`. On Windows without Python, a PowerShell `HttpListener` on the same port works too.
 
 ## Where knowledge lives
 
@@ -60,10 +73,11 @@ There is no ticket system, chat archive, or wiki connected to this repo. The con
 
 1. Put context here when it would otherwise have to be repeated in every task. Business nuance, constraints, and the requirements above belong in this file.
 2. Record a decision as a new ADR. Do not rewrite an accepted ADR. When a choice changes, add a new ADR and set the old status to superseded.
-3. Keep the files in this repo, in Markdown, next to the code they describe.
-4. The How tab is the lesson inside the page. `docs/matcher.md` is the written account of the binder. A behavior change that either one describes should update it in the same change. Do not add a second function-by-function manual beside those two.
-5. A change to a field the engine reads, or to what the matcher can find, updates `skill/references/format.md` in the same change. An agent only knows what that file says.
-6. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
+3. Write for a reader who was not there. Start with the problem in plain words, then say why it matters, then give one example if it helps. Name files and functions only when the reader needs them. In an ADR this is the Context section. [ADR-003](docs/decisions/003-two-zooms.md) is a good model.
+4. Keep the files in this repo, in Markdown, next to the code they describe.
+5. The How tab is the lesson inside the page. `docs/matcher.md` is the written account of the binder. A behavior change that either one describes should update it in the same change. Do not add a second function-by-function manual beside those two.
+6. A change to a field the engine reads, or to what the matcher can find, updates `skill/references/format.md` in the same change. An agent only knows what that file says.
+7. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
 
 ## Vocabulary
 
@@ -80,7 +94,11 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **engine**. The page itself: `index.html`, `styles.css`, and `js/`. It is the same for every explanation.
 - **content file**. One explanation: a script that sets `window.DIAGRAMS`. Today that is `diagrams.js`. The format is `skill/references/format.md`.
 - **code folder**. `code/` next to a content file. The files its notes show with `~~~lang file=path lines=a-b`. Not the engine's `js/`, which `source=` reads.
-- **lesson**. The ordered view ids on a tab. The How tab's lesson is the seven teaching pictures. A drill view is not in the lesson. Prev and Next stay on the lesson step that view was opened from.
+- **inner diagram**. The view a shape or arrow opens with double-click or the ↘ badge. Opening one is called drill-down, or a drill.
+- **How note**. A panel note on the How tab, which explains this page's own code.
+- **code walk**. A How view that steps through one function, such as `how-show`. It is an inner diagram, not a lesson step.
+- **claim**. When an arrow matcher takes an edge interaction, so no later matcher can use it.
+- **lesson**. The ordered view ids on a tab. The How tab's lesson is the seven teaching pictures. A drill view is not in the lesson. Each view in it is a lesson step. Prev and Next move between steps, and stay on the step an inner diagram was opened from.
 
 `js/mermaid-svg.js` finds Mermaid shapes and arrows. `js/bind.js` wires interactions onto them. Neither file decides which diagram is showing. That is `show(viewId)`.
 

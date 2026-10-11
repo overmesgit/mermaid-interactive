@@ -5,9 +5,9 @@
 
 ## Context
 
-`~~~js source=name` ([ADR-024](024-notes-name-functions.md)) shows a function the page has loaded. That only covers the engine's own code. A PR explanation had to paste its code into each note, so the same function was copied into several notes, and a note could not show the rest of the file around a snippet.
+A PR explanation often shows the same code in several notes, so the code had to be pasted into each one. Every copy then has to be changed by hand, and a note cannot show the rest of the file around a snippet. `source=` ([ADR-024](024-notes-name-functions.md)) avoids copying, but only for the engine's own code.
 
-The deliverable is one HTML file ([ADR-027](027-one-file-from-a-template.md)). A page opened from disk cannot read a folder next to it, so the code has to be inside the file. Code pasted into the page as raw text breaks it when the code contains `</script`, which HTML and JavaScript files often do.
+The code also has to live inside the one HTML file ([ADR-027](027-one-file-from-a-template.md)), because a page opened from disk cannot read a folder next to it. Pasting code in as plain text breaks the page when the code contains `</script`, which HTML and JavaScript files often do.
 
 ## Decision
 

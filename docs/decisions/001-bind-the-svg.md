@@ -5,9 +5,9 @@
 
 ## Context
 
-The page needs browser diagrams, a tooltip, a side panel on click, drill-down when a shape has its own diagram, and an export to one HTML file. The starting question was whether Mermaid could be extended.
+Mermaid draws good diagrams, but it has no side panel and no way to open one diagram from a shape in another. Its own click handlers work only in some chart types, and only with a looser security setting. The page needed all of this on four chart types: flowchart, C4, sequence, and state.
 
-A custom Mermaid diagram type would mean a new parser and a new renderer. Flowchart, C4, sequence, and state would not share one panel.
+Extending Mermaid with a new diagram type would mean writing a new parser and a new renderer. Even then, the four chart types would not share one panel.
 
 ## Decision
 

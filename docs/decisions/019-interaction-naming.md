@@ -6,7 +6,7 @@
 
 ## Context
 
-`nodes`, `id`, `host`, and `zoom` each meant more than one thing. `nodes` was this page's tooltip and panel data, and also the SVG group Mermaid drew. `id` was a chart id, a view id, a DOM id, or an edge key this page made up. `zoom` was both drill-down and the camera.
+Several names in the code meant more than one thing, so a reader could not tell whether a variable held Mermaid's drawing or this page's data. For example, `nodes` meant both the tooltip and panel data and the SVG groups Mermaid drew. `zoom` meant both opening an inner diagram and the camera zoom. `id` could be a chartId, a viewId, a DOM id, or a key this page made up.
 
 ## Decision
 

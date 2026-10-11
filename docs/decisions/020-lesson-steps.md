@@ -5,7 +5,9 @@
 
 ## Context
 
-The How tab is seven pictures. Each picture repeated the last and added one piece, and the way forward was the ↘ on the newest shape. That shape's `parent` was the previous picture, so the breadcrumb on the last picture listed all seven titles. The code walks (`how-show`, `how-bind`, `how-edges`) use the same `parent` path. A reader could not tell the lesson from a drill.
+In the How tab, moving to the next lesson step and opening a shape's inner diagram used the same ↘ badge. So a reader could not tell "move on" from "look deeper".
+
+The breadcrumb made it worse. Each step was stored as inside the previous one, so on the last picture the breadcrumb listed all seven titles.
 
 ## Decision
 

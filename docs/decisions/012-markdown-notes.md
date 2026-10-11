@@ -6,9 +6,9 @@
 
 ## Context
 
-The panel kept prose in `#panel-body` and a snippet in `#panel-code`. A note could not put text after the snippet, and the How snippets lived as escaped strings in `diagrams.js`.
+A panel note had text and one code snippet, each in a fixed place. A note could not put text after the code, or show two snippets. The How snippets were also stored as escaped strings in `diagrams.js`, so they were hard to edit.
 
-The How tab still teaches in steps. Each picture repeats the last one and adds one piece. That part of ADR-008 still holds. What changes is where the note text lives.
+The How tab's step-by-step teaching from ADR-008 still holds. Only the note format, and where notes live, change.
 
 ## Decision
 

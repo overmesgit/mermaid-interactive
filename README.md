@@ -9,7 +9,13 @@ There are two ways to make one.
 
 ## Run it
 
-Serve the folder over HTTP and open `index.html`. The sample tabs are a bookshop. The How tab walks the implementation. Export needs that server. The downloaded file still loads Mermaid from the network.
+Serve the folder over HTTP, then open `http://127.0.0.1:8765/`:
+
+```bash
+python3 -m http.server 8765
+```
+
+The sample tabs are a bookshop. The How tab walks the implementation. Export needs that server. The downloaded file still loads Mermaid from the network.
 
 ## Docs
 

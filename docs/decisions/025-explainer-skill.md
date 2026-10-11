@@ -5,9 +5,9 @@
 
 ## Context
 
-The page started as interactive Mermaid with a bookshop sample. A wants it for explaining hard things: a concept, a subsystem, a pull request. One way to use it is for an agent to write the explanation for a PR and put a link to the file in that PR.
+The page was built as a Mermaid demo with a bookshop sample. The author wants it for explaining hard things: a concept, a subsystem, a pull request. One use is an agent that writes the explanation for a PR and puts a link in that PR.
 
-An agent needs three things it does not have today: the content format in writing, a way to produce the file without a browser, and guidance on how to explain.
+An agent could not do that yet, because three things were missing: a written description of the content format, a way to produce the file without a browser, and guidance on how to explain well.
 
 ## Decision
 

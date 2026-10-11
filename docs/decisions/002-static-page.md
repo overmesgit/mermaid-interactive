@@ -5,7 +5,7 @@
 
 ## Context
 
-The export target is one HTML file that opens in a browser. A build step or a framework would have to be inlined or abandoned at export time.
+Export has to produce one HTML file that opens in a browser. A build step or a framework would make that harder, because everything it produces would have to be inlined into that one file.
 
 ## Decision
 

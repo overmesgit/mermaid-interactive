@@ -5,7 +5,7 @@
 
 ## Context
 
-`diagrams.js` holds the `arrow()` and `md` helpers, the How lesson's shared boxes, the bookshop views, and the How views. For an agent to write an explanation, it would have to edit that file and keep the parts it did not write.
+To write an explanation, an agent would have to edit `diagrams.js`. That file mixes the explanation with things the agent must leave alone: the `arrow()` and `md` helpers, the How lesson, and the bookshop sample. So every new explanation could break the engine or the sample.
 
 ## Decision
 

@@ -5,7 +5,9 @@
 
 ## Context
 
-The first binding covered nodes. Arrows needed the same tooltip, panel, highlight, and drill-down.
+At first only shapes were clickable. Arrows often carry the most interesting part of a diagram, such as what is sent and why, so they needed the same tooltip, panel, highlight, and drill-down.
+
+Arrows are harder to find than shapes, because each chart type draws and names its arrows differently.
 
 ## Decision
 

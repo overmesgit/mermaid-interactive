@@ -5,9 +5,9 @@
 
 ## Context
 
-`mermaidShapesFor` treated every diagram the same. It accepted any element whose id ended in the note id, unioned that with a `name` attribute, and fell back to label text. An inner element could win over the shape group.
+Mermaid names a shape's SVG differently in each chart type, but one rule tried to find shapes in all of them. It accepted any element whose id ended in the chartId, and fell back to matching label text. So it sometimes picked a piece inside a shape instead of the whole shape.
 
-Mermaid 11 draws a different id for each chart type, and prefixes it with the render id.
+Mermaid 11 also adds a render prefix, such as `diagram-2-`, to every id.
 
 ## Decision
 

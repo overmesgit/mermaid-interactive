@@ -6,7 +6,7 @@
 
 ## Context
 
-Prev and Next lived in the stage bar. Putting them in the middle fought the title, the summary, and the camera buttons, and the bar grew a second row.
+The bar above the diagram was too crowded. With Prev and Next beside the title, the summary, and the camera buttons, it wrapped into a second row.
 
 ## Decision
 

@@ -5,9 +5,9 @@
 
 ## Context
 
-The page loads `mermaid@11` and `marked@15`. jsDelivr serves the newest release in that major. A PR explanation is opened weeks or months after it was made. A minor Mermaid release can change the SVG ids and classes the matcher reads.
+`mermaid@11` means "the newest Mermaid 11", so the same explanation can draw differently next month. A PR explanation is often opened weeks later, and a Mermaid update can rename the SVG pieces the matcher looks for. Then shapes stop being clickable.
 
-Inlining both libraries would remove the network. Mermaid is about 3.5 MB minified, so every explanation would weigh that much.
+Inlining both libraries would remove the network, but Mermaid alone is about 3.5 MB, so every explanation would be that large.
 
 ## Decision
 

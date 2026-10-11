@@ -1,6 +1,21 @@
 # Decisions
 
-Append-only. The current choice is the latest accepted ADR on that topic. An older file stays so the history is still readable.
+Append-only. The current choice is the latest accepted ADR on that topic. An older file stays so the history is still readable. For what holds today, read the requirements in [CONTEXT.md](../../CONTEXT.md) first.
+
+ADRs written before [ADR-019](019-interaction-naming.md) use older names. The decisions still hold under the new names:
+
+| Old name | Name today |
+| --- | --- |
+| `app.js` | the scripts in `js/` ([ADR-011](011-split-scripts.md)) |
+| `current.edges`, `edges` | `edgeInteractions` |
+| `nodes` | `nodeInteractions` |
+| `link()` | `arrow()` |
+| `match` | `mermaidText` |
+| `zoom` | `opensView` |
+| `bindEdges` | `bindEdgeInteractions` |
+| `mermaidShapesFor` | `findMermaidShapes` |
+| note id | chartId |
+| the + badge | the ↘ badge ([ADR-015](015-drill-transition.md)) |
 
 | ADR | Status | Choice |
 | --- | --- | --- |

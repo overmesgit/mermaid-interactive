@@ -5,11 +5,11 @@
 
 ## Context
 
-Export is browser code. It fetches the CSS and scripts and starts a download. An agent cannot press that button without a headless browser and a local server.
+An agent cannot click a button, and export only runs as a button in the browser. To use it, the agent would need a headless browser and a local server.
 
-The deliverable could be the folder instead of one file. But where the link will point is still open. One file works on any host, and it can be attached to a PR or a message.
+Where the link will point is not decided yet. One file works on any host and can be attached to a PR or a message. A folder needs a host that keeps its files together.
 
-A content mistake is silent. A chartId that does not match draws a shape that does nothing on click. The agent does not see the page, so it cannot notice.
+A content mistake is silent. A chartId that matches nothing draws a shape that does nothing on click. The agent does not see the page, so it cannot notice.
 
 ## Decision
 

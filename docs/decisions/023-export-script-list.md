@@ -6,7 +6,7 @@
 
 ## Context
 
-`js/export.js` kept `APP_SCRIPTS`, a copy of the script tags in `index.html`. The two lists had to be kept in the same order by hand.
+The list of scripts existed twice: in `index.html` and in `js/export.js`. Both had to be updated by hand, in the same order. Adding a script to one and forgetting the other broke the exported file.
 
 ## Decision
 

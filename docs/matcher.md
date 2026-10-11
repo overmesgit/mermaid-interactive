@@ -1,5 +1,7 @@
 # Matcher
 
+Mermaid draws an SVG, but it gives no direct way to ask "which piece is the node `api`?". Each chart type hides the chartId in a different place: in an element id, in a `name` attribute, in the label text, or only in where the arrow starts and ends. So the page needs a matcher, with one rule per chart type, to find the right piece for each note before it can make that piece clickable.
+
 How a node interaction in `diagrams.js` becomes a clickable Mermaid shape. The lookup is `js/mermaid-svg.js`. The listeners are `js/bind.js`. They run at the end of `show(viewId)`, after `mermaid.render` has inserted the SVG into `#camera`.
 
 Mermaid only receives `view.chart`. `securityLevel` is `strict`, so Mermaid's own click syntax stays off. The tooltip, the panel text, and `opensView` live on the interaction, next to the chart string. The matcher finds the SVG piece for that chartId and `bind.js` attaches the listeners.

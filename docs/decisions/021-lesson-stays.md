@@ -6,7 +6,7 @@
 
 ## Context
 
-Back sat next to the breadcrumb, so a longer title pushed it. The word also matched Escape and Backspace, which step up a drill. Opening a node's inner diagram hid the buttons, so the stage bar jumped.
+The Back button moved around and was easy to confuse. A longer title pushed it sideways. Its name sounded like Escape and Backspace, which do something different: they leave an inner diagram. And opening an inner diagram hid the buttons, so the bar above the diagram jumped.
 
 ## Decision
 

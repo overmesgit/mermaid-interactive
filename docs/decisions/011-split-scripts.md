@@ -6,9 +6,9 @@
 
 ## Context
 
-`app.js` held navigation, SVG binding, the panel, the camera, and export. The binding is the part that is hard to follow, because it matches notes to SVG that Mermaid already drew. A UI library would not own that SVG.
+All the code was in one file, `app.js`: navigation, the panel, the camera, export, and the matching of notes to Mermaid's SVG. The matching is the hardest part to understand, and it was hard to find in that file.
 
-Export still has to inline the page into one HTML file. A module graph or a compile step would have to be bundled at export time.
+A UI framework would not help, because Mermaid owns that SVG, not the framework. Any split also had to keep export simple, because export inlines every script into one HTML file.
 
 ## Decision
 

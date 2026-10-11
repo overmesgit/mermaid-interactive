@@ -6,7 +6,7 @@
 
 ## Context
 
-How notes carried hand-copied code. `show()` was pasted six times. The copies drifted from `js/`: `fit()`, `findMermaidShapes`, `edgeInteractions`, and the arrow claim passes showed code that no longer existed.
+The same code was copied into several side panels. When the code changed, every copy had to be updated by hand. Some were missed, so panels showed code that no longer existed. For example, `show()` was copied into six notes.
 
 ## Decision
 

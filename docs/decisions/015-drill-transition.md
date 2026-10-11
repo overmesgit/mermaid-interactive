@@ -5,7 +5,9 @@
 
 ## Context
 
-Drill-down swapped the SVG at once, so nothing showed where the new picture came from. Stepping back up ran `fit()` and lost the pan and zoom of the parent. The drill-down badge was a +, the same sign as the camera zoom-in button, although the two zooms are different gestures ([ADR-003](003-two-zooms.md)).
+Opening an inner diagram replaced the picture instantly, so the reader could not see where the new picture came from. Going back up reset the parent picture's zoom.
+
+The badge that opens an inner diagram was a +, the same sign as the camera's zoom-in button, although the two do different things ([ADR-003](003-two-zooms.md)).
 
 ## Decision
 

@@ -6,7 +6,9 @@
 
 ## Context
 
-ADR-012 put each How note in its own file under `notes/how/`. That was 36 files. The panel renderer from that decision still holds: a note is markdown, `marked.lexer` walks the tokens, and the text is set with `textContent`.
+Keeping each How note in its own file (ADR-012) meant 36 small files. Each one had to be fetched before the page could draw, and editing a lesson meant switching between `diagrams.js` and those files.
+
+The markdown rendering from ADR-012 still holds: a note is markdown, and the text is set with `textContent`.
 
 ## Decision
 

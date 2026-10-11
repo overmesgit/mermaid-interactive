@@ -6,7 +6,7 @@
 
 ## Context
 
-Opening the panel called `fit()`, so a click threw away the pan and zoom the reader had chosen. Nothing in the picture showed which shape the panel described. A shape that could drill in waited 220ms before its panel opened, which felt slow.
+Clicking a shape to read about it reset the zoom and the position, so the reader lost the place they had zoomed into. Nothing in the picture showed which shape the panel was describing. And a shape with an inner diagram waited 220ms before its panel opened, which felt slow.
 
 ## Decision
 

@@ -6,9 +6,9 @@
 
 ## Context
 
-ADR-027 gave the skill a Python script to fill a template and check the content. A wants the agent's whole output to be a content file like `diagrams.js`, with no runtime to install.
+The agent's whole output should be a content file like `diagrams.js`. ADR-027 also required Python, to fill a template and to check the content, and Python may not be installed.
 
-The script had two jobs. Joining files needs no language. The checks run on data the page already has. A static check also cannot see what only Mermaid's SVG shows: a message that renders different text, or a shape the matcher misses.
+Neither job needs Python. Joining files is one shell command. The checks are better in the page, because only the page sees what Mermaid drew: a message whose text differs, or a shape the matcher misses.
 
 ## Decision
 

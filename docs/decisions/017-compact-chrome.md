@@ -5,7 +5,7 @@
 
 ## Context
 
-The header, the tab bar, and the stage bar stacked three rows above the diagram, and a hint line sat under it. The keyboard shortcuts were not written anywhere on the page. The page font was Aptos and Mermaid's was Segoe UI, so off Windows the two fell back to different faces.
+Too much of the screen went to controls. Three bars sat above the diagram and a hint line below it. The keyboard shortcuts were not listed anywhere on the page. The page and Mermaid also used different fonts, so outside Windows the text looked inconsistent.
 
 ## Decision
 

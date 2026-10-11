@@ -5,7 +5,9 @@
 
 ## Context
 
-Flowchart labels are HTML inside a `foreignObject`, because `htmlLabels` is on. The label was a fraction taller than the frame Mermaid assigned. A click focused that HTML, and the browser drew a box with a scrollbar around the text.
+Clicking a flowchart shape drew a box with a scrollbar around its label. It looked like a glitch.
+
+The cause: Mermaid puts each flowchart label in a frame (a `foreignObject`) that is slightly shorter than the text. A click focused that frame, so the browser drew a focus box, and the extra height showed a scrollbar.
 
 ## Decision
 

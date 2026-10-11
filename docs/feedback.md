@@ -91,3 +91,9 @@ The agent writes `diagrams.js`. It is joined between two halves of the page, and
 > can we inline files as gzip in our html page wdyt?
 
 A `code/` folder, named from a fence by path and lines, packed into the page as gzip and base64. [ADR-030](decisions/030-code-folder.md).
+
+> check existing docs for similar problems oportunities for improvements
+
+> 1 - 4 we can rewrite this time
+
+Every ADR Context now starts with the problem, then why it matters. The decisions index maps the names used before ADR-019 to today's. CONTEXT.md gained a writing rule and the missing terms. Rewriting accepted ADRs was allowed this once, for wording only. No decision changed.
