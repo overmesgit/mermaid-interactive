@@ -28,3 +28,7 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [022](022-lesson-on-diagram.md) | accepted | Prev and Next sit on the top left of the diagram |
 | [023](023-export-script-list.md) | accepted | Export reads the script list from the page |
 | [024](024-notes-name-functions.md) | accepted | How notes name a function instead of copying it |
+| [025](025-explainer-skill.md) | accepted | The page is an explainer, and agents make it through a skill |
+| [026](026-content-file.md) | accepted, not built yet | One content file per explanation, apart from the engine |
+| [027](027-one-file-from-a-template.md) | accepted, not built yet | The agent hands over one HTML file, built from a template |
+| [028](028-pinned-cdn.md) | accepted, not built yet | Mermaid and marked load at exact versions |

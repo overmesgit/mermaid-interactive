@@ -4,13 +4,20 @@ Read this before changing the product. It is the shared context for the page: wh
 
 ## What this is
 
-A static page that draws Mermaid diagrams in the browser and adds the interactions Mermaid does not provide: a tooltip, a details panel, drill-down into another diagram, and camera pan and zoom. The same page can export one HTML file.
+A tool for explaining hard things: a concept, a subsystem, a pull request. An explanation is a series of Mermaid diagrams. The page draws them in the browser and adds the interactions Mermaid does not provide: a tooltip, a details panel, drill-down into another diagram, a lesson walked with Prev and Next, and camera pan and zoom. The same page can export one HTML file.
+
+The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
+
+- **The engine.** This page: `index.html`, `styles.css`, and `js/`.
+- **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and, later, the prebuilt template and the build script. With it an agent writes one content file and hands over one HTML file, for example as a link in a PR.
 
 The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence, State, and How. How explains this page.
 
 ## Who it is for
 
-A, a software engineer. The useful way to work is in the code, in small steps, with the page still running after each step.
+- A, a software engineer, who builds the tool. The useful way to work is in the code, in small steps, with the page still running after each step.
+- The reader of an explanation. For a PR that is a reviewer who opens the link cold and has a few minutes.
+- The agent that writes an explanation. It does not see the page, so everything it needs is written in `skill/`.
 
 ## Requirements that still hold
 
@@ -23,6 +30,10 @@ A, a software engineer. The useful way to work is in the code, in small steps, w
 - Double-click drills in without selecting the label. Text in the panel stays selectable.
 - Export produces one HTML file. That file still loads Mermaid from the network.
 - The How tab explains the page as a series of diagrams. Prev and Next move along that series, and they stay when a shape's inner diagram is open. The panel note is markdown, and the code is part of that note.
+- An explanation is one content file, apart from the engine ([ADR-026](docs/decisions/026-content-file.md)).
+- An agent can produce the HTML file without a browser, and a content mistake fails the build instead of drawing a dead shape ([ADR-027](docs/decisions/027-one-file-from-a-template.md)).
+- An explanation opened months later draws the same way. Mermaid and marked load at exact versions ([ADR-028](docs/decisions/028-pinned-cdn.md)).
+- Where a PR link points is not decided. The skill ends with the file, and publishing is a separate step.
 
 ## How it runs
 
@@ -39,6 +50,8 @@ Open it through a local server. Export fails on `file://` because it has to read
 | Feedback | `docs/feedback.md`. The words used while shaping the page. |
 | Implementation | The source, and the How tab inside the running page. |
 | Matcher | `docs/matcher.md`. How a note is found in the SVG Mermaid drew. |
+| Content format | `skill/references/format.md`. The only description of what a content file holds. |
+| How to explain | `explain-difficult-things/`. Source notes for the skill's explanation guidance. Not rules yet. |
 
 There is no ticket system, chat archive, or wiki connected to this repo. The conversation that produced the page is captured in the decision log and the feedback log.
 
@@ -48,7 +61,8 @@ There is no ticket system, chat archive, or wiki connected to this repo. The con
 2. Record a decision as a new ADR. Do not rewrite an accepted ADR. When a choice changes, add a new ADR and set the old status to superseded.
 3. Keep the files in this repo, in Markdown, next to the code they describe.
 4. The How tab is the lesson inside the page. `docs/matcher.md` is the written account of the binder. A behavior change that either one describes should update it in the same change. Do not add a second function-by-function manual beside those two.
-5. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
+5. A change to a field the engine reads, or to what the matcher can find, updates `skill/references/format.md` in the same change. An agent only knows what that file says.
+6. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
 
 ## Vocabulary
 
@@ -62,6 +76,8 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **Interaction**. Either kind at runtime, with `kind: "node"` or `kind: "edge"`.
 - **opensView**. The viewId a double-click opens. This is not camera zoom.
 - **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
+- **engine**. The page itself: `index.html`, `styles.css`, and `js/`. It is the same for every explanation.
+- **content file**. One explanation: a script that sets `window.DIAGRAMS`. Today that is `diagrams.js`. The format is `skill/references/format.md`.
 - **lesson**. The ordered view ids on a tab. The How tab's lesson is the seven teaching pictures. A drill view is not in the lesson. Prev and Next stay on the lesson step that view was opened from.
 
 `js/mermaid-svg.js` finds Mermaid shapes and arrows. `js/bind.js` wires interactions onto them. Neither file decides which diagram is showing. That is `show(viewId)`.

@@ -61,3 +61,19 @@ Twelve suggestions. A chose the selection and camera fixes, the drill-down trans
 > each time we open side bar it also moves diagram to the left, can we fix it?
 
 That was `fit()` on panel open, still running from a cached script. ADR-014 had already removed it.
+
+> we should update this project docs i'm building this tool for explaining difficult concepts, pr changes, etc one mode is to generate it with agent and add link to static file to pr what should we write in docs?
+
+The page is an explainer, not a Mermaid demo. [ADR-025](decisions/025-explainer-skill.md).
+
+> help me to decide
+
+Content gets its own file, and the CDN versions are pinned. [ADR-026](decisions/026-content-file.md), [ADR-028](decisions/028-pinned-cdn.md). Where the link points stays open, so the deliverable is one file that any host can serve.
+
+> why do we need python build script?
+
+The Export button needs a browser and a server. The alternatives were a headless browser, the agent writing the whole page itself, or publishing the folder.
+
+> we probably will provide a skill for ai agent to generate our tool format
+
+The skill carries a prebuilt template, so the agent only adds its content. The script's main job is checking that content. [ADR-027](decisions/027-one-file-from-a-template.md).
