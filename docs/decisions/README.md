@@ -28,7 +28,9 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [022](022-lesson-on-diagram.md) | accepted | Prev and Next sit on the top left of the diagram |
 | [023](023-export-script-list.md) | accepted | Export reads the script list from the page |
 | [024](024-notes-name-functions.md) | accepted | How notes name a function instead of copying it |
-| [025](025-explainer-skill.md) | accepted | The page is an explainer, and agents make it through a skill |
+| [025](025-explainer-skill.md) | accepted, skill layout superseded by 029 | The page is an explainer, and agents make it through a skill |
 | [026](026-content-file.md) | accepted, not built yet | One content file per explanation, apart from the engine |
-| [027](027-one-file-from-a-template.md) | accepted, not built yet | The agent hands over one HTML file, built from a template |
+| [027](027-one-file-from-a-template.md) | accepted, template and build.py superseded by 029 | The agent hands over one HTML file, built from a template |
 | [028](028-pinned-cdn.md) | accepted, not built yet | Mermaid and marked load at exact versions |
+| [029](029-join-and-check-in-page.md) | accepted, not built yet | The agent writes diagrams.js. The file is joined, and the page checks it |
+| [030](030-code-folder.md) | accepted, not built yet | Notes show code from a code folder, packed into the page with gzip |

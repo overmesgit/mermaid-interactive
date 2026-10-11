@@ -101,11 +101,39 @@ body: md`
 `,
 ```
 
-Paste the code into the note. A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from a PR is not loaded, so it would print `// name is not loaded`.
+Code that exists as a file comes from the code folder. Write it in the note only when it is a short sketch that is in no file.
+
+A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from a PR is not loaded, so it would print `// name is not loaded`.
+
+## Code files
+
+Put the files the explanation needs in a `code/` folder next to `diagrams.js`. The layout is yours. A file can be a whole source file, the part that matters, an older version, or a `.diff`.
+
+```
+code/
+  api/session.go
+  api/session.go.diff
+  old/session.go
+```
+
+A note shows a file with an empty fence:
+
+```md
+~~~go file=api/session.go lines=40-58
+~~~
+```
+
+- The path is relative to `code/`, with `/` between folders, and no `"`.
+- `lines` is 1-based and inclusive. Leave it out to show the whole file. `grep -n` gives the numbers.
+- The fence's language is used as written. Use `diff` for a `.diff` file.
+
+The panel shows the snippet under a header with the path and the lines. Clicking the header opens the whole file, with that range highlighted. Several notes can point at the same file.
+
+The files are packed into the page when it is joined ([ADR-030](../../docs/decisions/030-code-folder.md)). Do not paste them into `diagrams.js`.
 
 ## Example
 
-A change that adds a Redis session cache. Two lesson steps, before and after, and one drill into the new read path.
+A change that adds a Redis session cache. Two lesson steps, before and after, and one drill into the new read path. The API note shows lines 12 to 24 of `code/api/session.go`.
 
 ```js
 window.DIAGRAMS = {
@@ -158,10 +186,7 @@ window.DIAGRAMS = {
           body: md`
             loadSession now checks Redis first.
 
-            ~~~go
-            if s, ok := cache.Get(id); ok {
-                return s, nil
-            }
+            ~~~go file=api/session.go lines=12-24
             ~~~
           `,
           facts: [["File", "api/session.go"]],
@@ -210,7 +235,7 @@ window.DIAGRAMS = {
 
 ## Check before handing it over
 
-A miss here is silent. The shape draws, and nothing happens on click.
+Today a miss is silent. The shape draws, and nothing happens on click.
 
 1. Every `nodeInteractions` key appears as a chartId in that view's chart.
 2. Every flowchart edge interaction matches an arrow drawn from `from` to `to`.
@@ -218,5 +243,7 @@ A miss here is silent. The shape draws, and nothing happens on click.
 4. Both ends of every state edge interaction have a node interaction, or are `"*"`.
 5. Every `opensView`, `parent`, tab `id`, and `lesson` entry is a viewId in `views`.
 6. Every view's `viewId` equals its key.
+7. `diagrams.js` does not contain `</script`. It is joined into the page as the body of a script tag. Files in `code/` may contain it.
+8. Every `file=` names a file in `code/`, and its `lines` range ends inside that file.
 
-[ADR-027](../../docs/decisions/027-one-file-from-a-template.md) makes `scripts/build.py` run these checks. Until it exists, check by hand.
+[ADR-029](../../docs/decisions/029-join-and-check-in-page.md) and [ADR-030](../../docs/decisions/030-code-folder.md) make the page run checks 1 to 6 and 8 on load, and list every interaction it could not wire after each draw. A problem shows as a warning on the page. Until that is built, check by hand. An agent that cannot open a browser always checks by hand.

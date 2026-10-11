@@ -9,7 +9,7 @@ A tool for explaining hard things: a concept, a subsystem, a pull request. An ex
 The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
 
 - **The engine.** This page: `index.html`, `styles.css`, and `js/`.
-- **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and, later, the prebuilt template and the build script. With it an agent writes one content file and hands over one HTML file, for example as a link in a PR.
+- **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and, later, the engine as two prebuilt halves. With it an agent writes one content file, like `diagrams.js`, joins it between the halves, and hands over one HTML file, for example as a link in a PR.
 
 The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence, State, and How. How explains this page.
 
@@ -31,7 +31,8 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 - Export produces one HTML file. That file still loads Mermaid from the network.
 - The How tab explains the page as a series of diagrams. Prev and Next move along that series, and they stay when a shape's inner diagram is open. The panel note is markdown, and the code is part of that note.
 - An explanation is one content file, apart from the engine ([ADR-026](docs/decisions/026-content-file.md)).
-- An agent can produce the HTML file without a browser, and a content mistake fails the build instead of drawing a dead shape ([ADR-027](docs/decisions/027-one-file-from-a-template.md)).
+- An agent can produce the HTML file without a browser or a script runtime. The page checks the content and shows a warning instead of drawing a dead shape ([ADR-029](docs/decisions/029-join-and-check-in-page.md)).
+- A note shows code from the explanation's `code/` folder by path and line range. The files are packed into the page as gzip ([ADR-030](docs/decisions/030-code-folder.md)).
 - An explanation opened months later draws the same way. Mermaid and marked load at exact versions ([ADR-028](docs/decisions/028-pinned-cdn.md)).
 - Where a PR link points is not decided. The skill ends with the file, and publishing is a separate step.
 
@@ -78,6 +79,7 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
 - **engine**. The page itself: `index.html`, `styles.css`, and `js/`. It is the same for every explanation.
 - **content file**. One explanation: a script that sets `window.DIAGRAMS`. Today that is `diagrams.js`. The format is `skill/references/format.md`.
+- **code folder**. `code/` next to a content file. The files its notes show with `~~~lang file=path lines=a-b`. Not the engine's `js/`, which `source=` reads.
 - **lesson**. The ordered view ids on a tab. The How tab's lesson is the seven teaching pictures. A drill view is not in the lesson. Prev and Next stay on the lesson step that view was opened from.
 
 `js/mermaid-svg.js` finds Mermaid shapes and arrows. `js/bind.js` wires interactions onto them. Neither file decides which diagram is showing. That is `show(viewId)`.

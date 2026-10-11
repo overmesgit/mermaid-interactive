@@ -77,3 +77,17 @@ The Export button needs a browser and a server. The alternatives were a headless
 > we probably will provide a skill for ai agent to generate our tool format
 
 The skill carries a prebuilt template, so the agent only adds its content. The script's main job is checking that content. [ADR-027](decisions/027-one-file-from-a-template.md).
+
+> i want to discuss decision 27 i thought ai agent will give something like diagram.js can we avoide python?
+
+The agent writes `diagrams.js`. It is joined between two halves of the page, and the page checks it. No Python. [ADR-029](decisions/029-join-and-check-in-page.md).
+
+> ADR-024 How notes name a function instead of copying it explain
+
+`source=` only reaches the engine's own functions. It also means the engine must not be minified. [ADR-029](decisions/029-join-and-check-in-page.md).
+
+> I was thinking about this how about allowing to link folder with code? and than we could reference it from the side panel it doesn't have to be original code with the same structure, maybe just files that we are interested in
+
+> can we inline files as gzip in our html page wdyt?
+
+A `code/` folder, named from a fence by path and lines, packed into the page as gzip and base64. [ADR-030](decisions/030-code-folder.md).

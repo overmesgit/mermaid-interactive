@@ -1,6 +1,6 @@
 # ADR-025 The page is an explainer, and agents make it through a skill
 
-- Status: accepted
+- Status: accepted, skill layout superseded by [ADR-029](029-join-and-check-in-page.md)
 - Date: 2026-10-11
 
 ## Context

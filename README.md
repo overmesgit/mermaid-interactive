@@ -5,7 +5,7 @@ A page for explaining hard things: a concept, a subsystem, a pull request. An ex
 There are two ways to make one.
 
 - **By hand.** Edit the content, run the page, and export.
-- **With an agent.** The skill in `skill/` tells an agent the format and the workflow. The agent writes one content file and builds one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md). The build is not there yet. [TODO](TODO.md) lists what is missing.
+- **With an agent.** The skill in `skill/` tells an agent the format and the workflow. The agent writes one content file, like `diagrams.js`, and joins it into one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-029](docs/decisions/029-join-and-check-in-page.md). The skill is not finished yet. [TODO](TODO.md) lists what is missing.
 
 ## Run it
 
