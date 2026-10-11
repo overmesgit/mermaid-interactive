@@ -1,0 +1,36 @@
+// Shared view, camera, and element refs. The other scripts read and write this object.
+
+const app = {
+  views: DIAGRAMS.views,
+  els: {
+    tabs: document.getElementById("tabs"),
+    crumbs: document.getElementById("crumbs"),
+    summary: document.getElementById("summary"),
+    camera: document.getElementById("camera"),
+    viewport: document.getElementById("viewport"),
+    workspace: document.getElementById("workspace"),
+    panel: document.getElementById("panel"),
+    tooltip: document.getElementById("tooltip"),
+    status: document.getElementById("status"),
+    search: document.getElementById("search"),
+    panelResize: document.getElementById("panel-resize"),
+  },
+  panel: {
+    kicker: document.getElementById("panel-kicker"),
+    title: document.getElementById("panel-title"),
+    lead: document.getElementById("panel-lead"),
+    body: document.getElementById("panel-body"),
+    code: document.getElementById("panel-code"),
+    facts: document.getElementById("panel-facts"),
+    zoom: document.getElementById("panel-zoom"),
+    close: document.getElementById("panel-close"),
+  },
+  stack: [],
+  current: null,
+  selected: null,
+  renderToken: 0,
+  hashLock: false,
+  clickTimer: 0,
+  cam: { x: 40, y: 32, s: 1 },
+  drag: null,
+};

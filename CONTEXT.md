@@ -26,7 +26,7 @@ A, a software engineer. The useful way to work is in the code, in small steps, w
 
 ## How it runs
 
-There is no build and no framework. The page is `index.html`, `styles.css`, `app.js`, and `diagrams.js`. Mermaid 11 loads from jsDelivr. `securityLevel` is `strict`, so Mermaid's own click syntax is off and this page binds the finished SVG.
+There is no build and no framework. The page is `index.html`, `styles.css`, `diagrams.js`, and the scripts in `js/`. Mermaid 11 loads from jsDelivr. `securityLevel` is `strict`, so Mermaid's own click syntax is off and this page binds the finished SVG. `show()` in `js/nav.js` is the only way to change the diagram.
 
 Open it through a local server. Export fails on `file://` because it has to read the CSS and scripts. On this machine Python and Node were not available, so the preview server is a PowerShell `HttpListener` on `http://127.0.0.1:8765/`.
 
@@ -38,6 +38,7 @@ Open it through a local server. Export fails on `file://` because it has to read
 | Decisions | `docs/decisions/`. Append-only. A later file supersedes an earlier one. |
 | Feedback | `docs/feedback.md`. The words used while shaping the page. |
 | Implementation | The source, and the How tab inside the running page. |
+| Matcher | `docs/matcher.md`. How a note is found in the SVG Mermaid drew. |
 
 There is no ticket system, chat archive, or wiki connected to this repo. The conversation that produced the page is captured in the decision log and the feedback log.
 
@@ -46,7 +47,7 @@ There is no ticket system, chat archive, or wiki connected to this repo. The con
 1. Put context here when it would otherwise have to be repeated in every task. Business nuance, constraints, and the requirements above belong in this file.
 2. Record a decision as a new ADR. Do not rewrite an accepted ADR. When a choice changes, add a new ADR and set the old status to superseded.
 3. Keep the files in this repo, in Markdown, next to the code they describe.
-4. Do not keep a second manual of functions. The How tab and the source are the implementation record. A behavior change that the How tab describes should update that view in the same change.
+4. The How tab is the lesson inside the page. `docs/matcher.md` is the written account of the binder. A behavior change that either one describes should update it in the same change. Do not add a second function-by-function manual beside those two.
 5. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
 
 ## What a change should assume
