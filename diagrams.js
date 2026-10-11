@@ -11,12 +11,52 @@ function md(strings, ...values) {
 }
 
 const HOW_BOX = {
-  chart: {
-    label: "Chart text",
-    tooltip: "The string stored on the view. Mermaid is the only reader.",
+  writer: {
+    label: "Author or agent",
+    caption: "Writes the explanation",
+    tooltip: "Whoever writes the explanation: a person by hand, or an agent.",
+    kicker: "Who",
+    body: md`
+      Someone has to decide what the reader should see, in what order, and what each shape means. That is the only part that changes from one explanation to the next, because the page that draws it is the same every time.
+
+      A person edits the file and reloads the page. An agent cannot see the page, so it works from the written format instead. That is why the format lives in one file that both can read.
+    `,
+    facts: [["Format", "skill/references/format.md"]],
+  },
+  content: {
+    label: "Content file",
+    caption: "Every diagram and every note, in one script",
+    tooltip: "One script that holds every diagram and every note.",
     kicker: "Data",
     body: md`
-      A view keeps the picture and the notes apart. view.chart is the Mermaid source. The tooltip, the panel text, and opensView are siblings of that string. Mermaid never sees them. securityLevel is strict, so Mermaid's own click syntax stays off. This page binds the finished SVG so flowchart, C4, sequence, and state share one panel.
+      An explanation needs two things for each diagram: the picture, and what to say about each part of it. Both live in one file, so the explanation can be written, reviewed, and handed over as one thing.
+
+      The file sets window.DIAGRAMS. It lists tabs and views. A view is one diagram: its Mermaid text, plus notes for its shapes and arrows. A note is keyed by the id written in the Mermaid text, so the page can find which shape it belongs to. For example, the shape web["Web app"] gets the note under the key web:
+
+      ~~~js
+      chart: \`flowchart LR
+        web["Web app"] --> api["API"]\`,
+      nodeInteractions: {
+        web: { label: "Web app", tooltip: "Sends the session cookie.", kicker: "Client" },
+      },
+      edgeInteractions: [
+        arrow("web", "api", "Each call carries the cookie.", "Nothing here changes in the PR."),
+      ],
+      ~~~
+
+      Today the sample content and the two helpers, arrow() and md, share diagrams.js. The page you are reading is drawn from that file.
+    `,
+    facts: [["File", "diagrams.js"], ["Format", "skill/references/format.md"]],
+  },
+  mmd: {
+    label: "Mermaid",
+    caption: "Turns each diagram's text into a picture",
+    tooltip: "Turns the Mermaid text into a picture. It never sees the notes.",
+    kicker: "Library",
+    body: md`
+      Drawing boxes and arrows by hand would be a lot of work, so the page lets Mermaid do it. Mermaid only gets the diagram's text. Mermaid's own click handling is turned off (securityLevel is strict), so the page adds its clicks to the finished picture instead. That way flowcharts, C4, sequence, and state diagrams all get the same panel.
+
+      Double-click this box to walk the function that draws one view.
 
       ~~~js
       mermaid.initialize({
@@ -26,123 +66,151 @@ const HOW_BOX = {
       });
       ~~~
     `,
-    facts: [["File", "diagrams.js"], ["Field", "view.chart"]],
-  },
-  mmd: {
-    label: "Mermaid",
-    tooltip: "Draws the SVG. It does not know about the side panel.",
-    kicker: "Code",
-    body: md`
-      show() sends view.chart to mermaid.render and keeps a token. If the reader opens another view before this draw finishes, the token no longer matches and the late SVG is dropped. Double-click this box to walk that function.
-
-      ~~~js source=show
-      ~~~
-    `,
     opensView: "how-show",
-    facts: [["Function", "show"], ["File", "js/nav.js"]],
+    facts: [["Function", "show"], ["File", "js/nav.js"], ["Setup", "js/boot.js"]],
   },
   picture: {
     label: "Picture",
-    tooltip: "The SVG that lands in #camera.",
+    caption: "The SVG Mermaid drew",
+    tooltip: "The SVG Mermaid drew, placed in the page.",
     kicker: "DOM",
     body: md`
-      The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodeInteractions and bindEdgeInteractions run after that. They are what make the shapes and arrows clickable.
+      Mermaid returns the picture as SVG text. The page puts it on screen and sizes it from its own dimensions, so later zooming starts from the real size. At this point nothing in it reacts to the mouse. The next step adds that.
 
       ~~~js source=show
       ~~~
     `,
-    facts: [["Element", "#camera"], ["Then", "bindNodeInteractions, bindEdgeInteractions"]],
-  },
-  notes: {
-    label: "Notes",
-    tooltip: "Node interactions and edge interactions, keyed like the chart.",
-    kicker: "Data",
-    body: md`
-      The map key is the chartId. The node interaction does not store chartId itself. nodeInteractions() copies the key on before matching. opensView is the viewId of the inner diagram. arrow() builds an edge interaction from the two chartIds plus the panel text. An arrow can have opensView too. Checkout's New card arrow and the login POST /login arrow both open another diagram.
-
-      ~~~js
-      browser: {
-        label: "Browser",
-        tooltip: "The reader's browser.",
-        kicker: "Client",
-        body: "Renders the pages and stores the session cookie.",
-        facts: [["Calls", "Web app"]],
-      }
-
-      arrow("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
-      ~~~
-    `,
-    facts: [["File", "diagrams.js"], ["Helper", "arrow()"]],
+    facts: [["Element", "#camera"]],
   },
   app: {
-    label: "Scripts",
-    tooltip: "Finds each note in the SVG, then listens. The matcher is js/bind.js.",
+    label: "Matcher",
+    caption: "Finds each note's shape, then listens on it",
+    tooltip: "Finds the shape Mermaid drew for each note, then listens on it.",
     kicker: "Code",
     body: md`
-      The first line of the chart picks the pattern. A flowchart node api is a g.node whose id ends in flowchart-api-3, after the render prefix diagram-2-. A C4 alias is a g.node.c4-shape whose id ends in -reader. A sequence actor is the name on the top and bottom boxes. A state Draft is a g.node whose id ends in state-Draft-1. A box under 8 by 8 pixels is ignored.
+      A note says "web", but the picture only has the shapes Mermaid drew, under Mermaid's own names. So the page has to find the right shape for each note before anything can be clicked.
+
+      Mermaid names shapes differently in each chart type, so the first line of the Mermaid text picks one rule. For example, in a flowchart the note api matches the shape whose id ends in flowchart-api-3. A shape smaller than 8 by 8 pixels is skipped. Arrows are harder, and have their own rules.
 
       ~~~js source=findMermaidShapes
       ~~~
     `,
-    facts: [["Function", "findMermaidShapes"], ["File", "js/bind.js"]],
+    facts: [["Shapes", "js/mermaid-svg.js"], ["Listeners", "js/bind.js"]],
   },
   hover: {
     label: "Hover",
-    tooltip: "Neighbors stay solid. The rest fade a little.",
+    caption: "Lights what the shape connects to",
+    tooltip: "Shows the tooltip and keeps the neighbors solid.",
     kicker: "Input",
     body: md`
-      highlightAround() keeps this shape and every arrow that touches it. The others get is-dim. Leaving the shape calls applySearch(), so a click does not leave the highlight stuck. Search uses the same dim and also looks through arrow text. The opacity is 0.72. It used to be 0.28, which hid the rest of the picture too hard.
+      When you point at a shape, the shapes and arrows it connects to stay solid and the rest fade a little. This shows what a shape talks to without opening anything.
+
+      The fade is light on purpose, because a heavy fade hid the rest of the picture. Moving away puts back the search filter, if there is one, because search uses the same fade.
 
       ~~~js source=highlightAround
       ~~~
     `,
-    facts: [["Function", "highlightAround"], ["CSS", ".is-dim"]],
+    facts: [["Function", "highlightAround"], ["Fade", "opacity 0.72"]],
   },
   tap: {
-    label: "Click",
-    tooltip: "Opens the side panel.",
+    label: "Panel",
+    caption: "Shows the full note on click",
+    tooltip: "A click opens the side panel with this shape's notes.",
     kicker: "Input",
     body: md`
-      The panel opens on the first click. The green ↘ badge calls show() instead. openPanel fills the title, the lead, this note, and the facts. The note is markdown, so the code below is part of that text. markSelected puts is-selected on the shape or arrow, so the picture shows what the panel is about. The camera keeps its pan and zoom. reveal() only pans when the panel now covers the selected shape. renderLinks lists the two ends of an arrow, or every arrow in and out of a shape. Each link opens that note's panel.
+      A tooltip holds one sentence. Most shapes need more, so a click opens a side panel with the full note, the facts, and links to the connected shapes and arrows.
 
-      ~~~js source=onInteractionClick,openPanel
+      The picture stays where it is, because jumping would lose your place. It only slides when the panel would cover the shape you clicked. The clicked shape is outlined, so you can see what the panel is about.
+
+      With nothing selected, the panel shows the story of the whole diagram and a list of its parts. From a note, Back returns to it.
+
+      ~~~js source=onInteractionClick,openPanel,openStory
       ~~~
     `,
-    facts: [["Function", "onInteractionClick"], ["Camera", "kept, reveal() pans if needed"]],
+    facts: [["Function", "openPanel"], ["File", "js/panel.js"]],
   },
   another: {
-    label: "Another chart",
-    tooltip: "show() swaps in a different view.",
-    kicker: "Next",
+    label: "Inner diagram",
+    caption: "Double-click draws a different diagram",
+    tooltip: "A different diagram, drawn from scratch.",
+    kicker: "Drill",
     body: md`
-      This is a new SVG, not a closer look at the same one. While Mermaid draws it, leaveView() zooms the old picture toward the shape you opened and fades it out. Each view keeps its own camera in app.cams, so stepping back up restores the pan and zoom you left. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.
+      Some shapes are too big to explain in one picture. For example, the API box can have its own diagram of the parts inside it. The content file says so with opensView, and the shape gets a ↘ badge.
+
+      A double-click, or the badge, draws that diagram. While Mermaid draws, the old picture zooms toward the shape and fades, so you see where the new one came from. Each diagram keeps its own zoom, so stepping back up puts you where you were. Escape and Backspace step up.
 
       ~~~js source=onInteractionDblClick
       ~~~
     `,
-    facts: [["Function", "show"], ["Hash", "replaceState"]],
+    facts: [["Field", "opensView"], ["Function", "show"]],
   },
   cam: {
-    label: "Scale",
-    tooltip: "The wheel and the + / - buttons change cam.s.",
+    label: "Camera",
+    caption: "The wheel zooms this picture only",
+    tooltip: "The wheel, + and −, and dragging move over the same picture.",
     kicker: "Camera",
     body: md`
-      cam is x, y, and s. applyCam writes that as a CSS transform on #camera. Dragging empty space changes x and y. The drag ignores nodes, arrows, labels, and the wide hit stroke. Fit recomputes all three so the picture sits in the viewport. Double-click does not use this camera. It calls show().
+      Zooming in on a picture and opening another diagram are different jobs. So the wheel and the + and − buttons only scale this picture. They never open an inner diagram. Dragging empty space moves it. Fit puts the whole picture back in the window.
 
-      ~~~js source=zoomAt,zoomBy,applyCam
+      The scale stays between 0.35 and 2.6, and it grows around the pointer, so the spot under the mouse stays put.
+
+      ~~~js source=zoomAt,applyCam
       ~~~
     `,
-    facts: [["Function", "zoomAt"], ["Range", "0.35 to 2.6"]],
+    facts: [["Function", "zoomAt"], ["Range", "0.35 to 2.6"], ["File", "js/camera.js"]],
+  },
+  lesson: {
+    label: "Lesson",
+    caption: "The order to read the diagrams in",
+    tooltip: "The order to read the diagrams in.",
+    kicker: "Path",
+    body: md`
+      A reader who opens the link cold needs a path, not a pile of diagrams. So a tab can list its diagrams in reading order. Prev, Next, and the ← and → keys step through them.
+
+      Each step usually redraws the one before and adds one piece, as this tab does. Opening an inner diagram keeps your place, so Next continues from the step you left.
+
+      ~~~js
+      { id: "how", label: "How", lesson: ["how", "how-draw", "how-match", ...] }
+      ~~~
+
+      ~~~js source=lessonStep,showLesson
+      ~~~
+    `,
+    facts: [["Field", "tab.lesson"], ["File", "js/nav.js"]],
+  },
+  file: {
+    label: "One HTML file",
+    caption: "Export saves it all as one file",
+    tooltip: "Export HTML saves the whole explanation as one file.",
+    kicker: "Output",
+    body: md`
+      An explanation is meant to be shared, for example as a link in a pull request. One file is easy to attach or host, so Export HTML copies the styles, the content file, and the page's scripts into a single page. The file opens on the diagram you were looking at.
+
+      Export reads those files over HTTP, so it needs the local server. Mermaid and marked still load from the network.
+
+      ~~~js source=exportHtml
+      ~~~
+    `,
+    facts: [["Function", "exportHtml"], ["File", "js/export.js"]],
   },
 };
 
 const HOW_ARROW = {
-  draw: arrow(
-    "chart",
-    "mmd",
-    "Only the chart string is passed to Mermaid.",
+  write: arrow(
+    "writer",
+    "content",
+    "Everything about one explanation goes in this file.",
     md`
-      mermaid.render gets view.chart and a fresh id. The notes stay in JavaScript.
+      The page is the same for every explanation, so this file is the only thing a writer touches. A person reloads the page to see a change. An agent follows the written format.
+    `,
+    [["Format", "skill/references/format.md"]],
+  ),
+  draw: arrow(
+    "content",
+    "mmd",
+    "Only the Mermaid text is passed to Mermaid.",
+    md`
+      Each view's Mermaid text goes to mermaid.render. The notes stay in JavaScript, because Mermaid has no place for a panel note.
 
       ~~~js source=show
       ~~~
@@ -152,54 +220,33 @@ const HOW_ARROW = {
   drawn: arrow(
     "mmd",
     "picture",
-    "The return value is an SVG string.",
+    "Mermaid returns the picture as SVG text.",
     md`
-      show() inserts that string into #camera. A stale render is ignored when app.renderToken has already moved on.
+      Drawing takes a moment. If you move to another diagram before it finishes, the late picture is thrown away, so it cannot cover the diagram you are now on.
 
       ~~~js source=show
       ~~~
     `,
-    [["Guard", "token !== app.renderToken"]],
-  ),
-  beside: arrow(
-    "chart",
-    "notes",
-    "The notes use the same ids as the chart.",
-    md`
-      Nothing in this arrow is drawn by Mermaid. It is here so you can see that the notes sit next to the chart instead of inside it.
-
-      ~~~js
-      browser: {
-        label: "Browser",
-        tooltip: "The reader's browser.",
-        kicker: "Client",
-        body: "Renders the pages and stores the session cookie.",
-        facts: [["Calls", "Web app"]],
-      }
-
-      arrow("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
-      ~~~
-    `,
-    [["Ids", "Map keys"]],
+    [["Guard", "app.renderToken"]],
   ),
   toApp: arrow(
-    "notes",
+    "content",
     "app",
-    "bind.js reads the notes after the SVG exists.",
+    "The notes say which ids to look for.",
     md`
-      bindNodeInteractions walks the node interactions on app.view. bindEdgeInteractions walks the edge interactions. Both run inside show(), after the SVG is in the page.
+      The matcher reads the notes of the diagram on screen. Shapes come first, then arrows, because state diagram arrows are found by the positions of shapes already matched.
 
-      ~~~js source=wireShape,makeInteractive
+      ~~~js source=bindNodeInteractions
       ~~~
     `,
-    [["Order", "render, then bind"]],
+    [["Order", "shapes, then arrows"]],
   ),
   fromPic: arrow(
     "picture",
     "app",
-    "The SVG is the other input to the match.",
+    "The picture is where they are looked for.",
     md`
-      findMermaidShapes uses the chart type. Flowchart and state match a g.node id. C4 matches a g.node.c4-shape id. Sequence matches the name on the actor boxes.
+      The matcher only runs once the picture is on screen and the camera is placed, because some arrows are matched by where they sit on screen.
 
       ~~~js source=chartKind
       ~~~
@@ -209,11 +256,11 @@ const HOW_ARROW = {
   toHover: arrow(
     "app",
     "hover",
-    "pointerenter calls showTooltip, which calls highlightAround.",
+    "Each matched shape listens for the pointer.",
     md`
-      The tooltip is a fixed div. It is not a Mermaid tooltip. It follows the pointer and flips when it would leave the window.
+      The tooltip is the page's own box, not Mermaid's. It follows the pointer and flips to the other side near the edge of the window.
 
-      ~~~js source=highlightAround
+      ~~~js source=showTooltip,placeTooltip
       ~~~
     `,
     [["Function", "showTooltip"]],
@@ -221,21 +268,21 @@ const HOW_ARROW = {
   toTap: arrow(
     "app",
     "tap",
-    "click and dblclick are both attached in wireShape().",
+    "Shapes and arrows share one click handler.",
     md`
-      Arrows use the same two handlers. watchEdge registers them on the hit stroke and on the label.
+      An arrow can have a note too, so it gets the same listeners as a shape. Tab moves between shapes and arrows, and Enter opens the panel, so the page also works without a mouse.
 
-      ~~~js source=onInteractionClick,openPanel
+      ~~~js source=makeInteractive
       ~~~
     `,
-    [["Shared", "onInteractionClick"]],
+    [["Function", "makeInteractive"]],
   ),
   toNext: arrow(
     "tap",
     "another",
-    "Double-click calls show(opensView), which closes the panel.",
+    "A double-click opens the inner diagram instead.",
     md`
-      The first click of a double-click has already opened the panel. The double-click clears the text selection and draws the next view. show() closes the panel on the way.
+      The first click of a double-click has already opened the panel. The double-click then draws the inner diagram, which closes the panel on the way. If the shape has no inner diagram, the double-click just opens the panel.
 
       ~~~js source=onInteractionDblClick
       ~~~
@@ -245,19 +292,71 @@ const HOW_ARROW = {
   toCam: arrow(
     "picture",
     "cam",
-    "The scroll wheel scales this SVG. It does not load another chart.",
+    "The wheel scales this picture. It does not open another one.",
     md`
-      zoomAt multiplies cam.s around one point: the viewport center for the buttons, the pointer for the wheel. The limits are 0.35 and 2.6.
+      The wheel and the buttons change the scale around one point: the pointer for the wheel, the middle of the window for the buttons.
 
-      ~~~js source=zoomAt,zoomBy,applyCam
+      ~~~js source=zoomAt,zoomBy
       ~~~
     `,
     [["Function", "zoomAt"]],
   ),
+  toLesson: arrow(
+    "content",
+    "lesson",
+    "The tab's lesson field lists the steps in order.",
+    md`
+      A lesson step is a normal view with no parent. Prev and Next sit on the top left of the diagram, and Next shows the title of the step it goes to.
+
+      ~~~js source=renderLesson
+      ~~~
+    `,
+    [["Field", "tab.lesson"]],
+  ),
+  toFile: arrow(
+    "content",
+    "file",
+    "The content file is copied into the export.",
+    md`
+      Export copies every local script the page loaded, in page order, and the content file is one of them. So the exported file holds the same explanation you see.
+
+      ~~~js source=localScripts
+      ~~~
+    `,
+    [["List", "the script tags in index.html"]],
+  ),
+  appToFile: arrow(
+    "app",
+    "file",
+    "The page's own scripts are copied in too.",
+    md`
+      The matcher and the rest of the page go into the file with the content. So the exported file works on its own, without the repo next to it.
+    `,
+    [["Folder", "js/"]],
+  ),
 };
+
+// A How box drawn with its caption under the name, so the picture reads without opening every box.
+function howNode(id) {
+  const { label, caption } = HOW_BOX[id];
+  return `${id}["${label}<br><small>${caption}</small>"]`;
+}
+
 function box(id, extra) {
   return { ...HOW_BOX[id], ...(extra || {}) };
 }
+
+// A lesson step's newest box opens the next step.
+function nextBox(id, viewId, tooltip) {
+  return box(id, { kicker: "Next", opensView: viewId, tooltip });
+}
+
+// From the step that explains them, these boxes open a code walk.
+const HOW_CODE = {
+  content: { kicker: "Code", opensView: "how-bind", tooltip: "Holds the notes. Open it to see how a note finds its shape." },
+  picture: { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to see how an arrow is found." },
+  tap: { kicker: "Code", opensView: "how-panel", tooltip: "The side panel. Open it to see how a note becomes the panel." },
+};
 
 window.DIAGRAMS = {
   tabs: [
@@ -266,7 +365,7 @@ window.DIAGRAMS = {
     { id: "checkout", label: "Flow" },
     { id: "login", label: "Sequence" },
     { id: "order", label: "State" },
-    { id: "how", label: "How", lesson: ["how", "how-notes", "how-match", "how-hover", "how-click", "how-twozoom", "how-camera"] },
+    { id: "how", label: "How", lesson: ["how", "how-draw", "how-match", "how-hover", "how-click", "how-drill", "how-lesson", "how-export"] },
   ],
   views: {
     architecture: {
@@ -1058,210 +1157,267 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       viewId: "how",
       tab: "how",
       parent: null,
-      title: "1. Mermaid draws",
-      summary: "Start here. Mermaid turns the chart string into a picture. Double-click Picture to add the notes. Double-click Mermaid to read show().",
+      title: "1. One file holds the explanation",
+      summary: "Start here. An explanation is one file: the Mermaid text for each diagram, and notes for its shapes and arrows. Click either box.",
+      story: md`
+        An explanation needs a picture and words about each part of it. Here both live in one file, so the person or agent who writes it has one thing to write and hand over.
+
+        The file holds tabs and diagrams. Each diagram is Mermaid text plus a note for each shape and arrow. A note is filed under the id its shape has in the Mermaid text, which is how the page later finds the shape it belongs to.
+
+        Each step of this lesson adds one piece to the picture. The list below shows what is in this one.
+      `,
       chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]`,
+  ${howNode("writer")} --> ${howNode("content")}`,
       nodeInteractions: {
-        chart: box("chart"),
-        mmd: box("mmd"),
-        picture: box("picture", {
-          kicker: "Next",
-          opensView: "how-notes",
-          tooltip: "The SVG in the page. The next picture adds the notes.",
-        }),
+        writer: box("writer"),
+        content: nextBox("content", "how-draw", "One script that holds every diagram and every note. The next picture draws it."),
       },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn],
+      edgeInteractions: [HOW_ARROW.write],
     },
-    "how-notes": {
-      viewId: "how-notes",
+    "how-draw": {
+      viewId: "how-draw",
       tab: "how",
       parent: null,
-      title: "2. Notes sit beside the chart",
-      summary: "Same picture, plus the notes. Double-click Notes to add the matcher. Double-click Picture to read how arrows are found.",
+      title: "2. Mermaid draws each picture",
+      summary: "Mermaid turns each diagram's text into a picture. It never sees the notes. Double-click Mermaid to walk the code that draws a view.",
+      story: md`
+        The page does not draw boxes itself. It hands each diagram's Mermaid text to Mermaid, which returns the picture as SVG.
+
+        Only the Mermaid text goes in. The notes stay behind, because Mermaid has no place for a side panel. So the picture that comes back looks right but does nothing when clicked.
+
+        Double-click Mermaid to walk through the code that draws one diagram.
+      `,
       chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
-  chart --> notes["Notes"]`,
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}`,
       nodeInteractions: {
-        chart: box("chart"),
+        writer: box("writer"),
+        content: box("content"),
         mmd: box("mmd"),
-        picture: box("picture", {
-          kicker: "Code",
-          opensView: "how-edges",
-          tooltip: "The SVG. Open it to read how an arrow is matched.",
-        }),
-        notes: box("notes", {
-          kicker: "Next",
-          opensView: "how-match",
-          tooltip: "The node and edge interactions. The next picture adds the matcher.",
-        }),
+        picture: nextBox("picture", "how-match", "The SVG in the page. The next picture makes it clickable."),
       },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside],
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn],
     },
     "how-match": {
       viewId: "how-match",
       tab: "how",
       parent: null,
-      title: "3. Scripts match them",
-      summary: "The notes and the picture both go into the page scripts. Double-click Scripts to add hover. Double-click Notes to read the box matcher.",
+      title: "3. The page finds each note's shape",
+      summary: "The page finds the shape Mermaid drew for each note. Double-click Content file to see how a box is found, or Picture for arrows.",
+      story: md`
+        A note says "web", but the picture only has the shapes Mermaid drew, under Mermaid's own names. So before anything can be clicked, the page has to find the right shape for each note.
+
+        Shapes are found by their id, and each chart type builds that id differently. Arrows are harder, because some chart types do not name an arrow's ends at all. Those are matched by their text, or by where they start and end.
+
+        Double-click Content file to see how a shape is found, or Picture to see how an arrow is found.
+      `,
       chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
-  chart --> notes["Notes"]
-  notes --> app["Scripts"]
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}
+  content --> ${howNode("app")}
   picture --> app`,
       nodeInteractions: {
-        chart: box("chart"),
+        writer: box("writer"),
+        content: box("content", HOW_CODE.content),
         mmd: box("mmd"),
-        picture: box("picture", {
-          kicker: "Code",
-          opensView: "how-edges",
-          tooltip: "The SVG. Open it to read how an arrow is matched.",
-        }),
-        notes: box("notes", {
-          kicker: "Code",
-          opensView: "how-bind",
-          tooltip: "The notes. Open them to read how a box is found.",
-        }),
-        app: box("app", {
-          kicker: "Next",
-          opensView: "how-hover",
-          tooltip: "The matcher. The next picture adds hover.",
-        }),
+        picture: box("picture", HOW_CODE.picture),
+        app: nextBox("app", "how-hover", "Finds each note's shape. The next picture adds hover."),
       },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic],
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.toApp, HOW_ARROW.fromPic],
     },
     "how-hover": {
       viewId: "how-hover",
       tab: "how",
       parent: null,
       title: "4. Hover lights the neighbors",
-      summary: "Hover is the new piece. Double-click Hover to add click. The other ↘ boxes open the code for drawing, boxes, and arrows.",
+      summary: "Pointing at a shape shows its tooltip and keeps what it connects to solid. Try it on any box here.",
+      story: md`
+        Once a shape is found, it listens for the pointer. Pointing at it shows its one-line tooltip and fades everything it does not connect to.
+
+        This lets a reader see what a shape talks to before reading anything. Try it on Matcher: Content file, Picture, and Hover stay solid.
+      `,
       chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
-  chart --> notes["Notes"]
-  notes --> app["Scripts"]
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}
+  content --> ${howNode("app")}
   picture --> app
-  app --> hover["Hover"]`,
+  app --> ${howNode("hover")}`,
       nodeInteractions: {
-        chart: box("chart"),
+        writer: box("writer"),
+        content: box("content", HOW_CODE.content),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", HOW_CODE.picture),
         app: box("app"),
-        hover: box("hover", {
-          kicker: "Next",
-          opensView: "how-click",
-          tooltip: "Pointer enter. The next picture adds click.",
-        }),
+        hover: nextBox("hover", "how-click", "Pointer enter. The next picture adds click."),
       },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover],
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover],
     },
     "how-click": {
       viewId: "how-click",
       tab: "how",
       parent: null,
-      title: "5. Click opens the panel",
-      summary: "Click is the new piece. Double-click Click to see what a double-click does instead.",
+      title: "5. Click opens the notes",
+      summary: "A click opens the side panel with that shape's note, its facts, and links to what it connects to.",
+      story: md`
+        One line is rarely enough, so a click opens the side panel with the shape's full note, its facts, and links to what it connects to.
+
+        With nothing selected, the panel shows the story of the whole diagram, as it does now, and a list of its parts. From a note, Back returns here.
+      `,
       chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
-  chart --> notes["Notes"]
-  notes --> app["Scripts"]
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}
+  content --> ${howNode("app")}
   picture --> app
-  app --> hover["Hover"]
-  app --> tap["Click"]`,
+  app --> ${howNode("hover")}
+  app --> ${howNode("tap")}`,
       nodeInteractions: {
-        chart: box("chart"),
+        writer: box("writer"),
+        content: box("content", HOW_CODE.content),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", HOW_CODE.picture),
         app: box("app"),
         hover: box("hover"),
-        tap: box("tap", {
-          kicker: "Next",
-          opensView: "how-twozoom",
-          tooltip: "Opens this panel. The next picture shows double-click.",
-        }),
+        tap: nextBox("tap", "how-drill", "Opens this panel. The next picture shows double-click."),
       },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap],
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap],
     },
-    "how-twozoom": {
-      viewId: "how-twozoom",
+    "how-drill": {
+      viewId: "how-drill",
       tab: "how",
       parent: null,
-      title: "6. Double-click draws another chart",
-      summary: "Another chart is the new piece. It replaces the SVG. Double-click it to add the camera, which only scales this picture.",
+      title: "6. Double-click opens another diagram",
+      summary: "A double-click draws a different diagram. The wheel only zooms this one. Double-click Panel to see how a note becomes the panel.",
+      story: md`
+        Some shapes are too big for one picture. A shape can name an inner diagram, and a double-click or its ↘ badge draws that diagram in place of this one.
+
+        That is different from zooming. The wheel and the + and − buttons only scale this picture, and never open another one. Keeping the two apart means a reader always knows whether they are looking closer or going deeper.
+
+        Escape or Backspace steps back up, and the picture is where you left it.
+      `,
       chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
-  chart --> notes["Notes"]
-  notes --> app["Scripts"]
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}
+  content --> ${howNode("app")}
   picture --> app
-  app --> hover["Hover"]
-  app --> tap["Click"]
-  tap --> another["Another chart"]`,
+  app --> ${howNode("hover")}
+  app --> ${howNode("tap")}
+  tap --> ${howNode("another")}
+  picture --> ${howNode("cam")}`,
       nodeInteractions: {
-        chart: box("chart"),
+        writer: box("writer"),
+        content: box("content", HOW_CODE.content),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", HOW_CODE.picture),
         app: box("app"),
         hover: box("hover"),
-        tap: box("tap"),
-        another: box("another", {
-          kicker: "Next",
-          opensView: "how-camera",
-          tooltip: "A different view, drawn from scratch. The next picture adds the camera.",
-        }),
-      },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext],
-    },
-    "how-camera": {
-      viewId: "how-camera",
-      tab: "how",
-      parent: null,
-      title: "7. The wheel only scales",
-      summary: "Scale is the last piece. The wheel changes cam.s. It does not call show(). Click any box for the code.",
-      chart: `flowchart LR
-  chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
-  chart --> notes["Notes"]
-  notes --> app["Scripts"]
-  picture --> app
-  app --> hover["Hover"]
-  app --> tap["Click"]
-  tap --> another["Another chart"]
-  picture --> cam["Scale"]`,
-      nodeInteractions: {
-        chart: box("chart"),
-        mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
-        app: box("app"),
-        hover: box("hover"),
-        tap: box("tap"),
-        another: box("another"),
+        tap: box("tap", HOW_CODE.tap),
+        another: nextBox("another", "how-lesson", "A different diagram, drawn from scratch. The next picture adds the lesson."),
         cam: box("cam"),
       },
-      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext, HOW_ARROW.toCam],
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext, HOW_ARROW.toCam],
+    },
+    "how-lesson": {
+      viewId: "how-lesson",
+      tab: "how",
+      parent: null,
+      title: "7. Prev and Next walk the lesson",
+      summary: "A tab can list its diagrams in reading order. Prev and Next, or the arrow keys, step through them, like this tab.",
+      story: md`
+        A reader who opens a link cold needs a path through the diagrams, not a pile of them. So a tab can list its diagrams in reading order, and Prev and Next step through them. This tab is one.
+
+        Opening an inner diagram keeps your place, so Next continues from the step you left. The arrow keys work too, while no note is open.
+      `,
+      chart: `flowchart LR
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}
+  content --> ${howNode("app")}
+  picture --> app
+  app --> ${howNode("hover")}
+  app --> ${howNode("tap")}
+  tap --> ${howNode("another")}
+  picture --> ${howNode("cam")}
+  content --> ${howNode("lesson")}`,
+      nodeInteractions: {
+        writer: box("writer"),
+        content: box("content", HOW_CODE.content),
+        mmd: box("mmd"),
+        picture: box("picture", HOW_CODE.picture),
+        app: box("app"),
+        hover: box("hover"),
+        tap: box("tap", HOW_CODE.tap),
+        another: box("another"),
+        cam: box("cam"),
+        lesson: nextBox("lesson", "how-export", "The order to read the diagrams in. The next picture adds export."),
+      },
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext, HOW_ARROW.toCam, HOW_ARROW.toLesson],
+    },
+    "how-export": {
+      viewId: "how-export",
+      tab: "how",
+      parent: null,
+      title: "8. Export makes one HTML file",
+      summary: "Export HTML saves the content and the page together as one file to share. Click any box for its code.",
+      story: md`
+        An explanation is meant to be shared, for example as a link in a pull request. So Export HTML saves everything as one file: the content, the page's scripts, and the styles.
+
+        The file opens on the diagram you exported from, and it works without the repo. Mermaid still loads from the internet. Export needs the page to be served over HTTP, because a browser does not let a page opened as a file read its own scripts.
+      `,
+      chart: `flowchart LR
+  ${howNode("writer")} --> ${howNode("content")}
+  content --> ${howNode("mmd")} --> ${howNode("picture")}
+  content --> ${howNode("app")}
+  picture --> app
+  app --> ${howNode("hover")}
+  app --> ${howNode("tap")}
+  tap --> ${howNode("another")}
+  picture --> ${howNode("cam")}
+  content --> ${howNode("lesson")}
+  content --> ${howNode("file")}
+  app --> file`,
+      nodeInteractions: {
+        writer: box("writer"),
+        content: box("content", HOW_CODE.content),
+        mmd: box("mmd"),
+        picture: box("picture", HOW_CODE.picture),
+        app: box("app"),
+        hover: box("hover"),
+        tap: box("tap", HOW_CODE.tap),
+        another: box("another"),
+        cam: box("cam"),
+        lesson: box("lesson"),
+        file: box("file"),
+      },
+      edgeInteractions: [HOW_ARROW.write, HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext, HOW_ARROW.toCam, HOW_ARROW.toLesson, HOW_ARROW.toFile, HOW_ARROW.appToFile],
     },
     "how-show": {
       viewId: "how-show",
       tab: "how",
-      parent: "how",
+      parent: "how-draw",
       title: "show() draws one view",
-      summary: "What show() does, in order. Click a box for that step's code. Back returns to the first picture.",
+      summary: "Every way of changing the diagram ends in show(). This is what it does, in order. Click a box for that part of the code.",
+      story: md`
+        Every way of changing the diagram, from a tab to Prev and Next, ends in one function, show(). So they all behave the same.
+
+        This is what it does, top to bottom. The old picture fades out while Mermaid draws the new one, and the two run at the same time.
+      `,
       chart: `flowchart TD
-  hash["Hash"] --> showFn["show(viewId)"]
-  showFn --> render["mermaid.render"]
-  render --> token["Drop a stale SVG"]
-  token --> bindN["bindNodeInteractions"]
-  bindN --> bindE["bindEdgeInteractions"]
-  bindE --> fitBox["fit"]`,
+  hash["Link<br><small>Names the diagram to draw</small>"] --> showFn["show(viewId)<br><small>Every change of diagram goes through here</small>"]
+  showFn --> leave["Fade out the old picture<br><small>Zooms toward the shape you opened</small>"]
+  showFn --> render["mermaid.render<br><small>Mermaid draws the SVG</small>"]
+  leave --> token["Drop a late result<br><small>A newer draw wins</small>"]
+  render --> token
+  token --> camBox["Place the camera<br><small>Saved zoom, or fit to the window</small>"]
+  camBox --> bindN["Wire the shapes<br><small>Each note finds its shape</small>"]
+  bindN --> bindE["Wire the arrows<br><small>Each arrow note finds its line</small>"]`,
       nodeInteractions: {
         hash: {
-          label: "Hash",
-          tooltip: "The last viewId in the hash is the view to draw.",
+          label: "Link",
+          tooltip: "The end of the link names the diagram to draw.",
           kicker: "Entry",
           body: md`
-            openFromHash splits location.hash on slashes and keeps the last viewId. #how/how-notes opens the notes picture. The hash is updated with replaceState, so moving between views does not push browser history.
+            Every diagram has an id, so a link can open any of them, not just the first tab. The page reads the last part of the hash. For example, #how/how-draw opens step 2 of this tab.
+
+            The hash is replaced, not added to the browser history, so the browser's Back button leaves the page instead of stepping through diagrams.
 
             ~~~js source=openFromHash
             ~~~
@@ -1270,30 +1426,36 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         showFn: {
           label: "show(viewId)",
-          tooltip: "Looks up the view and clears the panel.",
+          tooltip: "The only way the diagram on screen changes.",
           kicker: "Function",
           body: md`
-            app.views is DIAGRAMS.views. pathTo walks parent links for the breadcrumb. closePanel runs first so the old detail does not sit on top of the new picture.
+            Tabs, the breadcrumb, a double-click, Prev and Next, and the link all change the diagram. They all call show(), so they all behave the same way.
+
+            It first saves the zoom of the diagram being left, puts the panel back to the story of the new diagram, and redraws the tabs, the breadcrumb, and Prev and Next.
 
             ~~~js source=show
             ~~~
           `,
           facts: [["File", "js/nav.js"]],
         },
+        leave: {
+          label: "Fade out the old picture",
+          tooltip: "The old picture zooms toward the shape you opened and fades.",
+          kicker: "Motion",
+          body: md`
+            A diagram that just swaps is hard to follow, because you lose where the new one came from. So while Mermaid draws, the old picture zooms toward the shape you double-clicked and fades out, over 200 ms. It is skipped when the system asks for reduced motion.
+
+            ~~~js source=leaveView
+            ~~~
+          `,
+          facts: [["Function", "leaveView"], ["Time", "200 ms"]],
+        },
         render: {
           label: "mermaid.render",
-          tooltip: "Mermaid returns an SVG string. It does not bind clicks.",
+          tooltip: "Mermaid returns the SVG as text. It adds no clicks.",
           kicker: "Draw",
           body: md`
-            The first argument is a DOM id that must be unique per call, so it includes the token. The second argument is only view.chart. startOnLoad is false because this page calls render itself.
-
-            ~~~js
-            mermaid.initialize({
-              startOnLoad: false,
-              securityLevel: "strict",
-              flowchart: { htmlLabels: true, useMaxWidth: false },
-            });
-            ~~~
+            Mermaid gets the view's Mermaid text and a fresh id. It runs at the same time as the fade, so the wait is not added up.
 
             ~~~js source=show
             ~~~
@@ -1301,88 +1463,101 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           facts: [["CDN", "mermaid@11"]],
         },
         token: {
-          label: "Drop a stale SVG",
-          tooltip: "A slower draw must not overwrite a newer one.",
+          label: "Drop a late result",
+          tooltip: "A slow draw must not cover a diagram you have already moved to.",
           kicker: "Guard",
           body: md`
-            app.renderToken increments at the start of show(). After the await, the function returns if another show() has started. The same check wraps the error message.
+            Drawing takes time, and the reader may not wait. For example, pressing Next twice quickly starts two draws. Each call to show() takes a new number. After the draw, if a newer call has started, this result is thrown away.
 
             ~~~js source=show
             ~~~
           `,
           facts: [["Variable", "app.renderToken"]],
         },
+        camBox: {
+          label: "Place the camera",
+          tooltip: "A diagram seen before gets its zoom back. A new one is fitted.",
+          kicker: "Camera",
+          body: md`
+            Coming back to a diagram should put you where you were, so each diagram keeps its own pan and zoom. A diagram you have not seen yet is fitted to the window instead.
+
+            This happens before the shapes are wired, because some arrows are matched by where they sit on screen.
+
+            ~~~js source=enterView,fit
+            ~~~
+          `,
+          facts: [["Saved in", "app.cams"], ["Also", "the Fit button"]],
+        },
         bindN: {
-          label: "bindNodeInteractions",
-          tooltip: "Attaches each note to the shape Mermaid drew.",
+          label: "Wire the shapes",
+          tooltip: "Each note finds its shape and the shape becomes a button.",
           kicker: "Bind",
           body: md`
-            This is where a box becomes a button. The next diagrams cover the match itself. From the third picture, double-click Notes.
+            This is where a box becomes clickable. Double-click to see how a note finds its shape.
 
-            ~~~js source=wireShape,makeInteractive
+            ~~~js source=bindNodeInteractions
             ~~~
           `,
           opensView: "how-bind",
-          facts: [["Function", "bindNodeInteractions"]],
+          facts: [["Function", "bindNodeInteractions"], ["File", "js/bind.js"]],
         },
         bindE: {
-          label: "bindEdgeInteractions",
-          tooltip: "Attaches each note to the arrow Mermaid drew.",
+          label: "Wire the arrows",
+          tooltip: "Each arrow note finds its line.",
           kicker: "Bind",
           body: md`
-            Arrows are harder than boxes because the four diagram types draw lines differently. That walk is the edges picture.
+            Arrows are harder than shapes, because each chart type draws lines differently. Double-click to see the matchers.
+
+            After the arrows, labels that Mermaid cut short are given room, and the search filter is applied to the new picture.
 
             ~~~js source=bindEdgeInteractions
             ~~~
           `,
           opensView: "how-edges",
-          facts: [["Function", "bindEdgeInteractions"]],
-        },
-        fitBox: {
-          label: "fit",
-          tooltip: "Scales the new SVG so it sits in the viewport.",
-          kicker: "Camera",
-          body: md`
-            enterView() runs before bindNodeInteractions, so the matcher sees the picture at its final scale. A view opened before gets its saved camera from app.cams. A new view gets fit(), which sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel does not call fit(). It calls reveal(), which only pans.
-
-            ~~~js source=fit
-            ~~~
-          `,
-          facts: [["Also", "the Fit button"]],
+          facts: [["Function", "bindEdgeInteractions"], ["File", "js/bind.js"]],
         },
       },
       edgeInteractions: [
-        arrow("hash", "showFn", "The hash selects the view.", "Only the last segment is used.", [["Function", "openFromHash"]]),
-        arrow("showFn", "render", "show() asks Mermaid to draw.", "The notes are not in this call.", [["Arg", "view.chart"]]),
-        arrow("render", "token", "The await can finish late.", "A newer show() wins.", [["Check", "token !== app.renderToken"]]),
-        arrow("token", "bindN", "Boxes are bound after the SVG is inserted.", "findMermaidShapes runs per chartId.", [["Function", "bindNodeInteractions"]]),
-        arrow("bindN", "bindE", "Arrows are bound after boxes.", "State arrows need the shape centers from this pass.", [["Function", "bindEdgeInteractions"]]),
-        arrow("bindE", "fitBox", "The camera was placed before the binders ran.", "enterView() restores app.cams[viewId] or calls fit().", [["Call", "enterView"]]),
+        arrow("hash", "showFn", "The link picks the diagram.", "Only the last part of the hash is used.", [["Function", "openFromHash"]]),
+        arrow("showFn", "leave", "The old picture starts to leave.", "Only when another diagram was on screen.", [["Function", "leaveView"]]),
+        arrow("showFn", "render", "Mermaid starts drawing at the same time.", "The notes are not part of this call.", [["Arg", "view.chart"]]),
+        arrow("leave", "token", "The fade finishes.", "show() waits for both the fade and the draw.", [["Call", "Promise.all"]]),
+        arrow("render", "token", "The draw finishes, maybe late.", "A newer show() wins.", [["Check", "token !== app.renderToken"]]),
+        arrow("token", "camBox", "The new picture is placed.", "Saved zoom, or fit.", [["Function", "enterView"]]),
+        arrow("camBox", "bindN", "Shapes are wired on the placed picture.", "Each note looks for its shape.", [["Function", "bindNodeInteractions"]]),
+        arrow("bindN", "bindE", "Arrows come after shapes.", "State arrows need the shape positions from the step before.", [["Function", "bindEdgeInteractions"]]),
       ],
     },
     "how-bind": {
       viewId: "how-bind",
       tab: "how",
       parent: "how-match",
-      title: "Finding a box",
-      summary: "The chart type picks one rule. Click a box for that pattern. Back returns to the matcher picture.",
+      title: "Finding a shape",
+      summary: "The chart type picks one rule for finding a note's shape. Click a box for that rule.",
+      story: md`
+        Mermaid gives each shape its own id, and builds it differently in each chart type. So the first line of the Mermaid text picks one rule, and the note's id is looked for with that rule.
+
+        What the rule finds becomes a button, unless it is too small to be a real shape.
+      `,
       chart: `flowchart TD
-  kind["Chart type"] --> flowId["Flowchart id"]
-  kind --> c4Id["C4 alias"]
-  kind --> seqName["Sequence name"]
-  kind --> stateId["State id"]
-  flowId --> size["Skip tiny boxes"]
+  kind["Chart type<br><small>The first line picks one rule</small>"] --> flowId["Flowchart id<br><small>Id ends in flowchart-api-3</small>"]
+  kind --> c4Id["C4 alias<br><small>Id ends in -reader</small>"]
+  kind --> seqName["Sequence name<br><small>The name attribute</small>"]
+  kind --> stateId["State id<br><small>Id ends in state-Draft-1</small>"]
+  flowId --> size["Skip tiny shapes<br><small>Under 8 by 8 px is skipped</small>"]
   c4Id --> size
   seqName --> size
   stateId --> size
-  size --> wire["wireShape"]`,
+  size --> wire["Make it a button<br><small>Hover, click, keyboard, and the ↘ badge</small>"]`,
       nodeInteractions: {
         kind: {
           label: "Chart type",
-          tooltip: "The first line of view.chart chooses the pattern.",
+          tooltip: "The first line of the Mermaid text picks the rule.",
           kicker: "Rule",
           body: md`
-            flowchart, C4, sequenceDiagram, and stateDiagram each name the shape differently. findMermaidShapes runs only that pattern. A miss does not fall through to another one. It takes the chartId. The stored node interaction does not keep that id; nodeInteractions() adds chartId from the map key.
+            Mermaid names shapes differently in each chart type, so one rule cannot find them all. The first line, such as flowchart or sequenceDiagram, picks one rule. If that rule finds nothing, no other rule is tried, so a note cannot land on the wrong shape by accident.
+
+            Other chart types still draw. Nothing on them is clickable.
 
             ~~~js source=chartKind
             ~~~
@@ -1391,10 +1566,10 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         flowId: {
           label: "Flowchart id",
-          tooltip: "g.node ending in flowchart-api-3.",
+          tooltip: "The shape's id contains the id you wrote.",
           kicker: "Flowchart",
           body: md`
-            Mermaid prefixes the id with the render id. The note api matches diagram-2-flowchart-api-3. The pattern is anchored at the end, and only g.node is considered.
+            In a flowchart, Mermaid builds the shape's id from the id you wrote. The note api matches the shape diagram-2-flowchart-api-3. The rule checks the end of the id, so the note api does not also catch api2.
 
             ~~~js
             const id = escapeRegExp(chartId);
@@ -1408,10 +1583,10 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         c4Id: {
           label: "C4 alias",
-          tooltip: "g.node.c4-shape ending in -reader.",
+          tooltip: "The shape's id ends with the alias.",
           kicker: "C4",
           body: md`
-            The alias is the last piece of the shape id. reader matches diagram-5-reader. Markers such as diagram-5-arrowhead are not c4-shape groups, so they are not buttons.
+            In C4, the shape's id ends with the alias you wrote. The note reader matches diagram-5-reader. Only C4 shapes are looked at, so an arrowhead with a similar id never becomes a button.
 
             ~~~js
             const id = escapeRegExp(chartId);
@@ -1425,10 +1600,10 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         seqName: {
           label: "Sequence name",
-          tooltip: "name on the top and bottom actor boxes.",
+          tooltip: "The name attribute on the participant boxes.",
           kicker: "Sequence",
           body: md`
-            Sequence actor ids from Mermaid are not the names you wrote. The name attribute is. Top and bottom boxes both match, so one note is attached twice. Lifelines carry the same name and are not selected.
+            In a sequence diagram, Mermaid's ids do not contain the participant id you wrote, but the name attribute does. A participant has a box at the top and at the bottom. Both match, so the same note opens from either one.
 
             ~~~js
             svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
@@ -1440,10 +1615,10 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         stateId: {
           label: "State id",
-          tooltip: "g.node ending in state-Draft-1.",
+          tooltip: "The state name sits in the middle of the id.",
           kicker: "State",
           body: md`
-            The state name sits in the middle of the id. Draft matches diagram-1-state-Draft-1. The start and end dots are root_start and root_end, so they do not match a state name.
+            In a state diagram, the state name sits in the middle of the shape's id. The note Draft matches diagram-1-state-Draft-1. The start and end dots are named root_start and root_end, so they never match a note.
 
             ~~~js
             const id = escapeRegExp(chartId);
@@ -1456,23 +1631,23 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           facts: [["Element", "g.node"]],
         },
         size: {
-          label: "Skip tiny boxes",
-          tooltip: "Anything under 8 by 8 pixels is not a button.",
+          label: "Skip tiny shapes",
+          tooltip: "Anything under 8 by 8 pixels is not made clickable.",
           kicker: "Size",
           body: md`
-            Sequence lifelines are groups with almost no width and a lot of height. getBBox catches them. Without this check they became invisible click targets.
+            Some matches are not boxes a reader can see. Sequence lifelines carry the participant's name too, but they are tall and almost zero wide. They used to become invisible click targets, so anything under 8 by 8 pixels is skipped.
 
             ~~~js source=visibleShape
             ~~~
           `,
-          facts: [["Function", "visibleShape"]],
+          facts: [["Function", "visibleShape"], ["Minimum", "8 by 8 px"]],
         },
         wire: {
-          label: "wireShape",
-          tooltip: "The shape becomes a button.",
+          label: "Make it a button",
+          tooltip: "The shape gets the hover, click, and keyboard listeners.",
           kicker: "Listen",
           body: md`
-            wireShape sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If opensView is set, addBadge draws the green ↘ from the shape's getBBox. Enter and Space fire the same click handler.
+            A matched shape gets the listeners for hover, click, and double-click. It also becomes a Tab stop with a name a screen reader can say, and Enter or Space opens its panel. If it has an inner diagram, it gets the ↘ badge.
 
             ~~~js source=wireShape,makeInteractive
             ~~~
@@ -1481,15 +1656,15 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
       },
       edgeInteractions: [
-        arrow("kind", "flowId", "A flowchart uses the node id in the group id.", "The render prefix stays in front.", [["Ends", "flowchart-id-n"]]),
-        arrow("kind", "c4Id", "C4 uses the alias.", "Only c4-shape groups count.", [["Ends", "-alias"]]),
+        arrow("kind", "flowId", "A flowchart uses the id you wrote.", "Mermaid adds a prefix and a number around it.", [["Ends", "flowchart-id-n"]]),
+        arrow("kind", "c4Id", "C4 uses the alias.", "Only C4 shapes count.", [["Ends", "-alias"]]),
         arrow("kind", "seqName", "Sequence uses the name attribute.", "Top and bottom boxes both match.", [["Attribute", "name"]]),
-        arrow("kind", "stateId", "A state uses the state name in the group id.", "Start and end dots are separate.", [["Ends", "state-name-n"]]),
-        arrow("flowId", "size", "Tiny geometry is dropped.", "Lifelines fail this test.", [["Minimum", "8px"]]),
-        arrow("c4Id", "size", "The same size check.", "A marker is already excluded.", [["Minimum", "8px"]]),
-        arrow("seqName", "size", "Actor boxes pass.", "The lifeline line is not selected.", [["Minimum", "8px"]]),
+        arrow("kind", "stateId", "A state diagram uses the state name.", "The start and end dots are separate.", [["Ends", "state-name-n"]]),
+        arrow("flowId", "size", "Tiny shapes are dropped.", "The same check for every chart type.", [["Minimum", "8px"]]),
+        arrow("c4Id", "size", "The same size check.", "C4 shapes pass.", [["Minimum", "8px"]]),
+        arrow("seqName", "size", "Participant boxes pass.", "Lifelines do not.", [["Minimum", "8px"]]),
         arrow("stateId", "size", "State boxes pass.", "The start dot is not a note.", [["Minimum", "8px"]]),
-        arrow("size", "wire", "The survivors get listeners.", "A node interaction with opensView also gets a ↘ badge.", [["Function", "wireShape"]]),
+        arrow("size", "wire", "What is left becomes clickable.", "A shape with an inner diagram also gets the ↘ badge.", [["Function", "wireShape"]]),
       ],
     },
     "how-edges": {
@@ -1497,20 +1672,25 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       tab: "how",
       parent: "how-match",
       title: "Finding an arrow",
-      summary: "bindEdgeInteractions claims each arrow once, in this order. Click a box for that matcher. The first hit wins.",
+      summary: "Each arrow note is taken by the first matcher that finds its line, and no later matcher can use it. Click a box for that matcher.",
+      story: md`
+        Arrows are harder to find than shapes, because most chart types do not put an arrow's ends in its id.
+
+        So the page tries four matchers in order, and each arrow note is taken by the first one that finds its line. No later matcher can take it again.
+      `,
       chart: `flowchart TD
-  listed["Read the notes"] --> flowBox["Flowchart id"]
-  flowBox --> seqBox["Sequence text"]
-  seqBox --> c4Box["C4 text"]
-  c4Box --> geoBox["State geometry"]
-  geoBox --> hitBox["Wide hit stroke"]`,
+  listed["Read the arrow notes<br><small>Each gets a key from its two ends</small>"] --> flowBox["Flowchart id<br><small>The line's id names both ends</small>"]
+  flowBox --> seqBox["Sequence text<br><small>Matched by the message text</small>"]
+  seqBox --> c4Box["C4 text<br><small>Matched by the relationship label</small>"]
+  c4Box --> geoBox["State position<br><small>Matched by where it starts and ends</small>"]
+  geoBox --> hitBox["Wide hit stroke<br><small>A wide invisible copy takes the pointer</small>"]`,
       nodeInteractions: {
         listed: {
-          label: "Read the notes",
-          tooltip: "edgeInteractions() turns the view's edge interactions into records.",
+          label: "Read the arrow notes",
+          tooltip: "Each arrow note becomes a record with its two ends.",
           kicker: "0",
           body: md`
-            An edge can be a pair [from, to] or the object arrow() returns. edgeInteractions() copies from, to, and makes edgeId from-to-index. The label shown in the panel is the two node labels joined by an arrow.
+            Two arrows can join the same two shapes, so the ends alone do not tell them apart. Each arrow note gets a key made of its two ends and its place in the list, such as api-db-1. The panel title is the two shape labels joined by an arrow, unless the note sets its own label.
 
             ~~~js source=edgeInteractions
             ~~~
@@ -1519,10 +1699,12 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         flowBox: {
           label: "Flowchart id",
-          tooltip: "The path id ends in L_from_to_0.",
+          tooltip: "The line's id names both ends.",
           kicker: "1",
           body: md`
-            Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. Two arrows between the same boxes differ only in the last number, so the first unwired path wins. nearestFlowchartLabel picks the label whose center is within 160 diagram units of the path midpoint, and the binder marks it wired so the next arrow cannot take it.
+            Flowchart arrows are the easy case, because Mermaid puts both ends in the line's id. The arrow from api to db ends in L_api_db_0. Two arrows between the same shapes are taken in order.
+
+            The label is a separate element, so the page takes the nearest label that no other arrow has taken, within 160 diagram units of the middle of the line.
 
             ~~~js source=findFlowchartArrow,nearestFlowchartLabel
             ~~~
@@ -1531,46 +1713,50 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
         seqBox: {
           label: "Sequence text",
-          tooltip: "messageText, then the message line.",
+          tooltip: "Matched by the message text.",
           kicker: "2",
           body: md`
-            Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.mermaidText. An exact match is tried first for every arrow. startsWith is the fallback, so a short mermaidText still hits without taking a longer message from its own arrow. Each message is used once.
+            Sequence arrows do not name their ends, so the page tells them apart by their text. The note must set mermaidText to the message. Case and spacing are ignored.
 
-            ~~~js source=sequenceMessages,c4Relations,textMatches
+            Every note tries an exact match before any note falls back to "starts with". So a note for Pay does not take the line Pay refund from the note written for it. Each message is used once.
+
+            ~~~js source=sequenceMessages,textMatches
             ~~~
           `,
-          facts: [["Needs", "edge.mermaidText"], ["Function", "sequenceMessages"]],
+          facts: [["Needs", "mermaidText"], ["Function", "sequenceMessages"]],
         },
         c4Box: {
           label: "C4 text",
-          tooltip: "A line or path, then the text that follows it.",
+          tooltip: "Matched by the relationship label.",
           kicker: "3",
           body: md`
-            C4 puts every relationship in one group. A line or path starts a relationship. The text nodes after it belong to that relationship, until the next line. Two arrows that both say Reads are consumed in source order, because each match sets wired.
+            C4 arrows are also matched by their text, the label in Rel(api, db, "Reads"). C4 puts every relationship in one group: a line, then the text that belongs to it. Two arrows that both say Reads are taken in the order they were written.
 
-            ~~~js source=sequenceMessages,c4Relations,textMatches
+            ~~~js source=c4Relations
             ~~~
           `,
           facts: [["Function", "c4Relations"], ["Order", "Source order"]],
         },
         geoBox: {
-          label: "State geometry",
-          tooltip: "path.transition has no from or to in the id.",
+          label: "State position",
+          tooltip: "Matched by which shapes the line starts and ends at.",
           kicker: "4",
           body: md`
-            State arrows are matched by where they start and end. getPointAtLength plus getScreenCTM gives a screen point. That point is compared with the centers of the boxes already bound. Start and end dots use the id *. Their groups match root_start or root_end.
+            State arrows name neither end in their id, so they are matched by where they start and end. Each end of the line is compared with the centers of the shapes already wired, and the closest pairs win. That is why shapes are wired before arrows. The start and end dots are written as *.
 
             ~~~js source=matchStateArrows,shapeCentersOnScreen
             ~~~
           `,
-          facts: [["Function", "matchStateArrows"], ["Start", "*"]],
+          facts: [["Function", "matchStateArrows"], ["Start and end", "*"]],
         },
         hitBox: {
           label: "Wide hit stroke",
-          tooltip: "The visible line is too thin to click.",
+          tooltip: "The visible line is too thin to point at.",
           kicker: "5",
           body: md`
-            addWideHitStroke clones the stroke, strips the arrowhead, and puts an 18px transparent stroke on top. pointer-events is stroke, so the empty middle of the arrow is still a miss. The click has to land on that wide stroke. Only the first stroke is the keyboard button. The label listens too, but it is not a second tab stop.
+            A one-pixel line is hard to hover or click. So every matched line gets a transparent 18 px copy on top, and that copy takes the pointer. Only the stroke counts, so the empty space between lines is still a miss.
+
+            The first stroke is the Tab stop. The label listens too, but it is not a second Tab stop.
 
             ~~~js source=addWideHitStroke
             ~~~
@@ -1588,11 +1774,115 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
       },
       edgeInteractions: [
-        arrow("listed", "flowBox", "Flowchart arrows are tried first.", "Their ids already name the endpoints.", [["Pattern", "L_from_to_n"]]),
-        arrow("flowBox", "seqBox", "Unclaimed arrows try sequence text.", "edge.mermaidText has to be set.", [["Pair", "messageText + messageLine"]]),
-        arrow("seqBox", "c4Box", "Then C4 relationships.", "Duplicate labels are taken in order.", [["Flag", "wired"]]),
-        arrow("c4Box", "geoBox", "State arrows are what remain.", "They are matched by geometry.", [["Class", "path.transition"]]),
-        arrow("geoBox", "hitBox", "Every claimed stroke gets a fat hit target.", "The visible line stays thin.", [["Class", "edge-hit"]]),
+        arrow("listed", "flowBox", "Flowchart arrows are tried first.", "Their ids already name both ends.", [["Pattern", "L_from_to_n"]]),
+        arrow("flowBox", "seqBox", "Notes not yet taken try sequence text.", "The note needs mermaidText.", [["Pair", "message text and line"]]),
+        arrow("seqBox", "c4Box", "Then C4 relationships.", "Repeated labels are taken in order.", [["Flag", "wired"]]),
+        arrow("c4Box", "geoBox", "State arrows are what remain.", "They are matched by position.", [["Class", "path.transition"]]),
+        arrow("geoBox", "hitBox", "Every matched line gets a wide hit target.", "The visible line stays thin.", [["Class", "edge-hit"]]),
+      ],
+    },
+    "how-panel": {
+      viewId: "how-panel",
+      tab: "how",
+      parent: "how-click",
+      title: "A note becomes the panel",
+      summary: "What a click puts in the side panel. Click a box for that part of the code.",
+      story: md`
+        A note is written in markdown, but markdown turned into HTML could carry anything into the page.
+
+        So the page only uses marked to split the note into pieces, and builds each piece itself, as text. Code is shown as written, or filled in from the page's own functions.
+      `,
+      chart: `flowchart TD
+  note["Note<br><small>Markdown in the body field</small>"] --> lex["Split into pieces<br><small>marked splits it, the page builds it</small>"]
+  lex --> build["Build as text<br><small>Set as text, never as HTML</small>"]
+  lex --> fence["Code fence<br><small>Code shown as written</small>"]
+  fence --> src["Print a loaded function<br><small>source=name fills in the code</small>"]
+  links["Facts and links<br><small>Short rows, then the neighbors</small>"]`,
+      nodeInteractions: {
+        note: {
+          label: "Note",
+          tooltip: "The body field, written in markdown.",
+          kicker: "Data",
+          body: md`
+            A note needs more than plain text: paragraphs, lists, and code. So the body is markdown. A note that holds code is written with the md tag and ~~~ fences, because a backtick fence would end the JavaScript string. md only removes the shared indent.
+
+            ~~~~js
+            body: md\`
+              The cache is checked first.
+
+              ~~~go
+              if s, ok := cache.Get(id); ok { return s, nil }
+              ~~~
+            \`,
+            ~~~~
+          `,
+          facts: [["Field", "body"], ["Helper", "md"]],
+        },
+        lex: {
+          label: "Split into pieces",
+          tooltip: "marked splits the markdown into paragraphs, lists, and code.",
+          kicker: "Parse",
+          body: md`
+            The page uses marked only to split the note into pieces. It does not use marked's HTML, because then a note could put any HTML into the page.
+
+            ~~~js source=renderNote
+            ~~~
+          `,
+          facts: [["Call", "marked.lexer"], ["CDN", "marked@15"]],
+        },
+        build: {
+          label: "Build as text",
+          tooltip: "Each piece becomes an element with plain text in it.",
+          kicker: "Safe",
+          body: md`
+            Each piece becomes an element, and its text is set as text, never as HTML. HTML written in a note is dropped, and so are images. A link must be http or https, and it opens in a new tab.
+
+            ~~~js source=safeHref
+            ~~~
+          `,
+          facts: [["Function", "appendBlock"], ["Links", "http and https only"]],
+        },
+        fence: {
+          label: "Code fence",
+          tooltip: "Code in the note is shown as written.",
+          kicker: "Code",
+          body: md`
+            Code that is in no file, such as a config or a short sketch, is written straight into the note. The language after ~~~ is kept, so the reader can tell Go from SQL.
+          `,
+          facts: [["Fence", "~~~lang"]],
+        },
+        src: {
+          label: "Print a loaded function",
+          tooltip: "source=name shows that function as the page loaded it.",
+          kicker: "Code",
+          body: md`
+            Copies of code in notes go stale, because nobody updates every copy when the code changes. So a fence written as ~~~js source=show has no body. The page fills it with the show function as it is loaded right now. A renamed function shows "is not loaded", so a stale note is visible.
+
+            This only reaches the page's own functions. It is how this tab shows its code.
+
+            ~~~js source=codeText
+            ~~~
+          `,
+          facts: [["Function", "codeText"], ["Reads", "Function.prototype.toString"]],
+        },
+        links: {
+          label: "Facts and links",
+          tooltip: "Short rows, then links to what this shape connects to.",
+          kicker: "Panel",
+          body: md`
+            Facts are short term and value rows from the note. Links move around the picture without hunting for small arrows: an arrow links to its two ends, and a shape links to every arrow in and out. Each link opens that note.
+
+            ~~~js source=renderLinks
+            ~~~
+          `,
+          facts: [["Field", "facts"], ["Function", "renderLinks"]],
+        },
+      },
+      edgeInteractions: [
+        arrow("note", "lex", "The markdown is split, not turned into HTML.", "Only the pieces are used.", [["Call", "marked.lexer"]]),
+        arrow("lex", "build", "Text pieces become elements.", "Their text is set as text.", [["Function", "appendBlock"]]),
+        arrow("lex", "fence", "Code pieces become code blocks.", "The text is shown as written.", [["Element", "pre"]]),
+        arrow("fence", "src", "A source= fence is filled from the page.", "Only the page's own functions.", [["Function", "codeText"]]),
       ],
     },
   },

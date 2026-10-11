@@ -27,6 +27,7 @@ const app = {
     body: document.getElementById("panel-body"),
     facts: document.getElementById("panel-facts"),
     links: document.getElementById("panel-links"),
+    parts: document.getElementById("panel-parts"),
     zoom: document.getElementById("panel-zoom"),
     close: document.getElementById("panel-close"),
   },
@@ -34,6 +35,8 @@ const app = {
   view: null,
   shownViewId: null,
   selectedInteraction: null,
+  // The reader closed the story, so the next diagram does not open it again.
+  storyHidden: false,
   renderToken: 0,
   cam: { x: 40, y: 32, s: 1 },
   cams: {},

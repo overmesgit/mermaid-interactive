@@ -1,6 +1,6 @@
 # ADR-020 Step through the How lesson with buttons, not badges
 
-- Status: accepted, drill hiding and the Back label superseded by [ADR-021](021-lesson-stays.md)
+- Status: accepted, drill hiding and the Back label superseded by [ADR-021](021-lesson-stays.md), the seven steps superseded by [ADR-031](031-how-starts-from-the-content-file.md)
 - Date: 2026-10-11
 
 ## Context

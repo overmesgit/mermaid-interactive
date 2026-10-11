@@ -39,7 +39,7 @@ Zooming the picture versus opening another diagram.
 | ADR | Decision | Status |
 | --- | --- | --- |
 | [003](003-two-zooms.md) | Double-click opens an inner diagram. The wheel only zooms the camera | Current, partly replaced by 014 |
-| [014](014-selection-keeps-camera.md) | Clicking a shape keeps the zoom and the position | Current |
+| [014](014-selection-keeps-camera.md) | Clicking a shape keeps the zoom and the position | Current, partly replaced by 033 |
 | [015](015-drill-transition.md) | Animate opening an inner diagram, and remember each diagram's zoom | Current |
 
 ## Side panel
@@ -48,6 +48,7 @@ Zooming the picture versus opening another diagram.
 | --- | --- | --- |
 | [009](009-panel-resize.md) | Drag the panel's border to resize it | Current, partly replaced by 014 |
 | [016](016-panel-links.md) | The panel links to the connected shapes and arrows | Current |
+| [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current |
 
 ## Notes and code in the panel
 
@@ -66,9 +67,10 @@ The tab that explains this page, step by step.
 | --- | --- | --- |
 | [007](007-file-map.md) | Explain the page with a map of its files | Replaced by 008 |
 | [008](008-teach-in-the-tool.md) | The How tab teaches in steps, with code in the panel | Replaced by 012 |
-| [020](020-lesson-steps.md) | Step through the How lesson with buttons, not badges | Current, partly replaced by 021 |
+| [020](020-lesson-steps.md) | Step through the How lesson with buttons, not badges | Current, partly replaced by 021 and 031 |
 | [021](021-lesson-stays.md) | Prev and Next keep their place, even inside an inner diagram | Current, partly replaced by 022 |
 | [022](022-lesson-on-diagram.md) | Prev and Next sit on the top left of the diagram | Current |
+| [031](031-how-starts-from-the-content-file.md) | The How lesson starts from the content file | Current |
 
 ## Look and feel
 
@@ -78,6 +80,7 @@ The tab that explains this page, step by step.
 | [006](006-selection.md) | Double-click does not select text in the diagram | Current |
 | [010](010-label-frame.md) | Clicking a shape draws no box around its label | Current |
 | [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current |
+| [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
 
 ## Files and export
 

@@ -53,6 +53,10 @@ document.getElementById("copy").addEventListener("click", async () => {
 
 document.getElementById("export").addEventListener("click", exportHtml);
 document.getElementById("fit").addEventListener("click", fit);
+document.getElementById("story-open").addEventListener("click", () => {
+  app.storyHidden = false;
+  openStory();
+});
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
 document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));
 document.getElementById("lesson-prev").addEventListener("click", () => showLesson(-1));
@@ -77,14 +81,15 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape") {
     hideTooltip();
-    if (app.els.workspace.classList.contains("panel-open")) closePanel();
+    // A note goes back to the story first. The story itself stays open while stepping up.
+    if (app.selectedInteraction) closePanel();
     else showParent();
   }
   if (event.key === "Backspace" && !typing && showParent()) {
     event.preventDefault();
   }
   const lessonKey = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
-  if (lessonKey && !typing && !app.els.workspace.classList.contains("panel-open") && showLesson(lessonKey)) {
+  if (lessonKey && !typing && !app.selectedInteraction && showLesson(lessonKey)) {
     event.preventDefault();
   }
 });

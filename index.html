@@ -34,6 +34,7 @@
           <button id="zoom-out" type="button" title="Zoom out camera">−</button>
           <button id="fit" type="button" title="Fit diagram">Fit</button>
           <button id="zoom-in" type="button" title="Zoom in camera">+</button>
+          <button id="story-open" type="button" title="The story of this diagram">Story</button>
           <button id="help-open" type="button" title="How to use this page (?)" popovertarget="help">?</button>
         </div>
       </div>
@@ -59,6 +60,10 @@
         <div id="panel-body"></div>
         <dl id="panel-facts"></dl>
         <dl id="panel-links" aria-label="Connections"></dl>
+        <section id="panel-parts" hidden>
+          <h3>In this picture</h3>
+          <ol></ol>
+        </section>
         <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
       </div>
     </aside>
@@ -68,13 +73,14 @@
     <h2>How to use this page</h2>
     <dl>
       <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
+      <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
       <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>
       <dt><kbd>/</kbd></dt><dd>Find</dd>
-      <dt><kbd>Esc</kbd></dt><dd>Close the details, then step up</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Back to the story, then step up</dd>
       <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
-      <dt>Prev, Next</dt><dd>Move through the How lesson</dd>
+      <dt>Prev, Next</dt><dd>Move through the lesson</dd>
       <dt><kbd>←</kbd>, <kbd>→</kbd></dt><dd>Previous or next lesson step</dd>
       <dt><kbd>Tab</kbd>, <kbd>Enter</kbd></dt><dd>Move to a shape, open its details</dd>
       <dt><kbd>?</kbd></dt><dd>Show this list</dd>

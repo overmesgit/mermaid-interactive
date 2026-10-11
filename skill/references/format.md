@@ -63,6 +63,7 @@ A PR explanation is usually one tab with a lesson. A second tab is for a second 
 | `parent` | The viewId this view was drilled from, or `null`. It builds the breadcrumb. Escape and Backspace go up to it. A lesson step has `parent: null`. |
 | `title` | The breadcrumb text. The Next button shows the next step's title. |
 | `summary` | One sentence under the title. |
+| `story` | Optional. Markdown, like a note. The side panel shows it when nothing is selected, above a list of the view's shapes and arrows. Say what the diagram shows and why, so a reader can follow it without opening every shape. |
 | `chart` | The Mermaid source. Mermaid is the only reader. |
 | `nodeInteractions` | An object keyed by chartId. |
 | `edgeInteractions` | An array, one entry per arrow. |
@@ -79,6 +80,18 @@ The first line of `chart` picks the matcher. Only these four are clickable:
 | `stateDiagram-v2` | The state id. `HandedOff` in `state "Handed off" as HandedOff`. |
 
 Any other Mermaid type still draws. Nothing on it is clickable.
+
+## Captions
+
+A reader should be able to follow a diagram without clicking every shape. So give each shape a short caption under its name, in the Mermaid label:
+
+```
+api["API<br><small>Loads the session before each handler</small>"]
+```
+
+The caption is part of the picture, so Mermaid sizes the box to fit it and wraps long text. The page shows it in a quieter color. Keep it to a few words that say what the shape does in this diagram. The tooltip and the note can then say more.
+
+This works in flowcharts. A label cannot contain `"`.
 
 ## Node interaction
 

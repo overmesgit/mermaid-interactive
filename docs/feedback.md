@@ -101,3 +101,21 @@ Every ADR Context now starts with the problem, then why it matters. The decision
 > clearer ADR titles, a simpler status column in the decisions index, and a "start here" section in format.md. lets make those
 
 ADR titles now say the choice in plain words. The decisions index groups ADRs by topic, with four status words: Current, partly replaced, Planned, Replaced. `format.md` starts with five steps, including the join command.
+
+> let's update current explanation of this tool in HOW diagram
+
+The How lesson now starts from the content file and ends with the exported file, and its notes are rewritten in plain words. It shows only what is built. [ADR-031](decisions/031-how-starts-from-the-content-file.md).
+
+## 2026-10-12
+
+> why do we need server? can I open file?
+
+The page opens from a file. Only Export needs a server, because it reads the scripts with fetch, and a browser blocks that on file://.
+
+> it kinda feel strange that we need to open each node to follow explanation can we add text below block with short explanations?
+
+Each shape now has a short caption under its name, written in the Mermaid label. [ADR-032](decisions/032-shape-captions.md).
+
+> hmm... adding some text block to diagram can be good how about adding default side panel with the explanation flow?
+
+With nothing selected, the side panel shows the view's story and its parts, with what a lesson step adds marked New. The captions stay. [ADR-033](decisions/033-story-panel.md).

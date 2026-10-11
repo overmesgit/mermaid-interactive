@@ -1,6 +1,6 @@
 # ADR-014 Clicking a shape keeps the zoom and the position
 
-- Status: accepted
+- Status: accepted, `show()` closing the panel superseded by [ADR-033](033-story-panel.md)
 - Date: 2026-10-11
 - Supersedes: the `fit()` and 220ms parts of [ADR-003](003-two-zooms.md), and `fit()` after a drag in [ADR-009](009-panel-resize.md)
 

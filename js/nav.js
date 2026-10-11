@@ -49,7 +49,7 @@ async function show(viewId, fromInteraction) {
   const origin = wiredElements(fromInteraction);
   app.view = view;
   app.stack = pathTo(view);
-  closePanel();
+  openStory();
   hideTooltip();
   renderChrome();
   // A slower mermaid.render must not overwrite a diagram the reader has already left.
