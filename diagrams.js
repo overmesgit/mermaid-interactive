@@ -217,11 +217,9 @@ const HOW_BOX = {
       ~~~js
       app.cam = { x: 40, y: 32, s: 1 };
 
-      function zoomBy(factor) {
-        const rect = app.els.viewport.getBoundingClientRect();
-        const px = rect.width / 2;
-        const py = rect.height / 2;
-        const next = Math.min(2.6, Math.max(0.35, app.cam.s * factor));
+      // The + / - buttons zoom at the center. The wheel zooms at the pointer.
+      function zoomAt(px, py, factor) {
+        const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, app.cam.s * factor));
         const k = next / app.cam.s;
         app.cam.x = px - (px - app.cam.x) * k;
         app.cam.y = py - (py - app.cam.y) * k;
@@ -234,7 +232,7 @@ const HOW_BOX = {
       }
       ~~~
     `,
-    facts: [["Function", "zoomBy"], ["Range", "0.35 to 2.6"]],
+    facts: [["Function", "zoomAt"], ["Range", "0.35 to 2.6"]],
   },
 };
 
@@ -337,11 +335,16 @@ const HOW_ARROW = {
       function wireShape(shape, interaction) {
         shape.classList.add("is-node");
         shape.dataset.chartId = interaction.chartId;
-        shape.setAttribute("role", "button");
-        shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-        shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
-        shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+        makeInteractive(shape, interaction, true);
         if (interaction.opensView) addBadge(shape);
+      }
+
+      // Arrows call the same function, so a shape and an arrow listen the same way.
+      function makeInteractive(el, interaction, keyboardButton) {
+        if (keyboardButton) el.setAttribute("role", "button");
+        el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+        el.addEventListener("click", (event) => onInteractionClick(event, interaction));
+        el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
       }
       ~~~
     `,
@@ -435,16 +438,14 @@ const HOW_ARROW = {
     "cam",
     "The scroll wheel scales this SVG. It does not load another chart.",
     md`
-      zoomBy multiplies cam.s and keeps the zoom centered in the viewport. The limits are 0.35 and 2.6.
+      zoomAt multiplies cam.s around one point: the viewport center for the buttons, the pointer for the wheel. The limits are 0.35 and 2.6.
 
       ~~~js
       app.cam = { x: 40, y: 32, s: 1 };
 
-      function zoomBy(factor) {
-        const rect = app.els.viewport.getBoundingClientRect();
-        const px = rect.width / 2;
-        const py = rect.height / 2;
-        const next = Math.min(2.6, Math.max(0.35, app.cam.s * factor));
+      // The + / - buttons zoom at the center. The wheel zooms at the pointer.
+      function zoomAt(px, py, factor) {
+        const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, app.cam.s * factor));
         const k = next / app.cam.s;
         app.cam.x = px - (px - app.cam.x) * k;
         app.cam.y = py - (py - app.cam.y) * k;
@@ -457,7 +458,7 @@ const HOW_ARROW = {
       }
       ~~~
     `,
-    [["Function", "zoomBy"]],
+    [["Function", "zoomAt"]],
   ),
 };
 function box(id, extra) {
@@ -1471,9 +1472,8 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             ~~~js
             function openFromHash() {
               const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-              const viewId = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
-              if (!app.views[viewId]) show(DIAGRAMS.tabs[0].id);
-              else show(viewId);
+              const viewId = ids[ids.length - 1];
+              show(app.views[viewId] ? viewId : DIAGRAMS.tabs[0].id);
             }
             ~~~
           `,
@@ -1578,11 +1578,16 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             function wireShape(shape, interaction) {
               shape.classList.add("is-node");
               shape.dataset.chartId = interaction.chartId;
-              shape.setAttribute("role", "button");
-              shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-              shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
-              shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+              makeInteractive(shape, interaction, true);
               if (interaction.opensView) addBadge(shape);
+            }
+
+            // Arrows call the same function, so a shape and an arrow listen the same way.
+            function makeInteractive(el, interaction, keyboardButton) {
+              if (keyboardButton) el.setAttribute("role", "button");
+              el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+              el.addEventListener("click", (event) => onInteractionClick(event, interaction));
+              el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
             }
             ~~~
           `,
@@ -1603,13 +1608,18 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               claimEdge(edge, [path, nearestFlowchartLabel(path, labels)]);
             });
 
-            edges.forEach((edge) => {
-              if (used.has(edge) || !edge.mermaidText) return;
-              const message = messages.find((item) => !item.wired && textMatches(item.label, edge.mermaidText));
-              if (!message) return;
-              message.wired = true;
-              claimEdge(edge, [message.line, message.text]);
-            });
+            function claimByText(items, pieces) {
+              edges.forEach((edge) => {
+                if (wired.has(edge) || !edge.mermaidText) return;
+                const item = items.find((candidate) => !candidate.wired && textMatches(candidate.label, edge.mermaidText));
+                if (!item) return;
+                item.wired = true;
+                claimEdge(edge, pieces(item));
+              });
+            }
+
+            claimByText(sequenceMessages(svg), (message) => [message.line, message.text]);
+            claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
             ~~~
           `,
           opensView: "how-edges",
@@ -1626,14 +1636,13 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             function fit() {
               const box = svg.viewBox.baseVal;
               const pad = 48;
-              const s = Math.min(
-                (app.els.viewport.clientWidth - pad) / box.width,
-                (app.els.viewport.clientHeight - pad) / box.height,
-                1.35
-              );
+              // Prev and Next sit on the top left of the diagram. Fit starts below them.
+              const top = app.els.lesson.hidden ? pad / 2 : app.els.lesson.offsetTop + app.els.lesson.offsetHeight + 12;
+              const height = app.els.viewport.clientHeight - top - pad / 2;
+              const s = Math.min((app.els.viewport.clientWidth - pad) / box.width, height / box.height, 1.35);
               app.cam.s = Number.isFinite(s) && s > 0 ? s : 1;
               app.cam.x = (app.els.viewport.clientWidth - box.width * app.cam.s) / 2;
-              app.cam.y = Math.max(24, (app.els.viewport.clientHeight - box.height * app.cam.s) / 2);
+              app.cam.y = top + Math.max(0, (height - box.height * app.cam.s) / 2);
               applyCam();
             }
             ~~~
@@ -1776,11 +1785,16 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             function wireShape(shape, interaction) {
               shape.classList.add("is-node");
               shape.dataset.chartId = interaction.chartId;
-              shape.setAttribute("role", "button");
-              shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-              shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
-              shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+              makeInteractive(shape, interaction, true);
               if (interaction.opensView) addBadge(shape);
+            }
+
+            // Arrows call the same function, so a shape and an arrow listen the same way.
+            function makeInteractive(el, interaction, keyboardButton) {
+              if (keyboardButton) el.setAttribute("role", "button");
+              el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+              el.addEventListener("click", (event) => onInteractionClick(event, interaction));
+              el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
             }
             ~~~
           `,

@@ -1,5 +1,8 @@
 // Hover dimming and the search filter. Both write is-dim on the wired SVG.
 
+// The visible stroke and the label of a wired arrow. The wide hit stroke has only the edge-hit class.
+const EDGE_PIECES = ".is-edge, .is-edge-label";
+
 function setStatus(text) {
   app.els.status.textContent = text;
   clearTimeout(setStatus.timer);
@@ -58,7 +61,7 @@ function highlightAround(interaction) {
     el.classList.toggle("is-dim", !on);
     el.classList.remove("is-hit");
   });
-  app.els.camera.querySelectorAll(".is-edge:not(.edge-hit), .is-edge-label").forEach((el) => {
+  app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
     const on = litEdgeIds.has(el.dataset.edgeId);
     el.classList.toggle("is-dim", !on);
     el.classList.toggle("is-hot", on);
@@ -69,7 +72,7 @@ function highlightAround(interaction) {
 function wiredElements(interaction) {
   if (!interaction) return [];
   if (interaction.kind === "edge") {
-    return [...app.els.camera.querySelectorAll(".is-edge:not(.edge-hit), .is-edge-label")].filter(
+    return [...app.els.camera.querySelectorAll(EDGE_PIECES)].filter(
       (el) => el.dataset.edgeId === interaction.edgeId
     );
   }
@@ -99,8 +102,9 @@ function applySearch() {
     el.classList.toggle("is-dim", Boolean(query) && !hit);
     el.classList.toggle("is-hit", Boolean(query) && hit);
   });
-  app.els.camera.querySelectorAll(".is-edge:not(.edge-hit), .is-edge-label").forEach((el) => {
-    const interaction = edgeInteraction(el.dataset.edgeId);
+  const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
+  app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
+    const interaction = edges.get(el.dataset.edgeId);
     if (!interaction) return;
     const hit = !query || haystack(interaction).includes(query);
     el.classList.toggle("is-dim", Boolean(query) && !hit);

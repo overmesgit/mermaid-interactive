@@ -1,25 +1,17 @@
-// Keep this list identical to the script tags in index.html. Export inlines them in this order.
+// Export inlines the local script tags of index.html, in page order. The CDN scripts stay links.
 
-const APP_SCRIPTS = [
-  "js/state.js",
-  "js/camera.js",
-  "js/highlight.js",
-  "js/panel.js",
-  "js/mermaid-svg.js",
-  "js/bind.js",
-  "js/nav.js",
-  "js/export.js",
-  "js/boot.js",
-];
+function localScripts() {
+  return [...document.querySelectorAll("script[src]")]
+    .map((script) => script.getAttribute("src"))
+    .filter((src) => !/^https?:/.test(src));
+}
 
 async function exportHtml() {
-  let css, data, sources;
+  let css, sources;
   try {
-    [css, data, ...sources] = await Promise.all([
-      fetch("styles.css").then((response) => response.text()),
-      fetch("diagrams.js").then((response) => response.text()),
-      ...APP_SCRIPTS.map((path) => fetch(path).then((response) => response.text())),
-    ]);
+    [css, ...sources] = await Promise.all(
+      ["styles.css", ...localScripts()].map((path) => fetch(path).then((response) => response.text()))
+    );
   } catch {
     setStatus("Export needs a local server. Open the folder with a static server, then export.");
     return;
@@ -41,8 +33,7 @@ ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
 <script>if (!location.hash) location.replace("#${hash}");</script>
-<script>${safe(data)}</script>
-<script>${safe(sources.join("\n"))}</script>
+${sources.map((source) => `<script>${safe(source)}</script>`).join("\n")}
 </body>
 </html>`;
   const blob = new Blob([html], { type: "text/html" });

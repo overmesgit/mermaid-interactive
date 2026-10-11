@@ -27,16 +27,33 @@ function fit() {
   applyCam();
 }
 
+// The screen rectangle around these elements, or null when none of them has a size.
+function unionRect(elements) {
+  const boxes = elements.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
+  if (!boxes.length) return null;
+  return {
+    left: Math.min(...boxes.map((box) => box.left)),
+    right: Math.max(...boxes.map((box) => box.right)),
+    top: Math.min(...boxes.map((box) => box.top)),
+    bottom: Math.max(...boxes.map((box) => box.bottom)),
+  };
+}
+
+// Scale the camera by k around a viewport point, so that point stays where it is.
+function scaleAbout(px, py, k) {
+  const { cam } = app;
+  cam.x = px - (px - cam.x) * k;
+  cam.y = py - (py - cam.y) * k;
+  cam.s *= k;
+}
+
 // Pan the least distance that brings these elements inside the viewport. The scale stays.
 function reveal(elements) {
+  const box = unionRect(elements);
+  if (!box) return;
   const viewportBox = app.els.viewport.getBoundingClientRect();
-  const boxes = elements.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
-  if (!boxes.length) return;
   const pad = 24;
-  const left = Math.min(...boxes.map((box) => box.left));
-  const right = Math.max(...boxes.map((box) => box.right));
-  const top = Math.min(...boxes.map((box) => box.top));
-  const bottom = Math.max(...boxes.map((box) => box.bottom));
+  const { left, right, top, bottom } = box;
   let dx = 0;
   let dy = 0;
   if (right > viewportBox.right - pad) dx = viewportBox.right - pad - right;
@@ -53,20 +70,15 @@ const LEAVE_MS = 200;
 
 // Fade the old SVG out before show() swaps it. With origin elements, also zoom toward them.
 function leaveView(elements) {
-  const { cam, els: ui } = app;
+  const ui = app.els;
   if (!ui.camera.querySelector("svg") || matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return Promise.resolve();
   }
   ui.camera.classList.add("is-leaving");
-  const boxes = elements.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
-  if (boxes.length) {
+  const box = unionRect(elements);
+  if (box) {
     const viewportBox = ui.viewport.getBoundingClientRect();
-    const px = (Math.min(...boxes.map((b) => b.left)) + Math.max(...boxes.map((b) => b.right))) / 2 - viewportBox.left;
-    const py = (Math.min(...boxes.map((b) => b.top)) + Math.max(...boxes.map((b) => b.bottom))) / 2 - viewportBox.top;
-    const k = 1.8;
-    cam.x = px - (px - cam.x) * k;
-    cam.y = py - (py - cam.y) * k;
-    cam.s *= k;
+    scaleAbout((box.left + box.right) / 2 - viewportBox.left, (box.top + box.bottom) / 2 - viewportBox.top, 1.8);
   }
   applyCam();
   return new Promise((resolve) => setTimeout(resolve, LEAVE_MS));
@@ -81,17 +93,19 @@ function enterView(saved) {
   } else fit();
 }
 
-function zoomBy(factor) {
-  const { cam, els } = app;
-  const rect = els.viewport.getBoundingClientRect();
-  const px = rect.width / 2;
-  const py = rect.height / 2;
-  const next = Math.min(2.6, Math.max(0.35, cam.s * factor));
-  const k = next / cam.s;
-  cam.x = px - (px - cam.x) * k;
-  cam.y = py - (py - cam.y) * k;
-  cam.s = next;
+const ZOOM_MIN = 0.35;
+const ZOOM_MAX = 2.6;
+
+// The buttons and the wheel zoom here. The scale stays between ZOOM_MIN and ZOOM_MAX.
+function zoomAt(px, py, factor) {
+  const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, app.cam.s * factor));
+  scaleAbout(px, py, next / app.cam.s);
   applyCam();
+}
+
+function zoomBy(factor) {
+  const rect = app.els.viewport.getBoundingClientRect();
+  zoomAt(rect.width / 2, rect.height / 2, factor);
 }
 
 function wireCamera() {
@@ -125,14 +139,7 @@ function wireCamera() {
     (event) => {
       event.preventDefault();
       const rect = els.viewport.getBoundingClientRect();
-      const px = event.clientX - rect.left;
-      const py = event.clientY - rect.top;
-      const next = Math.min(2.6, Math.max(0.35, app.cam.s * (event.deltaY < 0 ? 1.08 : 1 / 1.08)));
-      const k = next / app.cam.s;
-      app.cam.x = px - (px - app.cam.x) * k;
-      app.cam.y = py - (py - app.cam.y) * k;
-      app.cam.s = next;
-      applyCam();
+      zoomAt(event.clientX - rect.left, event.clientY - rect.top, event.deltaY < 0 ? 1.08 : 1 / 1.08);
     },
     { passive: false }
   );

@@ -76,27 +76,24 @@ async function show(viewId, fromInteraction) {
 
 function openFromHash() {
   const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-  const viewId = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
-  if (!app.views[viewId]) {
-    show(DIAGRAMS.tabs[0].id);
-    return;
-  }
-  show(viewId);
+  const viewId = ids[ids.length - 1];
+  show(app.views[viewId] ? viewId : DIAGRAMS.tabs[0].id);
+}
+
+// Escape and Backspace go one level up. Returns false at a tab's root.
+function showParent() {
+  if (app.stack.length < 2) return false;
+  show(app.stack[app.stack.length - 2].viewId);
+  return true;
 }
 
 // The lesson is the ordered view ids on a tab. A drill keeps the step it was opened from.
 function lessonStep() {
-  let view = app.view;
-  if (!view) return null;
-  const tab = DIAGRAMS.tabs.find((item) => item.id === view.tab);
+  if (!app.view) return null;
+  const tab = DIAGRAMS.tabs.find((item) => item.id === app.view.tab);
   if (!tab || !tab.lesson) return null;
-  let guard = 0;
-  while (view && guard++ < 8) {
-    const index = tab.lesson.indexOf(view.viewId);
-    if (index >= 0) return { lesson: tab.lesson, index };
-    view = view.parent && app.views[view.parent];
-  }
-  return null;
+  const step = [...app.stack].reverse().find((view) => tab.lesson.includes(view.viewId));
+  return step ? { lesson: tab.lesson, index: tab.lesson.indexOf(step.viewId) } : null;
 }
 
 function renderLesson() {

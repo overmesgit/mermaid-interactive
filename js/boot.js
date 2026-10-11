@@ -78,11 +78,10 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     hideTooltip();
     if (app.els.workspace.classList.contains("panel-open")) closePanel();
-    else if (app.stack.length > 1) show(app.stack[app.stack.length - 2].viewId);
+    else showParent();
   }
-  if (event.key === "Backspace" && !typing && app.stack.length > 1) {
+  if (event.key === "Backspace" && !typing && showParent()) {
     event.preventDefault();
-    show(app.stack[app.stack.length - 2].viewId);
   }
   const lessonKey = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
   if (lessonKey && !typing && !app.els.workspace.classList.contains("panel-open") && showLesson(lessonKey)) {
@@ -90,8 +89,6 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("hashchange", () => {
-  if (!app.hashLock) openFromHash();
-});
+window.addEventListener("hashchange", openFromHash);
 
 openFromHash();

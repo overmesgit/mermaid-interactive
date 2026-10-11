@@ -23,22 +23,7 @@ function addBadge(shape) {
 function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
-  shape.setAttribute("role", "button");
-  shape.setAttribute("tabindex", "0");
-  shape.setAttribute(
-    "aria-label",
-    interaction.opensView ? `${interaction.label}, has an inner diagram` : interaction.label
-  );
-  shape.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    onInteractionClick(event, interaction);
-  });
-  shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-  shape.addEventListener("pointermove", placeTooltip);
-  shape.addEventListener("pointerleave", hideTooltip);
-  shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
-  shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+  makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
 }
 
@@ -87,16 +72,17 @@ function wireArrow(interaction, arrowElements) {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);
       hit.dataset.edgeId = interaction.edgeId;
-      listenOnArrow(hit, interaction, keyboardButton);
+      makeInteractive(hit, interaction, keyboardButton);
       keyboardButton = false;
     } else {
       element.classList.add("is-edge-label");
-      listenOnArrow(element, interaction, false);
+      makeInteractive(element, interaction, false);
     }
   });
 }
 
-function listenOnArrow(el, interaction, keyboardButton) {
+// Shapes and arrows get the same listeners. A keyboard button is also a tab stop with an aria-label.
+function makeInteractive(el, interaction, keyboardButton) {
   if (keyboardButton) {
     el.setAttribute("role", "button");
     el.setAttribute("tabindex", "0");
@@ -139,26 +125,22 @@ function bindEdgeInteractions(svg) {
     claimEdge(edge, [path, label]);
   });
 
-  const messages = sequenceMessages(svg);
-  edges.forEach((edge) => {
-    if (wired.has(edge) || !edge.mermaidText) return;
-    const message = messages.find((item) => !item.wired && textMatches(item.label, edge.mermaidText));
-    if (!message) return;
-    message.wired = true;
-    claimEdge(edge, [message.line, message.text]);
-  });
+  // Sequence and C4 arrows are told apart by their text. `items` carry a label; `pieces` gives the SVG for one.
+  function claimByText(items, pieces) {
+    edges.forEach((edge) => {
+      if (wired.has(edge) || !edge.mermaidText) return;
+      const item = items.find((candidate) => !candidate.wired && textMatches(candidate.label, edge.mermaidText));
+      if (!item) return;
+      item.wired = true;
+      claimEdge(edge, pieces(item));
+    });
+  }
 
-  const relations = c4Relations(svg);
-  edges.forEach((edge) => {
-    if (wired.has(edge) || !edge.mermaidText) return;
-    const relation = relations.find((item) => !item.wired && textMatches(item.label, edge.mermaidText));
-    if (!relation) return;
-    relation.wired = true;
-    claimEdge(edge, [...relation.strokes, ...relation.texts]);
-  });
+  claimByText(sequenceMessages(svg), (message) => [message.line, message.text]);
+  claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
 
   const paths = [...svg.querySelectorAll("path.transition")].filter((path) => !path.dataset.wired);
   matchStateArrows(paths, edges.filter((edge) => !wired.has(edge)), svg).forEach(({ path, edge }) => {
-    wireArrow(edge, [path]);
+    claimEdge(edge, [path]);
   });
 }

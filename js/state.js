@@ -34,7 +34,6 @@ const app = {
   view: null,
   selectedInteraction: null,
   renderToken: 0,
-  hashLock: false,
   cam: { x: 40, y: 32, s: 1 },
   cams: {},
   drag: null,
@@ -77,8 +76,4 @@ function edgeInteractions() {
       kind: "edge",
     };
   });
-}
-
-function edgeInteraction(edgeId) {
-  return edgeInteractions().find((edge) => edge.edgeId === edgeId) || null;
 }
