@@ -278,7 +278,30 @@ html.is-resizing * {
   color: var(--muted);
 }
 
-#panel-code {
+#panel-body p { margin: 0; }
+
+#panel-body p + p,
+#panel-body ul,
+#panel-body ol,
+#panel-body blockquote,
+#panel-body h3,
+#panel-body h4,
+#panel-body h5,
+#panel-body h6 { margin-top: 8px; }
+
+#panel-body ul,
+#panel-body ol { padding-left: 1.2em; }
+
+#panel-body h3,
+#panel-body h4,
+#panel-body h5,
+#panel-body h6 {
+  margin-bottom: 0;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+#panel-body pre {
   display: block;
   margin: 14px 0 0;
   padding: 12px;
@@ -291,7 +314,17 @@ html.is-resizing * {
   white-space: pre;
 }
 
-#panel-code[hidden] { display: none; }
+#panel-body pre code {
+  font: inherit;
+  color: inherit;
+}
+
+#panel-body :not(pre) > code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+}
+
+#panel-body a { color: var(--accent); }
 
 #panel-facts {
   display: grid;

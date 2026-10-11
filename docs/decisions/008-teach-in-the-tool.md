@@ -1,6 +1,6 @@
 # ADR-008 How teaches in steps, with code in the panel
 
-- Status: accepted
+- Status: superseded by [ADR-012](012-markdown-notes.md)
 - Date: 2026-10-10
 - Supersedes: [ADR-007](007-file-map.md)
 

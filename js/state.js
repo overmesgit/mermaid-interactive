@@ -20,7 +20,6 @@ const app = {
     title: document.getElementById("panel-title"),
     lead: document.getElementById("panel-lead"),
     body: document.getElementById("panel-body"),
-    code: document.getElementById("panel-code"),
     facts: document.getElementById("panel-facts"),
     zoom: document.getElementById("panel-zoom"),
     close: document.getElementById("panel-close"),

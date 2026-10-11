@@ -73,7 +73,7 @@ function paint(focus) {
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
   const haystack = (item) =>
-    [item.label, item.tooltip, item.body, item.code, item.kicker, item.match, ...(item.facts || []).flat()]
+    [item.label, item.tooltip, item.body, item.kicker, item.match, ...(item.facts || []).flat()]
       .join(" ")
       .toLowerCase();
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {

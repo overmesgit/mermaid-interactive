@@ -11,7 +11,9 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [005](005-light-dim.md) | accepted | Hover dim stays light |
 | [006](006-selection.md) | accepted | Double-click does not select the label |
 | [007](007-file-map.md) | superseded by 008 | The first How tab was a map of files |
-| [008](008-teach-in-the-tool.md) | accepted | How teaches in steps, with code in the panel |
+| [008](008-teach-in-the-tool.md) | superseded by 012 | How teaches in steps, with code in the panel |
 | [009](009-panel-resize.md) | accepted | Drag the panel border to set its width |
 | [010](010-label-frame.md) | accepted | A click does not frame the label |
 | [011](011-split-scripts.md) | accepted | Scripts split by job, still no build |
+| [012](012-markdown-notes.md) | superseded by 013 | Panel notes are markdown. How code lives in the note |
+| [013](013-notes-in-templates.md) | accepted | How notes are markdown templates in diagrams.js |

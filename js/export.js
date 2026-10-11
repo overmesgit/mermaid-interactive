@@ -38,6 +38,7 @@ async function exportHtml() {
 <body>
 ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
 <script>if (!location.hash) location.replace("#${hash}");</script>
 <script>${safe(data)}</script>
 <script>${safe(sources.join("\n"))}</script>

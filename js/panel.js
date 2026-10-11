@@ -4,15 +4,123 @@ const PANEL_MIN = 240;
 const PANEL_GAP = 280;
 let panelWidth = 340;
 
+function safeHref(href) {
+  try {
+    const url = new URL(href);
+    if (url.protocol === "http:" || url.protocol === "https:") return url.href;
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function appendInline(parent, tokens) {
+  (tokens || []).forEach((token) => {
+    if (token.type === "html" || token.type === "image") return;
+    if (token.type === "escape" || (token.type === "text" && !token.tokens)) {
+      parent.append(token.text);
+      return;
+    }
+    if (token.type === "text") {
+      appendInline(parent, token.tokens);
+      return;
+    }
+    if (token.type === "codespan") {
+      const code = document.createElement("code");
+      code.textContent = token.text;
+      parent.append(code);
+      return;
+    }
+    if (token.type === "strong" || token.type === "em") {
+      const el = document.createElement(token.type === "strong" ? "strong" : "em");
+      appendInline(el, token.tokens);
+      parent.append(el);
+      return;
+    }
+    if (token.type === "br") {
+      parent.append(document.createElement("br"));
+      return;
+    }
+    if (token.type === "link") {
+      const href = safeHref(token.href);
+      if (!href) {
+        appendInline(parent, token.tokens);
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = href;
+      link.rel = "noreferrer";
+      link.target = "_blank";
+      appendInline(link, token.tokens);
+      parent.append(link);
+      return;
+    }
+    if (token.type === "paragraph" || token.type === "list" || token.type === "code" || token.type === "heading" || token.type === "blockquote" || token.type === "space") {
+      appendBlock(parent, token);
+      return;
+    }
+    if (token.tokens) appendInline(parent, token.tokens);
+    else if (typeof token.text === "string") parent.append(token.text);
+  });
+}
+
+function appendBlock(parent, token) {
+  if (token.type === "space" || token.type === "html" || token.type === "def" || token.type === "image") return;
+  if (token.type === "code") {
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    code.textContent = token.text;
+    pre.append(code);
+    parent.append(pre);
+    return;
+  }
+  if (token.type === "heading") {
+    const heading = document.createElement(`h${Math.min(6, token.depth + 2)}`);
+    appendInline(heading, token.tokens);
+    parent.append(heading);
+    return;
+  }
+  if (token.type === "paragraph") {
+    const p = document.createElement("p");
+    appendInline(p, token.tokens);
+    parent.append(p);
+    return;
+  }
+  if (token.type === "text") {
+    if (token.tokens) appendInline(parent, token.tokens);
+    else parent.append(token.text);
+    return;
+  }
+  if (token.type === "list") {
+    const list = document.createElement(token.ordered ? "ol" : "ul");
+    token.items.forEach((item) => {
+      const li = document.createElement("li");
+      (item.tokens || []).forEach((child) => appendBlock(li, child));
+      list.append(li);
+    });
+    parent.append(list);
+    return;
+  }
+  if (token.type === "blockquote") {
+    const quote = document.createElement("blockquote");
+    (token.tokens || []).forEach((child) => appendBlock(quote, child));
+    parent.append(quote);
+  }
+}
+
+function renderNote(el, source) {
+  el.replaceChildren();
+  if (!source) return;
+  marked.lexer(source).forEach((token) => appendBlock(el, token));
+}
+
 function openPanel(node) {
   app.selected = node;
   const panel = app.panel;
   panel.kicker.textContent = node.kicker || "";
   panel.title.textContent = node.label;
   panel.lead.textContent = node.tooltip;
-  panel.body.textContent = node.body || "";
-  panel.code.hidden = !node.code;
-  panel.code.textContent = node.code || "";
+  renderNote(panel.body, node.body || "");
   panel.facts.replaceChildren();
   (node.facts || []).forEach(([term, detail]) => {
     const dt = document.createElement("dt");

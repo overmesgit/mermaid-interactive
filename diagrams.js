@@ -2,268 +2,59 @@ function link(from, to, tooltip, body, facts, more) {
   return { from, to, kicker: "Arrow", tooltip, body, facts: facts || [], ...(more || {}) };
 }
 
-function lines(rows) {
-  return rows.join("\n");
+function md(strings, ...values) {
+  const text = strings.reduce((acc, part, i) => acc + part + (values[i] ?? ""), "");
+  const rows = text.replace(/^\n/, "").replace(/\n\s*$/, "").split("\n");
+  const widths = rows.filter((row) => row.trim()).map((row) => row.match(/^ */)[0].length);
+  const indent = widths.length ? Math.min(...widths) : 0;
+  return rows.map((row) => row.slice(indent)).join("\n").trim();
 }
-
-const HOW = {
-  init: lines([
-    "mermaid.initialize({",
-    "  startOnLoad: false,",
-    '  securityLevel: "strict",',
-    "  flowchart: { htmlLabels: true, useMaxWidth: false },",
-    "});",
-  ]),
-  show: lines([
-    "async function show(id) {",
-    "  const view = app.views[id];",
-    "  if (!view) return;",
-    "  app.current = view;",
-    "  app.stack = pathTo(view);",
-    "  closePanel();",
-    "  const token = ++app.renderToken;",
-    "  app.els.camera.innerHTML = \"\";",
-    "  const { svg } = await mermaid.render(`diagram-${token}`, view.chart);",
-    "  if (token !== app.renderToken) return;",
-    "  app.els.camera.innerHTML = svg;",
-    "  const svgEl = app.els.camera.querySelector(\"svg\");",
-    "  bindNodes(svgEl);",
-    "  bindEdges(svgEl);",
-    "  applySearch();",
-    "  requestAnimationFrame(fit);",
-    "}",
-  ]),
-  record: lines([
-    "browser: {",
-    "  label: \"Browser\",",
-    "  tooltip: \"The reader's browser.\",",
-    "  kicker: \"Client\",",
-    "  body: \"Renders the pages and stores the session cookie.\",",
-    "  facts: [[\"Calls\", \"Web app\"]],",
-    "}",
-    "",
-    "link(\"browser\", \"cdn\", \"The browser loads files from the CDN.\", \"This path is cacheable.\")",
-  ]),
-  hosts: lines([
-    "function mermaidShapesFor(svg, node) {",
-    "  const byId = [...svg.querySelectorAll(\"[id]\")]",
-    "    .filter((el) => idMatches(el.id, node.id));",
-    "  const named = [...svg.querySelectorAll(\"[name]\")]",
-    "    .filter((el) => el.getAttribute(\"name\") === node.id);",
-    "  const direct = [...byId, ...named.map(shapeGroup)];",
-    "  if (direct.length) {",
-    "    return direct.filter((el) => visibleShape(el) && !direct.some(",
-    "      (other) => other !== el && el.contains(other)",
-    "    ));",
-    "  }",
-    "  const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);",
-    "  const groups = new Set();",
-    "  svg.querySelectorAll(\"text, tspan, span, div, p\").forEach((el) => {",
-    "    if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));",
-    "  });",
-    "}",
-    "",
-    "function idMatches(domId, nodeId) {",
-    "  if (domId === nodeId) return true;",
-    "  const escaped = nodeId.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");",
-    "  return new RegExp(`(?:^|-)${escaped}(?:-\\\\d+)?$`).test(domId);",
-    "}",
-  ]),
-  visible: lines([
-    "function visibleShape(el) {",
-    "  const box = el.getBBox();",
-    "  return box.width >= 8 && box.height >= 8;",
-    "}",
-  ]),
-  attach: lines([
-    "function attach(host, node) {",
-    "  host.classList.add(\"is-node\");",
-    "  host.dataset.nodeId = node.id;",
-    "  host.setAttribute(\"role\", \"button\");",
-    "  host.addEventListener(\"pointerenter\", (event) => showTooltip(event, node));",
-    "  host.addEventListener(\"click\", (event) => onNodeClick(event, node));",
-    "  host.addEventListener(\"dblclick\", (event) => onNodeDblClick(event, node));",
-    "  if (node.zoom) addBadge(host);",
-    "}",
-  ]),
-  bindEdges: lines([
-    "edges.forEach((edge) => {",
-    "  const path = flowchartLinkPath(svg, edge);",
-    "  if (!path || path.dataset.bound) return;",
-    "  claimEdge(edge, [path, nearestFlowchartLabel(path, labels)]);",
-    "});",
-    "",
-    "edges.forEach((edge) => {",
-    "  if (used.has(edge) || !edge.match) return;",
-    "  const message = messages.find((item) => !item.used && textMatches(item.label, edge.match));",
-    "  if (!message) return;",
-    "  message.used = true;",
-    "  claimEdge(edge, [message.line, message.text]);",
-    "});",
-  ]),
-  flow: lines([
-    "function flowchartLinkPath(svg, edge) {",
-    "  const from = edge.from.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");",
-    "  const to = edge.to.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");",
-    "  const pattern = new RegExp(`(?:^|-)L_${from}_${to}_\\\\d+$`);",
-    "  return [...svg.querySelectorAll(\"path.flowchart-link\")]",
-    "    .find((path) => pattern.test(path.id));",
-    "}",
-    "",
-    "function nearestFlowchartLabel(path, labels) {",
-    "  const mid = screenPoint(path, path.getTotalLength() / 2);",
-    "  let best = null;",
-    "  let bestDistance = 160;",
-    "  labels.forEach((label) => {",
-    "    const box = label.getBoundingClientRect();",
-    "    const distance = Math.hypot(",
-    "      box.left + box.width / 2 - mid.x,",
-    "      box.top + box.height / 2 - mid.y",
-    "    );",
-    "    if (distance < bestDistance) best = label;",
-    "  });",
-    "}",
-  ]),
-  sequence: lines([
-    "function mermaidSequenceMessages(svg) {",
-    "  [...svg.children].forEach((el) => {",
-    "    const cls = el.getAttribute(\"class\") || \"\";",
-    "    if (cls.includes(\"messageText\")) text = el;",
-    "    else if (cls.includes(\"messageLine\")) {",
-    "      messages.push({ line: el, text, label: norm(text ? text.textContent : \"\") });",
-    "    }",
-    "  });",
-    "}",
-    "",
-    "function mermaidC4Rels(svg) {",
-    "  const host = [...svg.querySelectorAll(\"g\")].find((group) => {",
-    "    const kids = [...group.children];",
-    "    return kids.some((el) => el.tagName === \"line\") && kids.some((el) => el.tagName === \"text\");",
-    "  });",
-    "  [...host.children].forEach((el) => {",
-    "    if (el.tagName === \"line\" || el.tagName === \"path\") {",
-    "      rel = { strokes: [el], texts: [], used: false };",
-    "      rels.push(rel);",
-    "    } else if (el.tagName === \"text\" && rel) rel.texts.push(el);",
-    "  });",
-    "}",
-    "",
-    "function textMatches(rendered, wanted) {",
-    "  const left = norm(rendered).toLowerCase();",
-    "  const right = norm(wanted).toLowerCase();",
-    "  return left === right || left.startsWith(right);",
-    "}",
-  ]),
-  geometry: lines([
-    "function matchStateArrowsByEnds(paths, edges, svg) {",
-    "  const centers = nodeCentersOnScreen(svg);",
-    "  paths.forEach((path) => {",
-    "    const length = path.getTotalLength();",
-    "    const start = nearestPoint(centers, screenPoint(path, 1));",
-    "    const end = nearestPoint(centers, screenPoint(path, Math.max(1, length - 1)));",
-    "    edges.forEach((edge) => {",
-    "      const forward = endpointDistance(start, end, edge);",
-    "    });",
-    "  });",
-    "}",
-    "",
-    "function nodeCentersOnScreen(svg) {",
-    "  svg.querySelectorAll(\".is-node\").forEach((el) => {",
-    "    const box = el.getBoundingClientRect();",
-    "    items.push({ id: el.dataset.nodeId, x: box.left + box.width / 2, y: box.top + box.height / 2 });",
-    "  });",
-    "  svg.querySelectorAll(\"g.node\").forEach((el) => {",
-    "    if (!/root_start|root_end/.test(el.id)) return;",
-    "    items.push({ id: \"*\", x: box.left + box.width / 2, y: box.top + box.height / 2 });",
-    "  });",
-    "}",
-  ]),
-  hit: lines([
-    "function addWideHitStroke(el) {",
-    "  const hit = el.cloneNode(false);",
-    "  hit.removeAttribute(\"marker-end\");",
-    "  hit.setAttribute(\"class\", \"edge-hit\");",
-    "  el.parentNode.insertBefore(hit, el.nextSibling);",
-    "}",
-    "",
-    ".edge-hit {",
-    "  stroke: transparent;",
-    "  stroke-width: 18px;",
-    "  pointer-events: stroke;",
-    "}",
-  ]),
-  paint: lines([
-    "function paint(focus) {",
-    "  // hot: this node and every edge that touches it",
-    "  el.classList.toggle(\"is-dim\", active && !on);",
-    "  el.classList.toggle(\"is-hot\", active && on);",
-    "}",
-    "",
-    ".is-dim { opacity: 0.72; }",
-  ]),
-  click: lines([
-    "function onNodeClick(event, node) {",
-    "  if (event.target.closest(\".zoom-badge\")) {",
-    "    show(node.zoom);",
-    "    return;",
-    "  }",
-    "  const wait = node.zoom ? 220 : 0;",
-    "  app.clickTimer = setTimeout(() => openPanel(node), wait);",
-    "}",
-    "",
-    "function openPanel(node) {",
-    "  panel.title.textContent = node.label;",
-    "  panel.body.textContent = node.body || \"\";",
-    "  panel.code.textContent = node.code || \"\";",
-    "  requestAnimationFrame(fit);",
-    "}",
-  ]),
-  dbl: lines([
-    "function onNodeDblClick(event, node) {",
-    "  clearTimeout(app.clickTimer);",
-    "  window.getSelection()?.removeAllRanges();",
-    "  if (node.zoom) show(node.zoom);",
-    "  else openPanel(node);",
-    "}",
-    "",
-    "#camera, #camera * { user-select: none; }",
-  ]),
-  camera: lines([
-    "app.cam = { x: 40, y: 32, s: 1 };",
-    "",
-    "function zoomBy(factor) {",
-    "  const rect = app.els.viewport.getBoundingClientRect();",
-    "  const px = rect.width / 2;",
-    "  const py = rect.height / 2;",
-    "  const next = Math.min(2.6, Math.max(0.35, app.cam.s * factor));",
-    "  const k = next / app.cam.s;",
-    "  app.cam.x = px - (px - app.cam.x) * k;",
-    "  app.cam.y = py - (py - app.cam.y) * k;",
-    "  app.cam.s = next;",
-    "  applyCam();",
-    "}",
-    "",
-    "function applyCam() {",
-    "  app.els.camera.style.transform = `translate(${app.cam.x}px, ${app.cam.y}px) scale(${app.cam.s})`;",
-    "}",
-  ]),
-};
 
 const HOW_BOX = {
   chart: {
     label: "Chart text",
     tooltip: "The string stored on the view. Mermaid is the only reader.",
     kicker: "Data",
-    body: "A view keeps the picture and the notes apart. view.chart is the Mermaid source. The tooltip, the panel text, and zoom are siblings of that string. Mermaid never sees them. securityLevel is strict, so Mermaid's own click syntax stays off. This page binds the finished SVG so flowchart, C4, sequence, and state share one panel.",
-    code: HOW.init,
+    body: md`
+      A view keeps the picture and the notes apart. view.chart is the Mermaid source. The tooltip, the panel text, and zoom are siblings of that string. Mermaid never sees them. securityLevel is strict, so Mermaid's own click syntax stays off. This page binds the finished SVG so flowchart, C4, sequence, and state share one panel.
+
+      ~~~js
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        flowchart: { htmlLabels: true, useMaxWidth: false },
+      });
+      ~~~
+    `,
     facts: [["File", "diagrams.js"], ["Field", "view.chart"]],
   },
   mmd: {
     label: "Mermaid",
     tooltip: "Draws the SVG. It does not know about the side panel.",
     kicker: "Code",
-    body: "show() sends view.chart to mermaid.render and keeps a token. If the reader opens another view before this draw finishes, the token no longer matches and the late SVG is dropped. Double-click this box to walk that function.",
-    code: HOW.show,
+    body: md`
+      show() sends view.chart to mermaid.render and keeps a token. If the reader opens another view before this draw finishes, the token no longer matches and the late SVG is dropped. Double-click this box to walk that function.
+
+      ~~~js
+      async function show(id) {
+        const view = app.views[id];
+        if (!view) return;
+        app.current = view;
+        app.stack = pathTo(view);
+        closePanel();
+        const token = ++app.renderToken;
+        app.els.camera.innerHTML = "";
+        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        if (token !== app.renderToken) return;
+        app.els.camera.innerHTML = svg;
+        const svgEl = app.els.camera.querySelector("svg");
+        bindNodes(svgEl);
+        bindEdges(svgEl);
+        applySearch();
+        requestAnimationFrame(fit);
+      }
+      ~~~
+    `,
     zoom: "how-show",
     facts: [["Function", "show"], ["File", "js/nav.js"]],
   },
@@ -271,56 +62,179 @@ const HOW_BOX = {
     label: "Picture",
     tooltip: "The SVG that lands in #camera.",
     kicker: "DOM",
-    body: "The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodes and bindEdges run after that. They are what make the shapes and arrows clickable.",
-    code: HOW.show,
+    body: md`
+      The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodes and bindEdges run after that. They are what make the shapes and arrows clickable.
+
+      ~~~js
+      async function show(id) {
+        const view = app.views[id];
+        if (!view) return;
+        app.current = view;
+        app.stack = pathTo(view);
+        closePanel();
+        const token = ++app.renderToken;
+        app.els.camera.innerHTML = "";
+        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        if (token !== app.renderToken) return;
+        app.els.camera.innerHTML = svg;
+        const svgEl = app.els.camera.querySelector("svg");
+        bindNodes(svgEl);
+        bindEdges(svgEl);
+        applySearch();
+        requestAnimationFrame(fit);
+      }
+      ~~~
+    `,
     facts: [["Element", "#camera"], ["Then", "bindNodes, bindEdges"]],
   },
   notes: {
     label: "Notes",
     tooltip: "nodes and edges, keyed like the chart.",
     kicker: "Data",
-    body: "The map key is the id. The node object does not store id itself. bindNodes copies the key onto the object before matching. zoom is another view id. link() builds an edge from the two ids plus the panel text. An arrow can have zoom too. Checkout's New card arrow and the login POST /login arrow both open another diagram.",
-    code: HOW.record,
+    body: md`
+      The map key is the id. The node object does not store id itself. bindNodes copies the key onto the object before matching. zoom is another view id. link() builds an edge from the two ids plus the panel text. An arrow can have zoom too. Checkout's New card arrow and the login POST /login arrow both open another diagram.
+
+      ~~~js
+      browser: {
+        label: "Browser",
+        tooltip: "The reader's browser.",
+        kicker: "Client",
+        body: "Renders the pages and stores the session cookie.",
+        facts: [["Calls", "Web app"]],
+      }
+
+      link("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
+      ~~~
+    `,
     facts: [["File", "diagrams.js"], ["Helper", "link()"]],
   },
   app: {
     label: "Scripts",
     tooltip: "Finds each note in the SVG, then listens. The matcher is js/bind.js.",
     kicker: "Code",
-    body: "Flowchart shapes carry the id in the element id, like flowchart-api-0. C4 shapes look like diagram-3-reader, so the test allows a prefix. Sequence actors use a name attribute. If neither matches, the page looks for text equal to the label. A box under 8 by 8 pixels is ignored. That drops sequence lifelines, which are tall and have no width.",
-    code: HOW.hosts,
+    body: md`
+      Flowchart shapes carry the id in the element id, like flowchart-api-0. C4 shapes look like diagram-3-reader, so the test allows a prefix. Sequence actors use a name attribute. If neither matches, the page looks for text equal to the label. A box under 8 by 8 pixels is ignored. That drops sequence lifelines, which are tall and have no width.
+
+      ~~~js
+      function mermaidShapesFor(svg, node) {
+        const byId = [...svg.querySelectorAll("[id]")]
+          .filter((el) => idMatches(el.id, node.id));
+        const named = [...svg.querySelectorAll("[name]")]
+          .filter((el) => el.getAttribute("name") === node.id);
+        const direct = [...byId, ...named.map(shapeGroup)];
+        if (direct.length) {
+          return direct.filter((el) => visibleShape(el) && !direct.some(
+            (other) => other !== el && el.contains(other)
+          ));
+        }
+        const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
+        const groups = new Set();
+        svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
+          if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));
+        });
+      }
+
+      function idMatches(domId, nodeId) {
+        if (domId === nodeId) return true;
+        const escaped = nodeId.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+        return new RegExp(\`(?:^|-)\${escaped}(?:-\\\\d+)?$\`).test(domId);
+      }
+      ~~~
+    `,
     facts: [["Function", "mermaidShapesFor"], ["File", "js/bind.js"]],
   },
   hover: {
     label: "Hover",
     tooltip: "Neighbors stay solid. The rest fade a little.",
     kicker: "Input",
-    body: "paint() keeps this shape and every arrow that touches it. The others get is-dim. Leaving the shape calls applySearch(), so a click does not leave the highlight stuck. Search uses the same dim and also looks through arrow text. The opacity is 0.72. It used to be 0.28, which hid the rest of the picture too hard.",
-    code: HOW.paint,
+    body: md`
+      paint() keeps this shape and every arrow that touches it. The others get is-dim. Leaving the shape calls applySearch(), so a click does not leave the highlight stuck. Search uses the same dim and also looks through arrow text. The opacity is 0.72. It used to be 0.28, which hid the rest of the picture too hard.
+
+      ~~~js
+      function paint(focus) {
+        // hot: this node and every edge that touches it
+        el.classList.toggle("is-dim", active && !on);
+        el.classList.toggle("is-hot", active && on);
+      }
+
+      .is-dim { opacity: 0.72; }
+      ~~~
+    `,
     facts: [["Function", "paint"], ["CSS", ".is-dim"]],
   },
   tap: {
     label: "Click",
     tooltip: "Opens the side panel.",
     kicker: "Input",
-    body: "A shape that has an inner diagram waits 220ms before the panel opens, so a double-click can cancel the click. The green + badge does not wait. It calls show() at once. openPanel fills the title, the lead, the body, this code block, and the facts. Then it calls fit(), which throws away the pan and zoom you had, because the stage just got narrower.",
-    code: HOW.click,
+    body: md`
+      A shape that has an inner diagram waits 220ms before the panel opens, so a double-click can cancel the click. The green + badge does not wait. It calls show() at once. openPanel fills the title, the lead, this note, and the facts. The note is markdown, so the code below is part of that text. Then it calls fit(), which throws away the pan and zoom you had, because the stage just got narrower.
+
+      ~~~js
+      function onNodeClick(event, node) {
+        if (event.target.closest(".zoom-badge")) {
+          show(node.zoom);
+          return;
+        }
+        const wait = node.zoom ? 220 : 0;
+        app.clickTimer = setTimeout(() => openPanel(node), wait);
+      }
+
+      function openPanel(node) {
+        panel.title.textContent = node.label;
+        renderNote(panel.body, node.body || "");
+        requestAnimationFrame(fit);
+      }
+      ~~~
+    `,
     facts: [["Function", "onNodeClick"], ["Wait", "220ms if zoom is set"]],
   },
   another: {
     label: "Another chart",
     tooltip: "show() swaps in a different view.",
     kicker: "Next",
-    body: "This is a new SVG, not a closer look at the same one. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.",
-    code: HOW.dbl,
+    body: md`
+      This is a new SVG, not a closer look at the same one. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.
+
+      ~~~js
+      function onNodeDblClick(event, node) {
+        clearTimeout(app.clickTimer);
+        window.getSelection()?.removeAllRanges();
+        if (node.zoom) show(node.zoom);
+        else openPanel(node);
+      }
+
+      #camera, #camera * { user-select: none; }
+      ~~~
+    `,
     facts: [["Function", "show"], ["Hash", "replaceState"]],
   },
   cam: {
     label: "Scale",
     tooltip: "The wheel and the + / - buttons change cam.s.",
     kicker: "Camera",
-    body: "cam is x, y, and s. applyCam writes that as a CSS transform on #camera. Dragging empty space changes x and y. The drag ignores nodes, arrows, labels, and the wide hit stroke. Fit recomputes all three so the picture sits in the viewport. Double-click does not use this camera. It calls show().",
-    code: HOW.camera,
+    body: md`
+      cam is x, y, and s. applyCam writes that as a CSS transform on #camera. Dragging empty space changes x and y. The drag ignores nodes, arrows, labels, and the wide hit stroke. Fit recomputes all three so the picture sits in the viewport. Double-click does not use this camera. It calls show().
+
+      ~~~js
+      app.cam = { x: 40, y: 32, s: 1 };
+
+      function zoomBy(factor) {
+        const rect = app.els.viewport.getBoundingClientRect();
+        const px = rect.width / 2;
+        const py = rect.height / 2;
+        const next = Math.min(2.6, Math.max(0.35, app.cam.s * factor));
+        const k = next / app.cam.s;
+        app.cam.x = px - (px - app.cam.x) * k;
+        app.cam.y = py - (py - app.cam.y) * k;
+        app.cam.s = next;
+        applyCam();
+      }
+
+      function applyCam() {
+        app.els.camera.style.transform = \`translate(\${app.cam.x}px, \${app.cam.y}px) scale(\${app.cam.s})\`;
+      }
+      ~~~
+    `,
     facts: [["Function", "zoomBy"], ["Range", "0.35 to 2.6"]],
   },
 };
@@ -330,76 +244,232 @@ const HOW_ARROW = {
     "chart",
     "mmd",
     "Only the chart string is passed to Mermaid.",
-    "mermaid.render gets view.chart and a fresh id. The notes stay in JavaScript.",
+    md`
+      mermaid.render gets view.chart and a fresh id. The notes stay in JavaScript.
+
+      ~~~js
+      async function show(id) {
+        const view = app.views[id];
+        if (!view) return;
+        app.current = view;
+        app.stack = pathTo(view);
+        closePanel();
+        const token = ++app.renderToken;
+        app.els.camera.innerHTML = "";
+        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        if (token !== app.renderToken) return;
+        app.els.camera.innerHTML = svg;
+        const svgEl = app.els.camera.querySelector("svg");
+        bindNodes(svgEl);
+        bindEdges(svgEl);
+        applySearch();
+        requestAnimationFrame(fit);
+      }
+      ~~~
+    `,
     [["Call", "mermaid.render"]],
-    { code: HOW.show }
   ),
   drawn: link(
     "mmd",
     "picture",
     "The return value is an SVG string.",
-    "show() inserts that string into #camera. A stale render is ignored when app.renderToken has already moved on.",
+    md`
+      show() inserts that string into #camera. A stale render is ignored when app.renderToken has already moved on.
+
+      ~~~js
+      async function show(id) {
+        const view = app.views[id];
+        if (!view) return;
+        app.current = view;
+        app.stack = pathTo(view);
+        closePanel();
+        const token = ++app.renderToken;
+        app.els.camera.innerHTML = "";
+        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        if (token !== app.renderToken) return;
+        app.els.camera.innerHTML = svg;
+        const svgEl = app.els.camera.querySelector("svg");
+        bindNodes(svgEl);
+        bindEdges(svgEl);
+        applySearch();
+        requestAnimationFrame(fit);
+      }
+      ~~~
+    `,
     [["Guard", "token !== app.renderToken"]],
-    { code: HOW.show }
   ),
   beside: link(
     "chart",
     "notes",
     "The notes use the same ids as the chart.",
-    "Nothing in this arrow is drawn by Mermaid. It is here so you can see that the notes sit next to the chart instead of inside it.",
+    md`
+      Nothing in this arrow is drawn by Mermaid. It is here so you can see that the notes sit next to the chart instead of inside it.
+
+      ~~~js
+      browser: {
+        label: "Browser",
+        tooltip: "The reader's browser.",
+        kicker: "Client",
+        body: "Renders the pages and stores the session cookie.",
+        facts: [["Calls", "Web app"]],
+      }
+
+      link("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
+      ~~~
+    `,
     [["Ids", "Map keys"]],
-    { code: HOW.record }
   ),
   toApp: link(
     "notes",
     "app",
     "bind.js reads the notes after the SVG exists.",
-    "bindNodes walks app.current.nodes. bindEdges walks app.current.edges. Both run inside show(), after the SVG is in the page.",
+    md`
+      bindNodes walks app.current.nodes. bindEdges walks app.current.edges. Both run inside show(), after the SVG is in the page.
+
+      ~~~js
+      function attach(host, node) {
+        host.classList.add("is-node");
+        host.dataset.nodeId = node.id;
+        host.setAttribute("role", "button");
+        host.addEventListener("pointerenter", (event) => showTooltip(event, node));
+        host.addEventListener("click", (event) => onNodeClick(event, node));
+        host.addEventListener("dblclick", (event) => onNodeDblClick(event, node));
+        if (node.zoom) addBadge(host);
+      }
+      ~~~
+    `,
     [["Order", "render, then bind"]],
-    { code: HOW.attach }
   ),
   fromPic: link(
     "picture",
     "app",
     "The SVG is the other input to the match.",
-    "mermaidShapesFor searches that SVG for an id, a name, or the label text.",
+    md`
+      mermaidShapesFor searches that SVG for an id, a name, or the label text.
+
+      ~~~js
+      function mermaidShapesFor(svg, node) {
+        const byId = [...svg.querySelectorAll("[id]")]
+          .filter((el) => idMatches(el.id, node.id));
+        const named = [...svg.querySelectorAll("[name]")]
+          .filter((el) => el.getAttribute("name") === node.id);
+        const direct = [...byId, ...named.map(shapeGroup)];
+        if (direct.length) {
+          return direct.filter((el) => visibleShape(el) && !direct.some(
+            (other) => other !== el && el.contains(other)
+          ));
+        }
+        const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
+        const groups = new Set();
+        svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
+          if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));
+        });
+      }
+
+      function idMatches(domId, nodeId) {
+        if (domId === nodeId) return true;
+        const escaped = nodeId.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+        return new RegExp(\`(?:^|-)\${escaped}(?:-\\\\d+)?$\`).test(domId);
+      }
+      ~~~
+    `,
     [["Function", "mermaidShapesFor"]],
-    { code: HOW.hosts }
   ),
   toHover: link(
     "app",
     "hover",
     "pointerenter calls showTooltip, which calls paint.",
-    "The tooltip is a fixed div. It is not a Mermaid tooltip. It follows the pointer and flips when it would leave the window.",
+    md`
+      The tooltip is a fixed div. It is not a Mermaid tooltip. It follows the pointer and flips when it would leave the window.
+
+      ~~~js
+      function paint(focus) {
+        // hot: this node and every edge that touches it
+        el.classList.toggle("is-dim", active && !on);
+        el.classList.toggle("is-hot", active && on);
+      }
+
+      .is-dim { opacity: 0.72; }
+      ~~~
+    `,
     [["Function", "showTooltip"]],
-    { code: HOW.paint }
   ),
   toTap: link(
     "app",
     "tap",
     "click and dblclick are both attached in attach().",
-    "Arrows use the same two handlers. watchEdge registers them on the hit stroke and on the label.",
+    md`
+      Arrows use the same two handlers. watchEdge registers them on the hit stroke and on the label.
+
+      ~~~js
+      function onNodeClick(event, node) {
+        if (event.target.closest(".zoom-badge")) {
+          show(node.zoom);
+          return;
+        }
+        const wait = node.zoom ? 220 : 0;
+        app.clickTimer = setTimeout(() => openPanel(node), wait);
+      }
+
+      function openPanel(node) {
+        panel.title.textContent = node.label;
+        renderNote(panel.body, node.body || "");
+        requestAnimationFrame(fit);
+      }
+      ~~~
+    `,
     [["Shared", "onNodeClick"]],
-    { code: HOW.click }
   ),
   toNext: link(
     "tap",
     "another",
     "Double-click calls show(zoom) and clears the pending panel.",
-    "A single click on a shape that can drill in waits 220ms. The double-click clears that timer, clears the text selection, and draws the next view.",
+    md`
+      A single click on a shape that can drill in waits 220ms. The double-click clears that timer, clears the text selection, and draws the next view.
+
+      ~~~js
+      function onNodeDblClick(event, node) {
+        clearTimeout(app.clickTimer);
+        window.getSelection()?.removeAllRanges();
+        if (node.zoom) show(node.zoom);
+        else openPanel(node);
+      }
+
+      #camera, #camera * { user-select: none; }
+      ~~~
+    `,
     [["Function", "onNodeDblClick"]],
-    { code: HOW.dbl }
   ),
   toCam: link(
     "picture",
     "cam",
     "The scroll wheel scales this SVG. It does not load another chart.",
-    "zoomBy multiplies cam.s and keeps the zoom centered in the viewport. The limits are 0.35 and 2.6.",
+    md`
+      zoomBy multiplies cam.s and keeps the zoom centered in the viewport. The limits are 0.35 and 2.6.
+
+      ~~~js
+      app.cam = { x: 40, y: 32, s: 1 };
+
+      function zoomBy(factor) {
+        const rect = app.els.viewport.getBoundingClientRect();
+        const px = rect.width / 2;
+        const py = rect.height / 2;
+        const next = Math.min(2.6, Math.max(0.35, app.cam.s * factor));
+        const k = next / app.cam.s;
+        app.cam.x = px - (px - app.cam.x) * k;
+        app.cam.y = py - (py - app.cam.y) * k;
+        app.cam.s = next;
+        applyCam();
+      }
+
+      function applyCam() {
+        app.els.camera.style.transform = \`translate(\${app.cam.x}px, \${app.cam.y}px) scale(\${app.cam.s})\`;
+      }
+      ~~~
+    `,
     [["Function", "zoomBy"]],
-    { code: HOW.camera }
   ),
 };
-
 function box(id, extra) {
   return { ...HOW_BOX[id], ...(extra || {}) };
 }
@@ -1405,52 +1475,119 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           label: "Hash",
           tooltip: "The last id in the hash is the view to draw.",
           kicker: "Entry",
-          body: "openFromHash splits location.hash on slashes and keeps the last id. #how/how-notes opens the notes picture. The hash is updated with replaceState, so moving between views does not push browser history.",
-          code: lines([
-            "function openFromHash() {",
-            "  const ids = location.hash.replace(/^#/, \"\").split(\"/\").filter(Boolean);",
-            "  const id = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;",
-            "  if (!app.views[id]) show(DIAGRAMS.tabs[0].id);",
-            "  else show(id);",
-            "}",
-          ]),
+          body: md`
+            openFromHash splits location.hash on slashes and keeps the last id. #how/how-notes opens the notes picture. The hash is updated with replaceState, so moving between views does not push browser history.
+
+            ~~~js
+            function openFromHash() {
+              const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
+              const id = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
+              if (!app.views[id]) show(DIAGRAMS.tabs[0].id);
+              else show(id);
+            }
+            ~~~
+          `,
           facts: [["Function", "openFromHash"], ["File", "js/nav.js"]],
         },
         showFn: {
           label: "show(id)",
           tooltip: "Looks up the view and clears the panel.",
           kicker: "Function",
-          body: "app.views is DIAGRAMS.views. pathTo walks parent links for the breadcrumb. closePanel runs first so the old detail does not sit on top of the new picture.",
-          code: HOW.show,
+          body: md`
+            app.views is DIAGRAMS.views. pathTo walks parent links for the breadcrumb. closePanel runs first so the old detail does not sit on top of the new picture.
+
+            ~~~js
+            async function show(id) {
+              const view = app.views[id];
+              if (!view) return;
+              app.current = view;
+              app.stack = pathTo(view);
+              closePanel();
+              const token = ++app.renderToken;
+              app.els.camera.innerHTML = "";
+              const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+              if (token !== app.renderToken) return;
+              app.els.camera.innerHTML = svg;
+              const svgEl = app.els.camera.querySelector("svg");
+              bindNodes(svgEl);
+              bindEdges(svgEl);
+              applySearch();
+              requestAnimationFrame(fit);
+            }
+            ~~~
+          `,
           facts: [["File", "js/nav.js"]],
         },
         render: {
           label: "mermaid.render",
           tooltip: "Mermaid returns an SVG string. It does not bind clicks.",
           kicker: "Draw",
-          body: "The first argument is a DOM id that must be unique per call, so it includes the token. The second argument is only view.chart. startOnLoad is false because this page calls render itself.",
-          code: HOW.init + "\n\n" + HOW.show,
+          body: md`
+            The first argument is a DOM id that must be unique per call, so it includes the token. The second argument is only view.chart. startOnLoad is false because this page calls render itself.
+
+            ~~~js
+            mermaid.initialize({
+              startOnLoad: false,
+              securityLevel: "strict",
+              flowchart: { htmlLabels: true, useMaxWidth: false },
+            });
+
+            async function show(id) {
+              const view = app.views[id];
+              if (!view) return;
+              app.current = view;
+              app.stack = pathTo(view);
+              closePanel();
+              const token = ++app.renderToken;
+              app.els.camera.innerHTML = "";
+              const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+              if (token !== app.renderToken) return;
+              app.els.camera.innerHTML = svg;
+              const svgEl = app.els.camera.querySelector("svg");
+              bindNodes(svgEl);
+              bindEdges(svgEl);
+              applySearch();
+              requestAnimationFrame(fit);
+            }
+            ~~~
+          `,
           facts: [["CDN", "mermaid@11"]],
         },
         token: {
           label: "Drop a stale SVG",
           tooltip: "A slower draw must not overwrite a newer one.",
           kicker: "Guard",
-          body: "app.renderToken increments at the start of show(). After the await, the function returns if another show() has started. The same check wraps the error message.",
-          code: lines([
-            "const token = ++app.renderToken;",
-            "const { svg } = await mermaid.render(`diagram-${token}`, view.chart);",
-            "if (token !== app.renderToken) return;",
-            "app.els.camera.innerHTML = svg;",
-          ]),
+          body: md`
+            app.renderToken increments at the start of show(). After the await, the function returns if another show() has started. The same check wraps the error message.
+
+            ~~~js
+            const token = ++app.renderToken;
+            const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+            if (token !== app.renderToken) return;
+            app.els.camera.innerHTML = svg;
+            ~~~
+          `,
           facts: [["Variable", "app.renderToken"]],
         },
         bindN: {
           label: "bindNodes",
           tooltip: "Attaches each note to the shape Mermaid drew.",
           kicker: "Bind",
-          body: "This is where a box becomes a button. The next diagrams cover the match itself. From the third picture, double-click Notes.",
-          code: HOW.attach,
+          body: md`
+            This is where a box becomes a button. The next diagrams cover the match itself. From the third picture, double-click Notes.
+
+            ~~~js
+            function attach(host, node) {
+              host.classList.add("is-node");
+              host.dataset.nodeId = node.id;
+              host.setAttribute("role", "button");
+              host.addEventListener("pointerenter", (event) => showTooltip(event, node));
+              host.addEventListener("click", (event) => onNodeClick(event, node));
+              host.addEventListener("dblclick", (event) => onNodeDblClick(event, node));
+              if (node.zoom) addBadge(host);
+            }
+            ~~~
+          `,
           zoom: "how-bind",
           facts: [["Function", "bindNodes"]],
         },
@@ -1458,8 +1595,25 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           label: "bindEdges",
           tooltip: "Attaches each note to the arrow Mermaid drew.",
           kicker: "Bind",
-          body: "Arrows are harder than boxes because the four diagram types draw lines differently. That walk is the edges picture.",
-          code: HOW.bindEdges,
+          body: md`
+            Arrows are harder than boxes because the four diagram types draw lines differently. That walk is the edges picture.
+
+            ~~~js
+            edges.forEach((edge) => {
+              const path = flowchartLinkPath(svg, edge);
+              if (!path || path.dataset.bound) return;
+              claimEdge(edge, [path, nearestFlowchartLabel(path, labels)]);
+            });
+
+            edges.forEach((edge) => {
+              if (used.has(edge) || !edge.match) return;
+              const message = messages.find((item) => !item.used && textMatches(item.label, edge.match));
+              if (!message) return;
+              message.used = true;
+              claimEdge(edge, [message.line, message.text]);
+            });
+            ~~~
+          `,
           zoom: "how-edges",
           facts: [["Function", "bindEdges"]],
         },
@@ -1467,22 +1621,25 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           label: "fit",
           tooltip: "Scales the new SVG so it sits in the viewport.",
           kicker: "Camera",
-          body: "fit() runs on the next frame, after layout. It sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel calls fit() again because the stage got narrower.",
-          code: lines([
-            "function fit() {",
-            "  const box = svg.viewBox.baseVal;",
-            "  const pad = 48;",
-            "  const s = Math.min(",
-            "    (app.els.viewport.clientWidth - pad) / box.width,",
-            "    (app.els.viewport.clientHeight - pad) / box.height,",
-            "    1.35",
-            "  );",
-            "  app.cam.s = Number.isFinite(s) && s > 0 ? s : 1;",
-            "  app.cam.x = (app.els.viewport.clientWidth - box.width * app.cam.s) / 2;",
-            "  app.cam.y = Math.max(24, (app.els.viewport.clientHeight - box.height * app.cam.s) / 2);",
-            "  applyCam();",
-            "}",
-          ]),
+          body: md`
+            fit() runs on the next frame, after layout. It sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel calls fit() again because the stage got narrower.
+
+            ~~~js
+            function fit() {
+              const box = svg.viewBox.baseVal;
+              const pad = 48;
+              const s = Math.min(
+                (app.els.viewport.clientWidth - pad) / box.width,
+                (app.els.viewport.clientHeight - pad) / box.height,
+                1.35
+              );
+              app.cam.s = Number.isFinite(s) && s > 0 ? s : 1;
+              app.cam.x = (app.els.viewport.clientWidth - box.width * app.cam.s) / 2;
+              app.cam.y = Math.max(24, (app.els.viewport.clientHeight - box.height * app.cam.s) / 2);
+              applyCam();
+            }
+            ~~~
+          `,
           facts: [["Also", "openPanel calls fit()"]],
         },
       },
@@ -1511,49 +1668,103 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           label: "Match the id",
           tooltip: "flowchart-api-0 and diagram-3-reader both count.",
           kicker: "1",
-          body: "idMatches allows the node id as a whole id, or as the last dash-separated piece, with an optional -number. That covers flowchart ids and C4 aliases. The first bug here was that the node object had no id field. The id lived only as the map key. bindNodes now copies the key on before matching.",
-          code: HOW.hosts,
+          body: md`
+            idMatches allows the node id as a whole id, or as the last dash-separated piece, with an optional -number. That covers flowchart ids and C4 aliases. The first bug here was that the node object had no id field. The id lived only as the map key. bindNodes now copies the key on before matching.
+
+            ~~~js
+            function mermaidShapesFor(svg, node) {
+              const byId = [...svg.querySelectorAll("[id]")]
+                .filter((el) => idMatches(el.id, node.id));
+              const named = [...svg.querySelectorAll("[name]")]
+                .filter((el) => el.getAttribute("name") === node.id);
+              const direct = [...byId, ...named.map(shapeGroup)];
+              if (direct.length) {
+                return direct.filter((el) => visibleShape(el) && !direct.some(
+                  (other) => other !== el && el.contains(other)
+                ));
+              }
+              const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
+              const groups = new Set();
+              svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
+                if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));
+              });
+            }
+
+            function idMatches(domId, nodeId) {
+              if (domId === nodeId) return true;
+              const escaped = nodeId.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+              return new RegExp(\`(?:^|-)\${escaped}(?:-\\\\d+)?$\`).test(domId);
+            }
+            ~~~
+          `,
           facts: [["Function", "idMatches"]],
         },
         nameBox: {
           label: "Match the name",
           tooltip: "Sequence actors expose name=\"DB\".",
           kicker: "2",
-          body: "Sequence actor ids from Mermaid are not the names you wrote. The name attribute is. Top and bottom actor boxes both match, so a sequence participant gets two buttons. That is the same note, attached twice.",
-          code: lines([
-            "const named = [...svg.querySelectorAll(\"[name]\")]",
-            "  .filter((el) => el.getAttribute(\"name\") === node.id);",
-          ]),
+          body: md`
+            Sequence actor ids from Mermaid are not the names you wrote. The name attribute is. Top and bottom actor boxes both match, so a sequence participant gets two buttons. That is the same note, attached twice.
+
+            ~~~js
+            const named = [...svg.querySelectorAll("[name]")]
+              .filter((el) => el.getAttribute("name") === node.id);
+            ~~~
+          `,
           facts: [["Attribute", "name"]],
         },
         words: {
           label: "Match the label",
           tooltip: "Used when id and name both miss.",
           kicker: "3",
-          body: "The page looks at text, tspan, span, div, and p. The text has to equal the label, or one of the match strings. A parent is skipped when a child already has that same text, so the inner node wins.",
-          code: lines([
-            "const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);",
-            "svg.querySelectorAll(\"text, tspan, span, div, p\").forEach((el) => {",
-            "  if (!wanted.has(norm(el.textContent))) return;",
-            "  groups.add(shapeGroup(el));",
-            "});",
-          ]),
+          body: md`
+            The page looks at text, tspan, span, div, and p. The text has to equal the label, or one of the match strings. A parent is skipped when a child already has that same text, so the inner node wins.
+
+            ~~~js
+            const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
+            svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
+              if (!wanted.has(norm(el.textContent))) return;
+              groups.add(shapeGroup(el));
+            });
+            ~~~
+          `,
           facts: [["Fallback", "Visible text"]],
         },
         size: {
           label: "Skip tiny boxes",
           tooltip: "Anything under 8 by 8 pixels is not a button.",
           kicker: "4",
-          body: "Sequence lifelines are groups with almost no width and a lot of height. getBBox catches them. Without this check they became invisible click targets.",
-          code: HOW.visible,
+          body: md`
+            Sequence lifelines are groups with almost no width and a lot of height. getBBox catches them. Without this check they became invisible click targets.
+
+            ~~~js
+            function visibleShape(el) {
+              const box = el.getBBox();
+              return box.width >= 8 && box.height >= 8;
+            }
+            ~~~
+          `,
           facts: [["Function", "visibleShape"]],
         },
         wire: {
           label: "attach",
           tooltip: "The shape becomes a button.",
           kicker: "5",
-          body: "attach sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If zoom is set, addBadge draws the green plus from the shape's getBBox. Enter and Space fire the same click handler.",
-          code: HOW.attach,
+          body: md`
+            attach sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If zoom is set, addBadge draws the green plus from the shape's getBBox. Enter and Space fire the same click handler.
+
+            ~~~js
+            function attach(host, node) {
+              host.classList.add("is-node");
+              host.dataset.nodeId = node.id;
+              host.setAttribute("role", "button");
+              host.addEventListener("pointerenter", (event) => showTooltip(event, node));
+              host.addEventListener("click", (event) => onNodeClick(event, node));
+              host.addEventListener("dblclick", (event) => onNodeDblClick(event, node));
+              if (node.zoom) addBadge(host);
+            }
+            ~~~
+          `,
           facts: [["Function", "attach"], ["Badge", "addBadge"]],
         },
       },
@@ -1581,56 +1792,190 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           label: "Read the notes",
           tooltip: "currentEdges() turns the view's edges into records.",
           kicker: "0",
-          body: "An edge can be a pair [from, to] or the object link() returns. currentEdges copies from, to, and a stable id from-to-index. The label shown in the panel is the two node labels joined by an arrow.",
-          code: lines([
-            "function currentEdges() {",
-            "  return (current.edges || []).map((edge, index) => {",
-            "    const from = Array.isArray(edge) ? edge[0] : edge.from;",
-            "    const to = Array.isArray(edge) ? edge[1] : edge.to;",
-            "    return { ...edge, from, to, id: `${from}-${to}-${index}` };",
-            "  });",
-            "}",
-          ]),
+          body: md`
+            An edge can be a pair [from, to] or the object link() returns. currentEdges copies from, to, and a stable id from-to-index. The label shown in the panel is the two node labels joined by an arrow.
+
+            ~~~js
+            function currentEdges() {
+              return (current.edges || []).map((edge, index) => {
+                const from = Array.isArray(edge) ? edge[0] : edge.from;
+                const to = Array.isArray(edge) ? edge[1] : edge.to;
+                return { ...edge, from, to, id: \`\${from}-\${to}-\${index}\` };
+              });
+            }
+            ~~~
+          `,
           facts: [["Function", "currentEdges"]],
         },
         flowBox: {
           label: "Flowchart id",
           tooltip: "The path id ends in L_from_to_0.",
           kicker: "1",
-          body: "Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. nearestFlowchartLabel picks the label whose center is within 160px of the path midpoint, and marks it claimed so the next arrow cannot take it.",
-          code: HOW.flow,
+          body: md`
+            Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. nearestFlowchartLabel picks the label whose center is within 160px of the path midpoint, and marks it claimed so the next arrow cannot take it.
+
+            ~~~js
+            function flowchartLinkPath(svg, edge) {
+              const from = edge.from.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+              const to = edge.to.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+              const pattern = new RegExp(\`(?:^|-)L_\${from}_\${to}_\\\\d+$\`);
+              return [...svg.querySelectorAll("path.flowchart-link")]
+                .find((path) => pattern.test(path.id));
+            }
+
+            function nearestFlowchartLabel(path, labels) {
+              const mid = screenPoint(path, path.getTotalLength() / 2);
+              let best = null;
+              let bestDistance = 160;
+              labels.forEach((label) => {
+                const box = label.getBoundingClientRect();
+                const distance = Math.hypot(
+                  box.left + box.width / 2 - mid.x,
+                  box.top + box.height / 2 - mid.y
+                );
+                if (distance < bestDistance) best = label;
+              });
+            }
+            ~~~
+          `,
           facts: [["Function", "flowchartLinkPath"], ["Label", "nearestFlowchartLabel"]],
         },
         seqBox: {
           label: "Sequence text",
           tooltip: "messageText, then the message line.",
           kicker: "2",
-          body: "Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.match. startsWith is allowed so a short match still hits. Each message is used once.",
-          code: HOW.sequence,
+          body: md`
+            Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.match. startsWith is allowed so a short match still hits. Each message is used once.
+
+            ~~~js
+            function mermaidSequenceMessages(svg) {
+              [...svg.children].forEach((el) => {
+                const cls = el.getAttribute("class") || "";
+                if (cls.includes("messageText")) text = el;
+                else if (cls.includes("messageLine")) {
+                  messages.push({ line: el, text, label: norm(text ? text.textContent : "") });
+                }
+              });
+            }
+
+            function mermaidC4Rels(svg) {
+              const host = [...svg.querySelectorAll("g")].find((group) => {
+                const kids = [...group.children];
+                return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
+              });
+              [...host.children].forEach((el) => {
+                if (el.tagName === "line" || el.tagName === "path") {
+                  rel = { strokes: [el], texts: [], used: false };
+                  rels.push(rel);
+                } else if (el.tagName === "text" && rel) rel.texts.push(el);
+              });
+            }
+
+            function textMatches(rendered, wanted) {
+              const left = norm(rendered).toLowerCase();
+              const right = norm(wanted).toLowerCase();
+              return left === right || left.startsWith(right);
+            }
+            ~~~
+          `,
           facts: [["Needs", "edge.match"], ["Function", "mermaidSequenceMessages"]],
         },
         c4Box: {
           label: "C4 text",
           tooltip: "A line or path, then the text that follows it.",
           kicker: "3",
-          body: "C4 puts every relationship in one group. A line or path starts a relationship. The text nodes after it belong to that relationship, until the next line. Two arrows that both say Reads are consumed in source order, because each match sets used.",
-          code: HOW.sequence,
+          body: md`
+            C4 puts every relationship in one group. A line or path starts a relationship. The text nodes after it belong to that relationship, until the next line. Two arrows that both say Reads are consumed in source order, because each match sets used.
+
+            ~~~js
+            function mermaidSequenceMessages(svg) {
+              [...svg.children].forEach((el) => {
+                const cls = el.getAttribute("class") || "";
+                if (cls.includes("messageText")) text = el;
+                else if (cls.includes("messageLine")) {
+                  messages.push({ line: el, text, label: norm(text ? text.textContent : "") });
+                }
+              });
+            }
+
+            function mermaidC4Rels(svg) {
+              const host = [...svg.querySelectorAll("g")].find((group) => {
+                const kids = [...group.children];
+                return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
+              });
+              [...host.children].forEach((el) => {
+                if (el.tagName === "line" || el.tagName === "path") {
+                  rel = { strokes: [el], texts: [], used: false };
+                  rels.push(rel);
+                } else if (el.tagName === "text" && rel) rel.texts.push(el);
+              });
+            }
+
+            function textMatches(rendered, wanted) {
+              const left = norm(rendered).toLowerCase();
+              const right = norm(wanted).toLowerCase();
+              return left === right || left.startsWith(right);
+            }
+            ~~~
+          `,
           facts: [["Function", "mermaidC4Rels"], ["Order", "Source order"]],
         },
         geoBox: {
           label: "State geometry",
           tooltip: "path.transition has no from or to in the id.",
           kicker: "4",
-          body: "State arrows are matched by where they start and end. getPointAtLength plus getScreenCTM gives a screen point. That point is compared with the centers of the boxes already bound. Start and end dots use the id *. Their groups match root_start or root_end.",
-          code: HOW.geometry,
+          body: md`
+            State arrows are matched by where they start and end. getPointAtLength plus getScreenCTM gives a screen point. That point is compared with the centers of the boxes already bound. Start and end dots use the id *. Their groups match root_start or root_end.
+
+            ~~~js
+            function matchStateArrowsByEnds(paths, edges, svg) {
+              const centers = nodeCentersOnScreen(svg);
+              paths.forEach((path) => {
+                const length = path.getTotalLength();
+                const start = nearestPoint(centers, screenPoint(path, 1));
+                const end = nearestPoint(centers, screenPoint(path, Math.max(1, length - 1)));
+                edges.forEach((edge) => {
+                  const forward = endpointDistance(start, end, edge);
+                });
+              });
+            }
+
+            function nodeCentersOnScreen(svg) {
+              svg.querySelectorAll(".is-node").forEach((el) => {
+                const box = el.getBoundingClientRect();
+                items.push({ id: el.dataset.nodeId, x: box.left + box.width / 2, y: box.top + box.height / 2 });
+              });
+              svg.querySelectorAll("g.node").forEach((el) => {
+                if (!/root_start|root_end/.test(el.id)) return;
+                items.push({ id: "*", x: box.left + box.width / 2, y: box.top + box.height / 2 });
+              });
+            }
+            ~~~
+          `,
           facts: [["Function", "matchStateArrowsByEnds"], ["Start", "*"]],
         },
         hitBox: {
           label: "Wide hit stroke",
           tooltip: "The visible line is too thin to click.",
           kicker: "5",
-          body: "addWideHitStroke clones the stroke, strips the arrowhead, and puts an 18px transparent stroke on top. pointer-events is stroke, so the empty middle of the arrow is still a miss. The click has to land on that wide stroke. Only the first stroke is the keyboard button. The label listens too, but it is not a second tab stop.",
-          code: HOW.hit,
+          body: md`
+            addWideHitStroke clones the stroke, strips the arrowhead, and puts an 18px transparent stroke on top. pointer-events is stroke, so the empty middle of the arrow is still a miss. The click has to land on that wide stroke. Only the first stroke is the keyboard button. The label listens too, but it is not a second tab stop.
+
+            ~~~js
+            function addWideHitStroke(el) {
+              const hit = el.cloneNode(false);
+              hit.removeAttribute("marker-end");
+              hit.setAttribute("class", "edge-hit");
+              el.parentNode.insertBefore(hit, el.nextSibling);
+            }
+
+            .edge-hit {
+              stroke: transparent;
+              stroke-width: 18px;
+              pointer-events: stroke;
+            }
+            ~~~
+          `,
           facts: [["Class", "edge-hit"], ["Width", "18px"]],
         },
       },
