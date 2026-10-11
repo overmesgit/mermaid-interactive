@@ -121,31 +121,23 @@ const HOW_BOX = {
     tooltip: "Finds each note in the SVG, then listens. The matcher is js/bind.js.",
     kicker: "Code",
     body: md`
-      Flowchart shapes carry the id in the element id, like flowchart-api-0. C4 shapes look like diagram-3-reader, so the test allows a prefix. Sequence actors use a name attribute. If neither matches, the page looks for text equal to the label. A box under 8 by 8 pixels is ignored. That drops sequence lifelines, which are tall and have no width.
+      The first line of the chart picks the pattern. A flowchart node api is a g.node whose id ends in flowchart-api-3, after the render prefix diagram-2-. A C4 alias is a g.node.c4-shape whose id ends in -reader. A sequence actor is the name on the top and bottom boxes. A state Draft is a g.node whose id ends in state-Draft-1. A box under 8 by 8 pixels is ignored.
 
       ~~~js
       function mermaidShapesFor(svg, node) {
-        const byId = [...svg.querySelectorAll("[id]")]
-          .filter((el) => idMatches(el.id, node.id));
-        const named = [...svg.querySelectorAll("[name]")]
-          .filter((el) => el.getAttribute("name") === node.id);
-        const direct = [...byId, ...named.map(shapeGroup)];
-        if (direct.length) {
-          return direct.filter((el) => visibleShape(el) && !direct.some(
-            (other) => other !== el && el.contains(other)
-          ));
+        const kind = chartKind(app.current.chart);
+        const id = escapeRegExp(node.id);
+        if (kind === "flowchart") {
+          const pattern = new RegExp(\`(?:^|-)flowchart-\${id}-\\\\d+$\`);
+          svg.querySelectorAll("g.node").forEach((el) => {
+            if (pattern.test(el.id)) groups.add(el);
+          });
+        } else if (kind === "c4") {
+          const pattern = new RegExp(\`(?:^|-)\${id}$\`);
+          svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
+            if (pattern.test(el.id)) groups.add(el);
+          });
         }
-        const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
-        const groups = new Set();
-        svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
-          if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));
-        });
-      }
-
-      function idMatches(domId, nodeId) {
-        if (domId === nodeId) return true;
-        const escaped = nodeId.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
-        return new RegExp(\`(?:^|-)\${escaped}(?:-\\\\d+)?$\`).test(domId);
       }
       ~~~
     `,
@@ -360,31 +352,15 @@ const HOW_ARROW = {
     "app",
     "The SVG is the other input to the match.",
     md`
-      mermaidShapesFor searches that SVG for an id, a name, or the label text.
+      mermaidShapesFor uses the chart type. Flowchart and state match a g.node id. C4 matches a g.node.c4-shape id. Sequence matches the name on the actor boxes.
 
       ~~~js
-      function mermaidShapesFor(svg, node) {
-        const byId = [...svg.querySelectorAll("[id]")]
-          .filter((el) => idMatches(el.id, node.id));
-        const named = [...svg.querySelectorAll("[name]")]
-          .filter((el) => el.getAttribute("name") === node.id);
-        const direct = [...byId, ...named.map(shapeGroup)];
-        if (direct.length) {
-          return direct.filter((el) => visibleShape(el) && !direct.some(
-            (other) => other !== el && el.contains(other)
-          ));
-        }
-        const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
-        const groups = new Set();
-        svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
-          if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));
-        });
-      }
-
-      function idMatches(domId, nodeId) {
-        if (domId === nodeId) return true;
-        const escaped = nodeId.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
-        return new RegExp(\`(?:^|-)\${escaped}(?:-\\\\d+)?$\`).test(domId);
+      function chartKind(chart) {
+        const line = chart.trim().split("\\n")[0].trim();
+        if (line.startsWith("flowchart")) return "flowchart";
+        if (line.startsWith("C4")) return "c4";
+        if (line.startsWith("sequenceDiagram")) return "sequence";
+        if (line.startsWith("stateDiagram")) return "state";
       }
       ~~~
     `,
@@ -1679,83 +1655,104 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       tab: "how",
       parent: "how-match",
       title: "Finding a box",
-      summary: "Four checks, in this order. Click each one for the code. Back returns to the matcher picture.",
+      summary: "The chart type picks one rule. Click a box for that pattern. Back returns to the matcher picture.",
       chart: `flowchart TD
-  idBox["Match the id"] --> nameBox["Match the name"]
-  nameBox --> words["Match the label"]
-  words --> size["Skip tiny boxes"]
+  kind["Chart type"] --> flowId["Flowchart id"]
+  kind --> c4Id["C4 alias"]
+  kind --> seqName["Sequence name"]
+  kind --> stateId["State id"]
+  flowId --> size["Skip tiny boxes"]
+  c4Id --> size
+  seqName --> size
+  stateId --> size
   size --> wire["attach"]`,
       nodes: {
-        idBox: {
-          label: "Match the id",
-          tooltip: "flowchart-api-0 and diagram-3-reader both count.",
-          kicker: "1",
+        kind: {
+          label: "Chart type",
+          tooltip: "The first line of view.chart chooses the pattern.",
+          kicker: "Rule",
           body: md`
-            idMatches allows the node id as a whole id, or as the last dash-separated piece, with an optional -number. That covers flowchart ids and C4 aliases. The first bug here was that the node object had no id field. The id lived only as the map key. bindNodes now copies the key on before matching.
+            flowchart, C4, sequenceDiagram, and stateDiagram each name the shape differently. mermaidShapesFor runs only that pattern. A miss does not fall through to another one. bindNodes still copies the map key onto the note before matching, because the node object does not store id.
 
             ~~~js
-            function mermaidShapesFor(svg, node) {
-              const byId = [...svg.querySelectorAll("[id]")]
-                .filter((el) => idMatches(el.id, node.id));
-              const named = [...svg.querySelectorAll("[name]")]
-                .filter((el) => el.getAttribute("name") === node.id);
-              const direct = [...byId, ...named.map(shapeGroup)];
-              if (direct.length) {
-                return direct.filter((el) => visibleShape(el) && !direct.some(
-                  (other) => other !== el && el.contains(other)
-                ));
-              }
-              const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
-              const groups = new Set();
-              svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
-                if (wanted.has(norm(el.textContent))) groups.add(shapeGroup(el));
-              });
-            }
-
-            function idMatches(domId, nodeId) {
-              if (domId === nodeId) return true;
-              const escaped = nodeId.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
-              return new RegExp(\`(?:^|-)\${escaped}(?:-\\\\d+)?$\`).test(domId);
+            function chartKind(chart) {
+              const line = chart.trim().split("\\n")[0].trim();
+              if (line.startsWith("flowchart")) return "flowchart";
+              if (line.startsWith("C4")) return "c4";
+              if (line.startsWith("sequenceDiagram")) return "sequence";
+              if (line.startsWith("stateDiagram")) return "state";
             }
             ~~~
           `,
-          facts: [["Function", "idMatches"]],
+          facts: [["Function", "chartKind"]],
         },
-        nameBox: {
-          label: "Match the name",
-          tooltip: "Sequence actors expose name=\"DB\".",
-          kicker: "2",
+        flowId: {
+          label: "Flowchart id",
+          tooltip: "g.node ending in flowchart-api-3.",
+          kicker: "Flowchart",
           body: md`
-            Sequence actor ids from Mermaid are not the names you wrote. The name attribute is. Top and bottom actor boxes both match, so a sequence participant gets two buttons. That is the same note, attached twice.
+            Mermaid prefixes the id with the render id. The note api matches diagram-2-flowchart-api-3. The pattern is anchored at the end, and only g.node is considered.
 
             ~~~js
-            const named = [...svg.querySelectorAll("[name]")]
-              .filter((el) => el.getAttribute("name") === node.id);
+            const pattern = new RegExp(\`(?:^|-)flowchart-\${id}-\\\\d+$\`);
+            svg.querySelectorAll("g.node").forEach((el) => {
+              if (pattern.test(el.id)) groups.add(el);
+            });
+            ~~~
+          `,
+          facts: [["Element", "g.node"]],
+        },
+        c4Id: {
+          label: "C4 alias",
+          tooltip: "g.node.c4-shape ending in -reader.",
+          kicker: "C4",
+          body: md`
+            The alias is the last piece of the shape id. reader matches diagram-5-reader. Markers such as diagram-5-arrowhead are not c4-shape groups, so they are not buttons.
+
+            ~~~js
+            const pattern = new RegExp(\`(?:^|-)\${id}$\`);
+            svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
+              if (pattern.test(el.id)) groups.add(el);
+            });
+            ~~~
+          `,
+          facts: [["Element", "g.node.c4-shape"]],
+        },
+        seqName: {
+          label: "Sequence name",
+          tooltip: "name on the top and bottom actor boxes.",
+          kicker: "Sequence",
+          body: md`
+            Sequence actor ids from Mermaid are not the names you wrote. The name attribute is. Top and bottom boxes both match, so one note is attached twice. Lifelines carry the same name and are not selected.
+
+            ~~~js
+            svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
+              if (el.getAttribute("name") === node.id) groups.add(shapeGroup(el));
+            });
             ~~~
           `,
           facts: [["Attribute", "name"]],
         },
-        words: {
-          label: "Match the label",
-          tooltip: "Used when id and name both miss.",
-          kicker: "3",
+        stateId: {
+          label: "State id",
+          tooltip: "g.node ending in state-Draft-1.",
+          kicker: "State",
           body: md`
-            The page looks at text, tspan, span, div, and p. The text has to equal the label, or one of the match strings. A parent is skipped when a child already has that same text, so the inner node wins.
+            The state name sits in the middle of the id. Draft matches diagram-1-state-Draft-1. The start and end dots are root_start and root_end, so they do not match a state name.
 
             ~~~js
-            const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
-            svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
-              if (!wanted.has(norm(el.textContent))) return;
-              groups.add(shapeGroup(el));
+            const pattern = new RegExp(\`(?:^|-)state-\${id}-\\\\d+$\`);
+            svg.querySelectorAll("g.node").forEach((el) => {
+              if (pattern.test(el.id)) groups.add(el);
             });
             ~~~
           `,
-          facts: [["Fallback", "Visible text"]],
+          facts: [["Element", "g.node"]],
         },
         size: {
           label: "Skip tiny boxes",
           tooltip: "Anything under 8 by 8 pixels is not a button.",
-          kicker: "4",
+          kicker: "Size",
           body: md`
             Sequence lifelines are groups with almost no width and a lot of height. getBBox catches them. Without this check they became invisible click targets.
 
@@ -1771,7 +1768,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         wire: {
           label: "attach",
           tooltip: "The shape becomes a button.",
-          kicker: "5",
+          kicker: "Listen",
           body: md`
             attach sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If zoom is set, addBadge draws the green ↘ from the shape's getBBox. Enter and Space fire the same click handler.
 
@@ -1791,9 +1788,14 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         },
       },
       edges: [
-        link("idBox", "nameBox", "Name is the second try.", "Sequence actors need it.", [["Attribute", "name"]]),
-        link("nameBox", "words", "Text is the third try.", "State labels often land here.", [["Equals", "node.label"]]),
-        link("words", "size", "Tiny geometry is dropped.", "Lifelines fail this test.", [["Minimum", "8px"]]),
+        link("kind", "flowId", "A flowchart uses the node id in the group id.", "The render prefix stays in front.", [["Ends", "flowchart-id-n"]]),
+        link("kind", "c4Id", "C4 uses the alias.", "Only c4-shape groups count.", [["Ends", "-alias"]]),
+        link("kind", "seqName", "Sequence uses the name attribute.", "Top and bottom boxes both match.", [["Attribute", "name"]]),
+        link("kind", "stateId", "A state uses the state name in the group id.", "Start and end dots are separate.", [["Ends", "state-name-n"]]),
+        link("flowId", "size", "Tiny geometry is dropped.", "Lifelines fail this test.", [["Minimum", "8px"]]),
+        link("c4Id", "size", "The same size check.", "A marker is already excluded.", [["Minimum", "8px"]]),
+        link("seqName", "size", "Actor boxes pass.", "The lifeline line is not selected.", [["Minimum", "8px"]]),
+        link("stateId", "size", "State boxes pass.", "The start dot is not a note.", [["Minimum", "8px"]]),
         link("size", "wire", "The survivors get listeners.", "A zoom node also gets a ↘ badge.", [["Function", "attach"]]),
       ],
     },

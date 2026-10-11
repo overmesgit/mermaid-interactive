@@ -21,3 +21,4 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [015](015-drill-transition.md) | accepted | Drill-down zooms toward the shape. Each view keeps its camera |
 | [016](016-panel-links.md) | accepted | The panel links to connected shapes and arrows |
 | [017](017-compact-chrome.md) | accepted | One header row, help behind ?, system font |
+| [018](018-box-by-chart-type.md) | accepted | A box is matched by chart type |

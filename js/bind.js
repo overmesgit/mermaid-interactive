@@ -6,13 +6,17 @@ function norm(value) {
   return (value || "").replace(/\s+/g, " ").trim();
 }
 
-// Flowchart ids look like flowchart-api-0. C4 ids look like diagram-3-reader.
-// The note id is the whole id, or the last dash-separated piece, plus an optional -number.
-function idMatches(domId, nodeId) {
-  if (!domId) return false;
-  if (domId === nodeId) return true;
-  const escaped = nodeId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:^|-)${escaped}(?:-\\d+)?$`).test(domId);
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function chartKind(chart) {
+  const line = (chart || "").trim().split("\n")[0].trim();
+  if (line.startsWith("flowchart")) return "flowchart";
+  if (line.startsWith("C4")) return "c4";
+  if (line.startsWith("sequenceDiagram")) return "sequence";
+  if (line.startsWith("stateDiagram")) return "state";
+  return "";
 }
 
 function shapeGroup(el) {
@@ -25,24 +29,35 @@ function shapeGroup(el) {
   );
 }
 
-// The SVG group Mermaid drew for this note: by id, then by the name attribute, then by label text.
+// One pattern per chart. Every hit is the shape group Mermaid drew for that note.
 function mermaidShapesFor(svg, node) {
-  const byId = [...svg.querySelectorAll("[id]")].filter((el) => idMatches(el.id, node.id));
-  const named = [...svg.querySelectorAll("[name]")].filter((el) => el.getAttribute("name") === node.id);
-  const direct = [...byId, ...named.map(shapeGroup)];
-  if (direct.length) {
-    return direct.filter(
-      (el) => visibleShape(el) && !direct.some((other) => other !== el && el.contains(other))
-    );
-  }
-  const wanted = new Set([norm(node.label), ...(node.match || []).map(norm)]);
+  const kind = chartKind(app.current.chart);
+  const id = escapeRegExp(node.id);
   const groups = new Set();
-  svg.querySelectorAll("text, tspan, span, div, p").forEach((el) => {
-    const text = norm(el.textContent);
-    if (!wanted.has(text)) return;
-    if ([...el.children].some((child) => norm(child.textContent) === text)) return;
-    groups.add(shapeGroup(el));
-  });
+  if (kind === "flowchart") {
+    // diagram-<n>-flowchart-<note id>-<number>
+    const pattern = new RegExp(`(?:^|-)flowchart-${id}-\\d+$`);
+    svg.querySelectorAll("g.node").forEach((el) => {
+      if (pattern.test(el.id)) groups.add(el);
+    });
+  } else if (kind === "c4") {
+    // diagram-<n>-<alias> on the C4 shape, not on a marker.
+    const pattern = new RegExp(`(?:^|-)${id}$`);
+    svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
+      if (pattern.test(el.id)) groups.add(el);
+    });
+  } else if (kind === "sequence") {
+    // Top and bottom actor boxes share the name. Lifelines have it too, and are not boxes.
+    svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
+      if (el.getAttribute("name") === node.id) groups.add(shapeGroup(el));
+    });
+  } else if (kind === "state") {
+    // diagram-<n>-state-<name>-<number>
+    const pattern = new RegExp(`(?:^|-)state-${id}-\\d+$`);
+    svg.querySelectorAll("g.node").forEach((el) => {
+      if (pattern.test(el.id)) groups.add(el);
+    });
+  }
   return [...groups].filter(visibleShape);
 }
 

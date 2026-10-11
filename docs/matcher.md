@@ -14,15 +14,16 @@ An edge is either `[from, to]` or the object `link()` returns. `currentEdges` tu
 
 ## Boxes
 
-`mermaidShapesFor` looks for the group Mermaid drew, in this order. The first try that finds anything wins. The later tries do not run.
+`chartKind` reads the first line of the chart. `mermaidShapesFor` uses one pattern for that kind and returns the shape group. It does not try a second pattern when the first misses.
 
-1. **Id.** `idMatches` accepts the note id as the whole element id, or as the last dash-separated piece, with an optional `-<number>`. A flowchart node `api` is drawn as `flowchart-api-0`. A C4 person `reader` is drawn as something like `diagram-3-reader`. A match in the middle of the id does not count.
-2. **Name.** Sequence actors do not use the name you wrote as their id. They expose `name="DB"`. The top and bottom actor boxes both match, so one note is attached twice.
-3. **Label text.** Used when id and name both miss. The text of a `text`, `tspan`, `span`, `div`, or `p` must equal `node.label`, or one string in `node.match`. A parent is skipped when a child already has that same text, so the inner node wins.
+Mermaid prefixes every id with the render id, `diagram-<n>-`.
 
-When several elements match, an element that contains another match is dropped. The inner shape gets the listeners.
+1. **Flowchart.** A `g.node` whose id ends in `flowchart-<note id>-<number>`. `api` matches `diagram-2-flowchart-api-3`.
+2. **C4.** A `g.node.c4-shape` whose id ends in `-<alias>`. `reader` matches `diagram-5-reader`. Markers are not shape groups, so they do not match.
+3. **Sequence.** `name` equals the note id, on `rect.actor` or `g.actor-man` only. The top and bottom boxes both match, so one note is attached twice. Lifelines carry the same name and are not selected.
+4. **State.** A `g.node` whose id ends in `state-<name>-<number>`. `Draft` matches `diagram-1-state-Draft-1`. The start and end dots are `root_start` and `root_end`, so they do not match a state name.
 
-`visibleShape` then drops anything under 8 by 8 pixels. Sequence lifelines are tall and have almost no width, so they fail this test and do not become invisible click targets.
+`visibleShape` then drops anything under 8 by 8 pixels. Sequence lifelines are tall and have almost no width. They are not selected, and this check still drops a group that has no real box.
 
 `attach` makes the surviving group a button: hover, click, double-click, Enter, and Space. If the note has `zoom`, a green ↘ badge is drawn from the group's box. Double-click or the badge calls `show(zoom)`.
 
