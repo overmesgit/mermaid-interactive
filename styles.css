@@ -120,8 +120,8 @@ button:hover { border-color: var(--accent); }
 }
 
 .stage-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  display: flex;
+  justify-content: space-between;
   gap: 16px;
   align-items: center;
   padding: 10px 16px;
@@ -129,26 +129,20 @@ button:hover { border-color: var(--accent); }
 }
 
 .stage-meta {
-  grid-column: 1;
   min-width: 0;
   overflow: hidden;
 }
 
-.camera-controls {
-  grid-row: 1;
-  grid-column: 2;
-  justify-self: end;
-}
-
 #lesson {
-  grid-row: 1;
-  grid-column: 2;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
   display: flex;
   gap: 8px;
   align-items: center;
-  justify-self: start;
-  min-width: 0;
-  max-width: calc(100% - 12rem);
+  max-width: calc(100% - 24px);
+  cursor: default;
 }
 
 #lesson[hidden] { display: none; }

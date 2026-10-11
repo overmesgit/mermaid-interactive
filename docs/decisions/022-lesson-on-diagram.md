@@ -1,0 +1,17 @@
+# ADR-022 Prev and Next sit on the top left of the diagram
+
+- Status: accepted
+- Date: 2026-10-11
+- Supersedes: the stage-bar placement in [ADR-021](021-lesson-stays.md)
+
+## Context
+
+Prev and Next lived in the stage bar. Putting them in the middle fought the title, the summary, and the camera buttons, and the bar grew a second row.
+
+## Decision
+
+The controls sit on the diagram, at its top left. The stage bar is the title, the summary, and the camera buttons again. Dragging the diagram does not start from these controls.
+
+## Consequences
+
+Fit places the diagram below the controls, so a fitted picture is not covered. After a pan or zoom the controls can cover part of it. A long next title ellipsizes at the edge of the diagram. Other tabs still have no stepper.

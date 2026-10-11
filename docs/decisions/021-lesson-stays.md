@@ -1,6 +1,6 @@
 # ADR-021 Prev and Next stay put, including inside a node
 
-- Status: accepted
+- Status: accepted, placement superseded by [ADR-022](022-lesson-on-diagram.md)
 - Date: 2026-10-11
 - Supersedes: drill hiding and the Back label in [ADR-020](020-lesson-steps.md)
 

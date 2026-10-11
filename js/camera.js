@@ -13,14 +13,17 @@ function fit() {
     ? svg.viewBox.baseVal
     : { width: svg.getBoundingClientRect().width, height: svg.getBoundingClientRect().height };
   const pad = 48;
+  // Prev and Next sit on the top left of the diagram. Fit starts below them.
+  const top = els.lesson.hidden ? pad / 2 : els.lesson.offsetTop + els.lesson.offsetHeight + 12;
+  const height = els.viewport.clientHeight - top - pad / 2;
   const s = Math.min(
     (els.viewport.clientWidth - pad) / box.width,
-    (els.viewport.clientHeight - pad) / box.height,
+    height / box.height,
     1.35
   );
   cam.s = Number.isFinite(s) && s > 0 ? s : 1;
   cam.x = (els.viewport.clientWidth - box.width * cam.s) / 2;
-  cam.y = Math.max(24, (els.viewport.clientHeight - box.height * cam.s) / 2);
+  cam.y = top + Math.max(0, (height - box.height * cam.s) / 2);
   applyCam();
 }
 
@@ -96,7 +99,7 @@ function wireCamera() {
   els.viewport.addEventListener("selectstart", (event) => event.preventDefault());
 
   els.viewport.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit") || event.button !== 0) return;
+    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit, #lesson") || event.button !== 0) return;
     app.drag = { x: event.clientX, y: event.clientY, cx: app.cam.x, cy: app.cam.y };
     els.viewport.classList.add("is-dragging");
     els.viewport.setPointerCapture(event.pointerId);
