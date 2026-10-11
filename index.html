@@ -30,6 +30,11 @@
           <nav id="crumbs" aria-label="Zoom path"></nav>
           <p id="summary"></p>
         </div>
+        <div id="lesson" hidden>
+          <button id="lesson-prev" type="button">Prev</button>
+          <span id="lesson-count"></span>
+          <button id="lesson-next" type="button">Next</button>
+        </div>
         <div class="camera-controls" aria-label="Camera">
           <button id="zoom-out" type="button" title="Zoom out camera">−</button>
           <button id="fit" type="button" title="Fit diagram">Fit</button>
@@ -69,6 +74,8 @@
       <dt><kbd>/</kbd></dt><dd>Find</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close the details, then step up</dd>
       <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
+      <dt>Prev, Next</dt><dd>Move through the How lesson</dd>
+      <dt><kbd>←</kbd>, <kbd>→</kbd></dt><dd>Previous or next lesson step</dd>
       <dt><kbd>Tab</kbd>, <kbd>Enter</kbd></dt><dd>Move to a shape, open its details</dd>
       <dt><kbd>?</kbd></dt><dd>Show this list</dd>
     </dl>

@@ -5,6 +5,10 @@ const app = {
   els: {
     tabs: document.getElementById("tabs"),
     crumbs: document.getElementById("crumbs"),
+    lesson: document.getElementById("lesson"),
+    lessonCount: document.getElementById("lesson-count"),
+    lessonPrev: document.getElementById("lesson-prev"),
+    lessonNext: document.getElementById("lesson-next"),
     summary: document.getElementById("summary"),
     camera: document.getElementById("camera"),
     viewport: document.getElementById("viewport"),

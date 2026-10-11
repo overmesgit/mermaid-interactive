@@ -22,7 +22,7 @@ A, a software engineer. The useful way to work is in the code, in small steps, w
 - Hover may dim unrelated shapes. The dim stays light.
 - Double-click drills in without selecting the label. Text in the panel stays selectable.
 - Export produces one HTML file. That file still loads Mermaid from the network.
-- The How tab explains the page as a series of diagrams. The panel note is markdown, and the code is part of that note.
+- The How tab explains the page as a series of diagrams. Prev and Next move along that series, and they stay when a shape's inner diagram is open. The panel note is markdown, and the code is part of that note.
 
 ## How it runs
 
@@ -62,6 +62,7 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **Interaction**. Either kind at runtime, with `kind: "node"` or `kind: "edge"`.
 - **opensView**. The viewId a double-click opens. This is not camera zoom.
 - **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
+- **lesson**. The ordered view ids on a tab. The How tab's lesson is the seven teaching pictures. A drill view is not in the lesson. Prev and Next stay on the lesson step that view was opened from.
 
 `js/mermaid-svg.js` finds Mermaid shapes and arrows. `js/bind.js` wires interactions onto them. Neither file decides which diagram is showing. That is `show(viewId)`.
 

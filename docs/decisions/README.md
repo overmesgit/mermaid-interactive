@@ -23,3 +23,5 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [017](017-compact-chrome.md) | accepted | One header row, help behind ?, system font |
 | [018](018-box-by-chart-type.md) | accepted | A box is matched by chart type |
 | [019](019-interaction-naming.md) | accepted | Names say whether a thing is Mermaid's or ours |
+| [020](020-lesson-steps.md) | accepted, drill hiding superseded by 021 | How moves with Back and Next |
+| [021](021-lesson-stays.md) | accepted | Prev and Next stay put, including inside a node |

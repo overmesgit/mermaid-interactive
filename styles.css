@@ -120,15 +120,79 @@ button:hover { border-color: var(--accent); }
 }
 
 .stage-bar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
   align-items: center;
   padding: 10px 16px;
   border-bottom: 1px solid var(--line);
 }
 
-.stage-meta { min-width: 0; }
+.stage-meta {
+  grid-column: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.camera-controls {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+}
+
+#lesson {
+  grid-row: 1;
+  grid-column: 2;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-self: start;
+  min-width: 0;
+  max-width: calc(100% - 12rem);
+}
+
+#lesson[hidden] { display: none; }
+
+#lesson-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2em;
+  text-align: center;
+}
+
+#lesson-prev,
+#lesson-next {
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+#lesson-prev {
+  background: #e4efe6;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#lesson-next {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  min-width: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#lesson-next:hover { border-color: var(--accent); }
+
+#lesson button:disabled,
+#lesson button:disabled:hover {
+  background: #fff;
+  color: var(--muted);
+  cursor: default;
+  border-color: #cfc6b8;
+}
 
 #crumbs {
   display: flex;
@@ -155,6 +219,9 @@ button:hover { border-color: var(--accent); }
   margin-top: 2px;
   color: var(--muted);
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .camera-controls { display: flex; gap: 6px; }

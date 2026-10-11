@@ -471,7 +471,7 @@ window.DIAGRAMS = {
     { id: "checkout", label: "Flow" },
     { id: "login", label: "Sequence" },
     { id: "order", label: "State" },
-    { id: "how", label: "How" },
+    { id: "how", label: "How", lesson: ["how", "how-notes", "how-match", "how-hover", "how-click", "how-twozoom", "how-camera"] },
   ],
   views: {
     architecture: {
@@ -1281,7 +1281,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
     "how-notes": {
       viewId: "how-notes",
       tab: "how",
-      parent: "how",
+      parent: null,
       title: "2. Notes sit beside the chart",
       summary: "Same picture, plus the notes. Double-click Notes to add the matcher. Double-click Picture to read how arrows are found.",
       chart: `flowchart LR
@@ -1306,7 +1306,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
     "how-match": {
       viewId: "how-match",
       tab: "how",
-      parent: "how-notes",
+      parent: null,
       title: "3. Scripts match them",
       summary: "The notes and the picture both go into the page scripts. Double-click Scripts to add hover. Double-click Notes to read the box matcher.",
       chart: `flowchart LR
@@ -1338,7 +1338,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
     "how-hover": {
       viewId: "how-hover",
       tab: "how",
-      parent: "how-match",
+      parent: null,
       title: "4. Hover lights the neighbors",
       summary: "Hover is the new piece. Double-click Hover to add click. The other ↘ boxes open the code for drawing, boxes, and arrows.",
       chart: `flowchart LR
@@ -1364,7 +1364,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
     "how-click": {
       viewId: "how-click",
       tab: "how",
-      parent: "how-hover",
+      parent: null,
       title: "5. Click opens the panel",
       summary: "Click is the new piece. Double-click Click to see what a double-click does instead.",
       chart: `flowchart LR
@@ -1392,7 +1392,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
     "how-twozoom": {
       viewId: "how-twozoom",
       tab: "how",
-      parent: "how-click",
+      parent: null,
       title: "6. Double-click draws another chart",
       summary: "Another chart is the new piece. It replaces the SVG. Double-click it to add the camera, which only scales this picture.",
       chart: `flowchart LR
@@ -1422,7 +1422,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
     "how-camera": {
       viewId: "how-camera",
       tab: "how",
-      parent: "how-twozoom",
+      parent: null,
       title: "7. The wheel only scales",
       summary: "Scale is the last piece. The wheel changes cam.s. It does not call show(). Click any box for the code.",
       chart: `flowchart LR

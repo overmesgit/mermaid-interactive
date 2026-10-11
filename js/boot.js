@@ -55,6 +55,8 @@ document.getElementById("export").addEventListener("click", exportHtml);
 document.getElementById("fit").addEventListener("click", fit);
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
 document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));
+document.getElementById("lesson-prev").addEventListener("click", () => showLesson(-1));
+document.getElementById("lesson-next").addEventListener("click", () => showLesson(1));
 
 app.els.search.addEventListener("input", applySearch);
 
@@ -81,6 +83,10 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Backspace" && !typing && app.stack.length > 1) {
     event.preventDefault();
     show(app.stack[app.stack.length - 2].viewId);
+  }
+  const lessonKey = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+  if (lessonKey && !typing && !app.els.workspace.classList.contains("panel-open") && showLesson(lessonKey)) {
+    event.preventDefault();
   }
 });
 

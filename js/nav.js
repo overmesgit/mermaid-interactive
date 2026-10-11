@@ -33,6 +33,7 @@ function renderChrome() {
     els.crumbs.appendChild(button);
   });
   els.summary.textContent = app.view.summary;
+  renderLesson();
   const next = "#" + stack.map((view) => view.viewId).join("/");
   if (location.hash !== next) history.replaceState(null, "", next);
 }
@@ -81,6 +82,45 @@ function openFromHash() {
     return;
   }
   show(viewId);
+}
+
+// The lesson is the ordered view ids on a tab. A drill keeps the step it was opened from.
+function lessonStep() {
+  let view = app.view;
+  if (!view) return null;
+  const tab = DIAGRAMS.tabs.find((item) => item.id === view.tab);
+  if (!tab || !tab.lesson) return null;
+  let guard = 0;
+  while (view && guard++ < 8) {
+    const index = tab.lesson.indexOf(view.viewId);
+    if (index >= 0) return { lesson: tab.lesson, index };
+    view = view.parent && app.views[view.parent];
+  }
+  return null;
+}
+
+function renderLesson() {
+  const { els } = app;
+  const step = lessonStep();
+  if (!step) {
+    els.lesson.hidden = true;
+    return;
+  }
+  els.lesson.hidden = false;
+  els.lessonCount.textContent = (step.index + 1) + " / " + step.lesson.length;
+  els.lessonPrev.disabled = step.index === 0;
+  const nextView = app.views[step.lesson[step.index + 1]];
+  els.lessonNext.disabled = !nextView;
+  els.lessonNext.textContent = nextView ? "Next: " + nextView.title : "Next";
+}
+
+function showLesson(delta) {
+  const step = lessonStep();
+  if (!step) return false;
+  const viewId = step.lesson[step.index + delta];
+  if (!viewId) return false;
+  show(viewId);
+  return true;
 }
 
 function wireTabs() {
