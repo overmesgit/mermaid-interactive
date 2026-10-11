@@ -32,6 +32,7 @@ const app = {
   },
   stack: [],
   view: null,
+  shownViewId: null,
   selectedInteraction: null,
   renderToken: 0,
   cam: { x: 40, y: 32, s: 1 },

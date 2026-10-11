@@ -126,13 +126,16 @@ function bindEdgeInteractions(svg) {
   });
 
   // Sequence and C4 arrows are told apart by their text. `items` carry a label; `pieces` gives the SVG for one.
+  // Every edge tries an exact match before any edge falls back to a prefix.
   function claimByText(items, pieces) {
-    edges.forEach((edge) => {
-      if (wired.has(edge) || !edge.mermaidText) return;
-      const item = items.find((candidate) => !candidate.wired && textMatches(candidate.label, edge.mermaidText));
-      if (!item) return;
-      item.wired = true;
-      claimEdge(edge, pieces(item));
+    [true, false].forEach((exact) => {
+      edges.forEach((edge) => {
+        if (wired.has(edge) || !edge.mermaidText) return;
+        const item = items.find((candidate) => !candidate.wired && textMatches(candidate.label, edge.mermaidText, exact));
+        if (!item) return;
+        item.wired = true;
+        claimEdge(edge, pieces(item));
+      });
     });
   }
 

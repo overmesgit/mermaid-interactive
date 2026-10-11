@@ -1522,7 +1522,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           tooltip: "The path id ends in L_from_to_0.",
           kicker: "1",
           body: md`
-            Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. nearestFlowchartLabel picks the label whose center is within 160px of the path midpoint, and the binder marks it wired so the next arrow cannot take it.
+            Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. Two arrows between the same boxes differ only in the last number, so the first unwired path wins. nearestFlowchartLabel picks the label whose center is within 160 diagram units of the path midpoint, and the binder marks it wired so the next arrow cannot take it.
 
             ~~~js source=findFlowchartArrow,nearestFlowchartLabel
             ~~~
@@ -1534,7 +1534,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           tooltip: "messageText, then the message line.",
           kicker: "2",
           body: md`
-            Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.mermaidText. startsWith is allowed so a short mermaidText still hits. Each message is used once.
+            Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.mermaidText. An exact match is tried first for every arrow. startsWith is the fallback, so a short mermaidText still hits without taking a longer message from its own arrow. Each message is used once.
 
             ~~~js source=sequenceMessages,c4Relations,textMatches
             ~~~

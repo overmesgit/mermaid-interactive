@@ -97,8 +97,12 @@ const ZOOM_MIN = 0.35;
 const ZOOM_MAX = 2.6;
 
 // The buttons and the wheel zoom here. The scale stays between ZOOM_MIN and ZOOM_MAX.
+// Fit can go below ZOOM_MIN for a large diagram. From there a zoom out stops instead of jumping up to ZOOM_MIN.
 function zoomAt(px, py, factor) {
-  const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, app.cam.s * factor));
+  const low = Math.min(ZOOM_MIN, app.cam.s);
+  const high = Math.max(ZOOM_MAX, app.cam.s);
+  const next = Math.min(high, Math.max(low, app.cam.s * factor));
+  if (next === app.cam.s) return;
   scaleAbout(px, py, next / app.cam.s);
   applyCam();
 }

@@ -42,7 +42,10 @@ function renderChrome() {
 async function show(viewId, fromInteraction) {
   const view = app.views[viewId];
   if (!view) return;
-  if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+  // Only a view that finished drawing owns app.cam. During a swap the camera holds the leave zoom, so it is not saved.
+  const shown = app.shownViewId;
+  if (shown) app.cams[shown] = { ...app.cam };
+  app.shownViewId = null;
   const origin = wiredElements(fromInteraction);
   app.view = view;
   app.stack = pathTo(view);
@@ -52,7 +55,8 @@ async function show(viewId, fromInteraction) {
   // A slower mermaid.render must not overwrite a diagram the reader has already left.
   const token = ++app.renderToken;
   try {
-    const [{ svg }] = await Promise.all([mermaid.render(`diagram-${token}`, view.chart), leaveView(origin)]);
+    const leaving = shown ? leaveView(origin) : Promise.resolve();
+    const [{ svg }] = await Promise.all([mermaid.render(`diagram-${token}`, view.chart), leaving]);
     if (token !== app.renderToken) return;
     app.els.camera.innerHTML = svg;
     const svgEl = app.els.camera.querySelector("svg");
@@ -63,6 +67,7 @@ async function show(viewId, fromInteraction) {
       svgEl.setAttribute("height", String(box.height));
     }
     enterView(app.cams[viewId]);
+    app.shownViewId = viewId;
     bindNodeInteractions(svgEl);
     bindEdgeInteractions(svgEl);
     relaxLabels(svgEl);

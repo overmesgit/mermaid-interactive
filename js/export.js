@@ -6,14 +6,20 @@ function localScripts() {
     .filter((src) => !/^https?:/.test(src));
 }
 
+// fetch resolves on a 404, so a missing file is an error here instead of an error page inlined as a script.
+async function readFile(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`Export could not read ${path} (${response.status}).`);
+  return response.text();
+}
+
 async function exportHtml() {
   let css, sources;
   try {
-    [css, ...sources] = await Promise.all(
-      ["styles.css", ...localScripts()].map((path) => fetch(path).then((response) => response.text()))
-    );
-  } catch {
-    setStatus("Export needs a local server. Open the folder with a static server, then export.");
+    [css, ...sources] = await Promise.all(["styles.css", ...localScripts()].map(readFile));
+  } catch (error) {
+    // On file:// fetch itself rejects with a TypeError.
+    setStatus(error instanceof TypeError ? "Export needs a local server. Open the folder with a static server, then export." : error.message);
     return;
   }
   const hash = app.stack.map((view) => view.viewId).join("/");
@@ -42,6 +48,7 @@ ${sources.map((source) => `<script>${safe(source)}</script>`).join("\n")}
   link.href = url;
   link.download = "interactive-diagrams.html";
   link.click();
-  URL.revokeObjectURL(url);
+  // Firefox can cancel the download if the URL is revoked in the same task as the click.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   setStatus("Downloaded a standalone HTML file.");
 }

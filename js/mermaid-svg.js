@@ -88,19 +88,25 @@ function nearestPoint(points, point) {
 }
 
 // Flowchart arrows are path.flowchart-link. Mermaid puts the endpoints in the id: …L_<from>_<to>_<n>.
+// Two arrows between the same shapes differ only in n, so a path the binder already wired is skipped.
 function findFlowchartArrow(svg, edge) {
   const from = escapeRegExp(edge.from);
   const to = escapeRegExp(edge.to);
   const pattern = new RegExp(`(?:^|-)L_${from}_${to}_\\d+$`);
-  return [...svg.querySelectorAll("path.flowchart-link")].find((path) => pattern.test(path.id));
+  return [...svg.querySelectorAll("path.flowchart-link")].find((path) => !path.dataset.wired && pattern.test(path.id));
 }
 
-// A label farther than 160px from the path midpoint belongs to another arrow.
+// Screen distances shrink and grow with the camera. Multiply a limit in diagram units by the scale before comparing.
+function onScreen(units) {
+  return units * app.cam.s;
+}
+
+// A label farther than 160 diagram units from the path midpoint belongs to another arrow.
 // data-wired is set by the binder, so a label already given to an arrow is skipped.
 function nearestFlowchartLabel(path, labels) {
   const mid = screenPoint(path, path.getTotalLength() / 2);
   let best = null;
-  let bestDistance = 160;
+  let bestDistance = onScreen(160);
   labels.forEach((label) => {
     if (label.dataset.wired) return;
     const box = label.getBoundingClientRect();
@@ -149,11 +155,12 @@ function c4Relations(svg) {
   }));
 }
 
-function textMatches(rendered, wanted) {
+// The binder tries exact matches first. A prefix match is the fallback, so "Pay" does not take "Pay refund" from its own arrow.
+function textMatches(rendered, wanted, exact) {
   const left = norm(rendered).toLowerCase();
   const right = norm(wanted).toLowerCase();
   if (!right) return false;
-  return left === right || left.startsWith(right);
+  return exact ? left === right : left.startsWith(right);
 }
 
 // State start and end dots are not node interactions. Mermaid draws them as root_start and root_end, and edge interactions call them *.
@@ -185,7 +192,7 @@ function matchStateArrows(paths, edges, svg) {
       const forward = endpointDistance(start, end, edge);
       const backward = endpointDistance(end, start, edge);
       const score = Math.min(forward, backward);
-      if (score < 360) candidates.push({ path, edge, score });
+      if (score < onScreen(360)) candidates.push({ path, edge, score });
     });
   });
   candidates.sort((a, b) => a.score - b.score);
