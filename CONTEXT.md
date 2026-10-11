@@ -18,7 +18,7 @@ A, a software engineer. The useful way to work is in the code, in small steps, w
 - A click on a node or an arrow opens a side panel with the notes for that shape.
 - Hover shows a tooltip.
 - If a shape has its own diagram, a double-click or the ↘ badge opens that diagram.
-- Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `zoom` is set.
+- Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `opensView` is set.
 - Hover may dim unrelated shapes. The dim stays light.
 - Double-click drills in without selecting the label. Text in the panel stays selectable.
 - Export produces one HTML file. That file still loads Mermaid from the network.
@@ -50,9 +50,24 @@ There is no ticket system, chat archive, or wiki connected to this repo. The con
 4. The How tab is the lesson inside the page. `docs/matcher.md` is the written account of the binder. A behavior change that either one describes should update it in the same change. Do not add a second function-by-function manual beside those two.
 5. If a task depends on knowledge that is not in this repo, say so. Do not invent a ticket, a chat, or a wiki entry.
 
+## Vocabulary
+
+Three sides meet on the page. A name should say which side it belongs to.
+
+- **chartId**. The id written in the Mermaid source (`web` in `web["Web app"]`). Mermaid copies it into the SVG. It is not a key this page invents.
+- **Mermaid shape**. The `<g>` Mermaid drew for one chartId.
+- **Mermaid arrow**. The stroke Mermaid drew, plus its label when there is one.
+- **Node interaction**. This page's tooltip, panel text, facts, and `opensView` for one chartId. Stored on `view.nodeInteractions`.
+- **Edge interaction**. The same kind of data for an arrow: `from` and `to` are chartIds, `mermaidText` is the label Mermaid rendered, `edgeId` is the key this page makes (`from-to-index`). Stored on `view.edgeInteractions`.
+- **Interaction**. Either kind at runtime, with `kind: "node"` or `kind: "edge"`.
+- **opensView**. The viewId a double-click opens. This is not camera zoom.
+- **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
+
+`js/mermaid-svg.js` finds Mermaid shapes and arrows. `js/bind.js` wires interactions onto them. Neither file decides which diagram is showing. That is `show(viewId)`.
+
 ## What a change should assume
 
 - One binder for flowcharts, C4, sequence, and state. It runs after `mermaid.render`.
-- Drill-down calls `show(id)` and replaces the SVG. The wheel only changes the camera.
+- Drill-down calls `show(viewId)` and replaces the SVG. The wheel only changes the camera.
 - The panel width is chosen by dragging its left border.
 - A click must not draw a frame around the label.

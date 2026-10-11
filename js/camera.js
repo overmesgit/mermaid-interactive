@@ -25,9 +25,9 @@ function fit() {
 }
 
 // Pan the least distance that brings these elements inside the viewport. The scale stays.
-function reveal(els) {
-  const view = app.els.viewport.getBoundingClientRect();
-  const boxes = els.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
+function reveal(elements) {
+  const viewportBox = app.els.viewport.getBoundingClientRect();
+  const boxes = elements.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
   if (!boxes.length) return;
   const pad = 24;
   const left = Math.min(...boxes.map((box) => box.left));
@@ -36,10 +36,10 @@ function reveal(els) {
   const bottom = Math.max(...boxes.map((box) => box.bottom));
   let dx = 0;
   let dy = 0;
-  if (right > view.right - pad) dx = view.right - pad - right;
-  if (left + dx < view.left + pad) dx = view.left + pad - left;
-  if (bottom > view.bottom - pad) dy = view.bottom - pad - bottom;
-  if (top + dy < view.top + pad) dy = view.top + pad - top;
+  if (right > viewportBox.right - pad) dx = viewportBox.right - pad - right;
+  if (left + dx < viewportBox.left + pad) dx = viewportBox.left + pad - left;
+  if (bottom > viewportBox.bottom - pad) dy = viewportBox.bottom - pad - bottom;
+  if (top + dy < viewportBox.top + pad) dy = viewportBox.top + pad - top;
   if (!dx && !dy) return;
   app.cam.x += dx;
   app.cam.y += dy;
@@ -49,17 +49,17 @@ function reveal(els) {
 const LEAVE_MS = 200;
 
 // Fade the old SVG out before show() swaps it. With origin elements, also zoom toward them.
-function leaveView(els) {
+function leaveView(elements) {
   const { cam, els: ui } = app;
   if (!ui.camera.querySelector("svg") || matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return Promise.resolve();
   }
   ui.camera.classList.add("is-leaving");
-  const boxes = els.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
+  const boxes = elements.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
   if (boxes.length) {
-    const view = ui.viewport.getBoundingClientRect();
-    const px = (Math.min(...boxes.map((b) => b.left)) + Math.max(...boxes.map((b) => b.right))) / 2 - view.left;
-    const py = (Math.min(...boxes.map((b) => b.top)) + Math.max(...boxes.map((b) => b.bottom))) / 2 - view.top;
+    const viewportBox = ui.viewport.getBoundingClientRect();
+    const px = (Math.min(...boxes.map((b) => b.left)) + Math.max(...boxes.map((b) => b.right))) / 2 - viewportBox.left;
+    const py = (Math.min(...boxes.map((b) => b.top)) + Math.max(...boxes.map((b) => b.bottom))) / 2 - viewportBox.top;
     const k = 1.8;
     cam.x = px - (px - cam.x) * k;
     cam.y = py - (py - cam.y) * k;

@@ -14,7 +14,7 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [008](008-teach-in-the-tool.md) | superseded by 012 | How teaches in steps, with code in the panel |
 | [009](009-panel-resize.md) | accepted, fit superseded by 014 | Drag the panel border to set its width |
 | [010](010-label-frame.md) | accepted | A click does not frame the label |
-| [011](011-split-scripts.md) | accepted | Scripts split by job, still no build |
+| [011](011-split-scripts.md) | accepted, script list superseded by 019 | Scripts split by job, still no build |
 | [012](012-markdown-notes.md) | superseded by 013 | Panel notes are markdown. How code lives in the note |
 | [013](013-notes-in-templates.md) | accepted | How notes are markdown templates in diagrams.js |
 | [014](014-selection-keeps-camera.md) | accepted | A click selects and keeps the camera |
@@ -22,3 +22,4 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [016](016-panel-links.md) | accepted | The panel links to connected shapes and arrows |
 | [017](017-compact-chrome.md) | accepted | One header row, help behind ?, system font |
 | [018](018-box-by-chart-type.md) | accepted | A box is matched by chart type |
+| [019](019-interaction-naming.md) | accepted | Names say whether a thing is Mermaid's or ours |

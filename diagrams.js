@@ -1,4 +1,4 @@
-function link(from, to, tooltip, body, facts, more) {
+function arrow(from, to, tooltip, body, facts, more) {
   return { from, to, kicker: "Arrow", tooltip, body, facts: facts || [], ...(more || {}) };
 }
 
@@ -16,7 +16,7 @@ const HOW_BOX = {
     tooltip: "The string stored on the view. Mermaid is the only reader.",
     kicker: "Data",
     body: md`
-      A view keeps the picture and the notes apart. view.chart is the Mermaid source. The tooltip, the panel text, and zoom are siblings of that string. Mermaid never sees them. securityLevel is strict, so Mermaid's own click syntax stays off. This page binds the finished SVG so flowchart, C4, sequence, and state share one panel.
+      A view keeps the picture and the notes apart. view.chart is the Mermaid source. The tooltip, the panel text, and opensView are siblings of that string. Mermaid never sees them. securityLevel is strict, so Mermaid's own click syntax stays off. This page binds the finished SVG so flowchart, C4, sequence, and state share one panel.
 
       ~~~js
       mermaid.initialize({
@@ -36,12 +36,12 @@ const HOW_BOX = {
       show() sends view.chart to mermaid.render and keeps a token. If the reader opens another view before this draw finishes, the token no longer matches and the late SVG is dropped. Double-click this box to walk that function.
 
       ~~~js
-      async function show(id, from) {
-        const view = app.views[id];
+      async function show(viewId, fromInteraction) {
+        const view = app.views[viewId];
         if (!view) return;
-        if (app.current) app.cams[app.current.id] = { ...app.cam };
-        const origin = itemEls(from);
-        app.current = view;
+        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+        const origin = wiredElements(fromInteraction);
+        app.view = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
@@ -52,14 +52,14 @@ const HOW_BOX = {
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[id]);
-        bindNodes(svgEl);
-        bindEdges(svgEl);
+        enterView(app.cams[viewId]);
+        bindNodeInteractions(svgEl);
+        bindEdgeInteractions(svgEl);
         applySearch();
       }
       ~~~
     `,
-    zoom: "how-show",
+    opensView: "how-show",
     facts: [["Function", "show"], ["File", "js/nav.js"]],
   },
   picture: {
@@ -67,15 +67,15 @@ const HOW_BOX = {
     tooltip: "The SVG that lands in #camera.",
     kicker: "DOM",
     body: md`
-      The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodes and bindEdges run after that. They are what make the shapes and arrows clickable.
+      The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodeInteractions and bindEdgeInteractions run after that. They are what make the shapes and arrows clickable.
 
       ~~~js
-      async function show(id, from) {
-        const view = app.views[id];
+      async function show(viewId, fromInteraction) {
+        const view = app.views[viewId];
         if (!view) return;
-        if (app.current) app.cams[app.current.id] = { ...app.cam };
-        const origin = itemEls(from);
-        app.current = view;
+        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+        const origin = wiredElements(fromInteraction);
+        app.view = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
@@ -86,21 +86,21 @@ const HOW_BOX = {
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[id]);
-        bindNodes(svgEl);
-        bindEdges(svgEl);
+        enterView(app.cams[viewId]);
+        bindNodeInteractions(svgEl);
+        bindEdgeInteractions(svgEl);
         applySearch();
       }
       ~~~
     `,
-    facts: [["Element", "#camera"], ["Then", "bindNodes, bindEdges"]],
+    facts: [["Element", "#camera"], ["Then", "bindNodeInteractions, bindEdgeInteractions"]],
   },
   notes: {
     label: "Notes",
-    tooltip: "nodes and edges, keyed like the chart.",
+    tooltip: "Node interactions and edge interactions, keyed like the chart.",
     kicker: "Data",
     body: md`
-      The map key is the id. The node object does not store id itself. bindNodes copies the key onto the object before matching. zoom is another view id. link() builds an edge from the two ids plus the panel text. An arrow can have zoom too. Checkout's New card arrow and the login POST /login arrow both open another diagram.
+      The map key is the chartId. The node interaction does not store chartId itself. nodeInteractions() copies the key on before matching. opensView is the viewId of the inner diagram. arrow() builds an edge interaction from the two chartIds plus the panel text. An arrow can have opensView too. Checkout's New card arrow and the login POST /login arrow both open another diagram.
 
       ~~~js
       browser: {
@@ -111,10 +111,10 @@ const HOW_BOX = {
         facts: [["Calls", "Web app"]],
       }
 
-      link("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
+      arrow("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
       ~~~
     `,
-    facts: [["File", "diagrams.js"], ["Helper", "link()"]],
+    facts: [["File", "diagrams.js"], ["Helper", "arrow()"]],
   },
   app: {
     label: "Scripts",
@@ -124,16 +124,16 @@ const HOW_BOX = {
       The first line of the chart picks the pattern. A flowchart node api is a g.node whose id ends in flowchart-api-3, after the render prefix diagram-2-. A C4 alias is a g.node.c4-shape whose id ends in -reader. A sequence actor is the name on the top and bottom boxes. A state Draft is a g.node whose id ends in state-Draft-1. A box under 8 by 8 pixels is ignored.
 
       ~~~js
-      function mermaidShapesFor(svg, node) {
-        const kind = chartKind(app.current.chart);
+      function findMermaidShapes(svg, node) {
+        const kind = chartKind(app.view.chart);
         const id = escapeRegExp(node.id);
         if (kind === "flowchart") {
-          const pattern = new RegExp(\`(?:^|-)flowchart-\${id}-\\\\d+$\`);
+          const pattern = new RegExp(\`(?:^|-)flowchart-\${chartId}-\\\\d+$\`);
           svg.querySelectorAll("g.node").forEach((el) => {
             if (pattern.test(el.id)) groups.add(el);
           });
         } else if (kind === "c4") {
-          const pattern = new RegExp(\`(?:^|-)\${id}$\`);
+          const pattern = new RegExp(\`(?:^|-)\${chartId}$\`);
           svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
             if (pattern.test(el.id)) groups.add(el);
           });
@@ -141,17 +141,17 @@ const HOW_BOX = {
       }
       ~~~
     `,
-    facts: [["Function", "mermaidShapesFor"], ["File", "js/bind.js"]],
+    facts: [["Function", "findMermaidShapes"], ["File", "js/bind.js"]],
   },
   hover: {
     label: "Hover",
     tooltip: "Neighbors stay solid. The rest fade a little.",
     kicker: "Input",
     body: md`
-      paint() keeps this shape and every arrow that touches it. The others get is-dim. Leaving the shape calls applySearch(), so a click does not leave the highlight stuck. Search uses the same dim and also looks through arrow text. The opacity is 0.72. It used to be 0.28, which hid the rest of the picture too hard.
+      highlightAround() keeps this shape and every arrow that touches it. The others get is-dim. Leaving the shape calls applySearch(), so a click does not leave the highlight stuck. Search uses the same dim and also looks through arrow text. The opacity is 0.72. It used to be 0.28, which hid the rest of the picture too hard.
 
       ~~~js
-      function paint(focus) {
+      function highlightAround(interaction) {
         // hot: this node and every edge that touches it
         el.classList.toggle("is-dim", active && !on);
         el.classList.toggle("is-hot", active && on);
@@ -160,7 +160,7 @@ const HOW_BOX = {
       .is-dim { opacity: 0.72; }
       ~~~
     `,
-    facts: [["Function", "paint"], ["CSS", ".is-dim"]],
+    facts: [["Function", "highlightAround"], ["CSS", ".is-dim"]],
   },
   tap: {
     label: "Click",
@@ -170,23 +170,23 @@ const HOW_BOX = {
       The panel opens on the first click. The green ↘ badge calls show() instead. openPanel fills the title, the lead, this note, and the facts. The note is markdown, so the code below is part of that text. markSelected puts is-selected on the shape or arrow, so the picture shows what the panel is about. The camera keeps its pan and zoom. reveal() only pans when the panel now covers the selected shape. renderLinks lists the two ends of an arrow, or every arrow in and out of a shape. Each link opens that note's panel.
 
       ~~~js
-      function onNodeClick(event, node) {
+      function onInteractionClick(event, interaction) {
         if (event.target.closest(".zoom-badge")) {
-          show(node.zoom);
+          show(interaction.opensView);
           return;
         }
-        openPanel(node);
+        openPanel(interaction);
       }
 
-      function openPanel(node) {
-        panel.title.textContent = node.label;
-        renderNote(panel.body, node.body || "");
-        const selected = markSelected(node);
+      function openPanel(interaction) {
+        panel.title.textContent = interaction.label;
+        renderNote(panel.body, interaction.body || "");
+        const selected = markSelected(interaction);
         requestAnimationFrame(() => reveal(selected));
       }
       ~~~
     `,
-    facts: [["Function", "onNodeClick"], ["Camera", "kept, reveal() pans if needed"]],
+    facts: [["Function", "onInteractionClick"], ["Camera", "kept, reveal() pans if needed"]],
   },
   another: {
     label: "Another chart",
@@ -196,10 +196,10 @@ const HOW_BOX = {
       This is a new SVG, not a closer look at the same one. While Mermaid draws it, leaveView() zooms the old picture toward the shape you opened and fades it out. Each view keeps its own camera in app.cams, so stepping back up restores the pan and zoom you left. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.
 
       ~~~js
-      function onNodeDblClick(event, node) {
+      function onInteractionDblClick(event, interaction) {
         window.getSelection()?.removeAllRanges();
-        if (node.zoom) show(node.zoom);
-        else openPanel(node);
+        if (interaction.opensView) show(interaction.opensView);
+        else openPanel(interaction);
       }
 
       #camera, #camera * { user-select: none; }
@@ -239,7 +239,7 @@ const HOW_BOX = {
 };
 
 const HOW_ARROW = {
-  draw: link(
+  draw: arrow(
     "chart",
     "mmd",
     "Only the chart string is passed to Mermaid.",
@@ -247,12 +247,12 @@ const HOW_ARROW = {
       mermaid.render gets view.chart and a fresh id. The notes stay in JavaScript.
 
       ~~~js
-      async function show(id, from) {
-        const view = app.views[id];
+      async function show(viewId, fromInteraction) {
+        const view = app.views[viewId];
         if (!view) return;
-        if (app.current) app.cams[app.current.id] = { ...app.cam };
-        const origin = itemEls(from);
-        app.current = view;
+        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+        const origin = wiredElements(fromInteraction);
+        app.view = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
@@ -263,16 +263,16 @@ const HOW_ARROW = {
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[id]);
-        bindNodes(svgEl);
-        bindEdges(svgEl);
+        enterView(app.cams[viewId]);
+        bindNodeInteractions(svgEl);
+        bindEdgeInteractions(svgEl);
         applySearch();
       }
       ~~~
     `,
     [["Call", "mermaid.render"]],
   ),
-  drawn: link(
+  drawn: arrow(
     "mmd",
     "picture",
     "The return value is an SVG string.",
@@ -280,12 +280,12 @@ const HOW_ARROW = {
       show() inserts that string into #camera. A stale render is ignored when app.renderToken has already moved on.
 
       ~~~js
-      async function show(id, from) {
-        const view = app.views[id];
+      async function show(viewId, fromInteraction) {
+        const view = app.views[viewId];
         if (!view) return;
-        if (app.current) app.cams[app.current.id] = { ...app.cam };
-        const origin = itemEls(from);
-        app.current = view;
+        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+        const origin = wiredElements(fromInteraction);
+        app.view = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
@@ -296,16 +296,16 @@ const HOW_ARROW = {
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[id]);
-        bindNodes(svgEl);
-        bindEdges(svgEl);
+        enterView(app.cams[viewId]);
+        bindNodeInteractions(svgEl);
+        bindEdgeInteractions(svgEl);
         applySearch();
       }
       ~~~
     `,
     [["Guard", "token !== app.renderToken"]],
   ),
-  beside: link(
+  beside: arrow(
     "chart",
     "notes",
     "The notes use the same ids as the chart.",
@@ -321,38 +321,38 @@ const HOW_ARROW = {
         facts: [["Calls", "Web app"]],
       }
 
-      link("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
+      arrow("browser", "cdn", "The browser loads files from the CDN.", "This path is cacheable.")
       ~~~
     `,
     [["Ids", "Map keys"]],
   ),
-  toApp: link(
+  toApp: arrow(
     "notes",
     "app",
     "bind.js reads the notes after the SVG exists.",
     md`
-      bindNodes walks app.current.nodes. bindEdges walks app.current.edges. Both run inside show(), after the SVG is in the page.
+      bindNodeInteractions walks the node interactions on app.view. bindEdgeInteractions walks the edge interactions. Both run inside show(), after the SVG is in the page.
 
       ~~~js
-      function attach(host, node) {
-        host.classList.add("is-node");
-        host.dataset.nodeId = node.id;
-        host.setAttribute("role", "button");
-        host.addEventListener("pointerenter", (event) => showTooltip(event, node));
-        host.addEventListener("click", (event) => onNodeClick(event, node));
-        host.addEventListener("dblclick", (event) => onNodeDblClick(event, node));
-        if (node.zoom) addBadge(host);
+      function wireShape(shape, interaction) {
+        shape.classList.add("is-node");
+        shape.dataset.chartId = interaction.chartId;
+        shape.setAttribute("role", "button");
+        shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+        shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
+        shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+        if (interaction.opensView) addBadge(shape);
       }
       ~~~
     `,
     [["Order", "render, then bind"]],
   ),
-  fromPic: link(
+  fromPic: arrow(
     "picture",
     "app",
     "The SVG is the other input to the match.",
     md`
-      mermaidShapesFor uses the chart type. Flowchart and state match a g.node id. C4 matches a g.node.c4-shape id. Sequence matches the name on the actor boxes.
+      findMermaidShapes uses the chart type. Flowchart and state match a g.node id. C4 matches a g.node.c4-shape id. Sequence matches the name on the actor boxes.
 
       ~~~js
       function chartKind(chart) {
@@ -364,17 +364,17 @@ const HOW_ARROW = {
       }
       ~~~
     `,
-    [["Function", "mermaidShapesFor"]],
+    [["Function", "findMermaidShapes"]],
   ),
-  toHover: link(
+  toHover: arrow(
     "app",
     "hover",
-    "pointerenter calls showTooltip, which calls paint.",
+    "pointerenter calls showTooltip, which calls highlightAround.",
     md`
       The tooltip is a fixed div. It is not a Mermaid tooltip. It follows the pointer and flips when it would leave the window.
 
       ~~~js
-      function paint(focus) {
+      function highlightAround(interaction) {
         // hot: this node and every edge that touches it
         el.classList.toggle("is-dim", active && !on);
         el.classList.toggle("is-hot", active && on);
@@ -385,52 +385,52 @@ const HOW_ARROW = {
     `,
     [["Function", "showTooltip"]],
   ),
-  toTap: link(
+  toTap: arrow(
     "app",
     "tap",
-    "click and dblclick are both attached in attach().",
+    "click and dblclick are both attached in wireShape().",
     md`
       Arrows use the same two handlers. watchEdge registers them on the hit stroke and on the label.
 
       ~~~js
-      function onNodeClick(event, node) {
+      function onInteractionClick(event, interaction) {
         if (event.target.closest(".zoom-badge")) {
-          show(node.zoom);
+          show(interaction.opensView);
           return;
         }
-        openPanel(node);
+        openPanel(interaction);
       }
 
-      function openPanel(node) {
-        panel.title.textContent = node.label;
-        renderNote(panel.body, node.body || "");
-        const selected = markSelected(node);
+      function openPanel(interaction) {
+        panel.title.textContent = interaction.label;
+        renderNote(panel.body, interaction.body || "");
+        const selected = markSelected(interaction);
         requestAnimationFrame(() => reveal(selected));
       }
       ~~~
     `,
-    [["Shared", "onNodeClick"]],
+    [["Shared", "onInteractionClick"]],
   ),
-  toNext: link(
+  toNext: arrow(
     "tap",
     "another",
-    "Double-click calls show(zoom), which closes the panel.",
+    "Double-click calls show(opensView), which closes the panel.",
     md`
       The first click of a double-click has already opened the panel. The double-click clears the text selection and draws the next view. show() closes the panel on the way.
 
       ~~~js
-      function onNodeDblClick(event, node) {
+      function onInteractionDblClick(event, interaction) {
         window.getSelection()?.removeAllRanges();
-        if (node.zoom) show(node.zoom);
-        else openPanel(node);
+        if (interaction.opensView) show(interaction.opensView);
+        else openPanel(interaction);
       }
 
       #camera, #camera * { user-select: none; }
       ~~~
     `,
-    [["Function", "onNodeDblClick"]],
+    [["Function", "onInteractionDblClick"]],
   ),
-  toCam: link(
+  toCam: arrow(
     "picture",
     "cam",
     "The scroll wheel scales this SVG. It does not load another chart.",
@@ -475,7 +475,7 @@ window.DIAGRAMS = {
   ],
   views: {
     architecture: {
-      id: "architecture",
+      viewId: "architecture",
       tab: "architecture",
       parent: null,
       title: "Web app",
@@ -498,18 +498,18 @@ window.DIAGRAMS = {
   worker --> redis
   worker --> db
   worker --> mail`,
-      edges: [
-        link("browser", "cdn", "The browser loads HTML, CSS, and images from the CDN.", "This path is cacheable. It never carries the session cookie.", [["Carries", "Static files"]]),
-        link("cdn", "web", "The CDN returns the static web app.", "The files are the pages, not API data.", [["Cached", "Yes"]]),
-        link("browser", "web", "API calls go to the web origin, not the CDN.", "The session cookie is sent only on this path.", [["Carries", "Cookie and JSON"]]),
-        link("web", "api", "The page calls the Go API.", "Catalog reads and checkout writes both use this hop.", [["Format", "JSON"]]),
-        link("api", "db", "The API reads and writes books, users, and orders.", "Postgres is the system of record.", [["Protocol", "SQL"]]),
-        link("api", "redis", "The API stores the session and pushes a job.", "Redis is safe to lose. The order row is already in Postgres.", [["Uses", "Cache and queue"]]),
-        link("worker", "redis", "The worker pulls the next job.", "Payment capture and mail wait here until a worker is free.", [["Pattern", "Queue"]]),
-        link("worker", "db", "The worker updates payment and fulfillment columns.", "It does not create the order. The API did that.", [["Writes", "Order status"]]),
-        link("worker", "mail", "The worker sends the receipt.", "The mail provider is outside the system.", [["Protocol", "SMTP"]]),
+      edgeInteractions: [
+        arrow("browser", "cdn", "The browser loads HTML, CSS, and images from the CDN.", "This path is cacheable. It never carries the session cookie.", [["Carries", "Static files"]]),
+        arrow("cdn", "web", "The CDN returns the static web app.", "The files are the pages, not API data.", [["Cached", "Yes"]]),
+        arrow("browser", "web", "API calls go to the web origin, not the CDN.", "The session cookie is sent only on this path.", [["Carries", "Cookie and JSON"]]),
+        arrow("web", "api", "The page calls the Go API.", "Catalog reads and checkout writes both use this hop.", [["Format", "JSON"]]),
+        arrow("api", "db", "The API reads and writes books, users, and orders.", "Postgres is the system of record.", [["Protocol", "SQL"]]),
+        arrow("api", "redis", "The API stores the session and pushes a job.", "Redis is safe to lose. The order row is already in Postgres.", [["Uses", "Cache and queue"]]),
+        arrow("worker", "redis", "The worker pulls the next job.", "Payment capture and mail wait here until a worker is free.", [["Pattern", "Queue"]]),
+        arrow("worker", "db", "The worker updates payment and fulfillment columns.", "It does not create the order. The API did that.", [["Writes", "Order status"]]),
+        arrow("worker", "mail", "The worker sends the receipt.", "The mail provider is outside the system.", [["Protocol", "SMTP"]]),
       ],
-      nodes: {
+      nodeInteractions: {
         browser: {
           label: "Browser",
           tooltip: "The reader's browser. Static files come from the CDN. API calls go to the web origin.",
@@ -530,7 +530,7 @@ window.DIAGRAMS = {
           kicker: "Frontend",
           body: "A small multi-page front end. It calls the API with the session cookie.",
           facts: [["Runs as", "Static files"], ["Talks to", "API"]],
-          zoom: "architecture-web",
+          opensView: "architecture-web",
         },
         api: {
           label: "API",
@@ -538,7 +538,7 @@ window.DIAGRAMS = {
           kicker: "Backend",
           body: "The only component that writes orders. It enqueues mail and payment work in Redis.",
           facts: [["Runtime", "Go"], ["Listens", "HTTPS"], ["Writes", "Postgres"]],
-          zoom: "architecture-api",
+          opensView: "architecture-api",
         },
         db: {
           label: "Postgres",
@@ -571,7 +571,7 @@ window.DIAGRAMS = {
       },
     },
     "architecture-web": {
-      id: "architecture-web",
+      viewId: "architecture-web",
       tab: "architecture",
       parent: "architecture",
       title: "Web app",
@@ -585,13 +585,13 @@ window.DIAGRAMS = {
   shell --> cart
   cart --> checkout
   catalog --> cart`,
-      edges: [
-        link("shell", "catalog", "The shell opens the catalog.", "Search and book pages sit inside the shared frame.", [["Page", "Catalog"]]),
-        link("shell", "cart", "The shell opens the cart.", "The header cart link lands here.", [["Page", "Cart"]]),
-        link("cart", "checkout", "A priced cart continues to checkout.", "An empty cart cannot take this step.", [["Next", "Address and payment"]]),
-        link("catalog", "cart", "Add a book from the catalog.", "The server cart is updated before checkout.", [["API", "PUT /cart"]]),
+      edgeInteractions: [
+        arrow("shell", "catalog", "The shell opens the catalog.", "Search and book pages sit inside the shared frame.", [["Page", "Catalog"]]),
+        arrow("shell", "cart", "The shell opens the cart.", "The header cart link lands here.", [["Page", "Cart"]]),
+        arrow("cart", "checkout", "A priced cart continues to checkout.", "An empty cart cannot take this step.", [["Next", "Address and payment"]]),
+        arrow("catalog", "cart", "Add a book from the catalog.", "The server cart is updated before checkout.", [["API", "PUT /cart"]]),
       ],
-      nodes: {
+      nodeInteractions: {
         shell: {
           label: "App shell",
           tooltip: "Shared header, session check, and page frame.",
@@ -623,7 +623,7 @@ window.DIAGRAMS = {
       },
     },
     "architecture-api": {
-      id: "architecture-api",
+      viewId: "architecture-api",
       tab: "architecture",
       parent: "architecture",
       title: "API",
@@ -637,13 +637,13 @@ window.DIAGRAMS = {
   router --> catalog
   router --> orders
   orders --> auth`,
-      edges: [
-        link("router", "auth", "Login and session routes go to auth.", "The router matches the path, then auth owns the cookie.", [["Routes", "/login"]]),
-        link("router", "catalog", "Public book routes go to catalog.", "No session is required to browse.", [["Routes", "GET /books"]]),
-        link("router", "orders", "Checkout routes go to orders.", "Orders asks auth before it writes.", [["Routes", "POST /orders"]]),
-        link("orders", "auth", "Orders checks the session before writing.", "A missing session stops the order.", [["Needs", "Session cookie"]]),
+      edgeInteractions: [
+        arrow("router", "auth", "Login and session routes go to auth.", "The router matches the path, then auth owns the cookie.", [["Routes", "/login"]]),
+        arrow("router", "catalog", "Public book routes go to catalog.", "No session is required to browse.", [["Routes", "GET /books"]]),
+        arrow("router", "orders", "Checkout routes go to orders.", "Orders asks auth before it writes.", [["Routes", "POST /orders"]]),
+        arrow("orders", "auth", "Orders checks the session before writing.", "A missing session stops the order.", [["Needs", "Session cookie"]]),
       ],
-      nodes: {
+      nodeInteractions: {
         router: {
           label: "Router",
           tooltip: "net/http routes and the request log.",
@@ -675,7 +675,7 @@ window.DIAGRAMS = {
       },
     },
     c4: {
-      id: "c4",
+      viewId: "c4",
       tab: "c4",
       parent: null,
       title: "System context",
@@ -690,12 +690,12 @@ Rel(reader, shop, "Uses")
 Rel(shop, pay, "Charges", "HTTPS")
 Rel(shop, mail, "Sends mail", "SMTP")
 UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
-      edges: [
-        link("reader", "shop", "The reader browses and checks out.", "People do not call the card processor themselves.", [["C4", "Uses"]], { match: "Uses" }),
-        link("shop", "pay", "The bookshop charges the card.", "Only a paid order continues to fulfillment.", [["Protocol", "HTTPS"]], { match: "Charges" }),
-        link("shop", "mail", "The bookshop sends the receipt.", "Mail is delivered by an external system.", [["Protocol", "SMTP"]], { match: "Sends mail" }),
+      edgeInteractions: [
+        arrow("reader", "shop", "The reader browses and checks out.", "People do not call the card processor themselves.", [["C4", "Uses"]], { mermaidText: "Uses" }),
+        arrow("shop", "pay", "The bookshop charges the card.", "Only a paid order continues to fulfillment.", [["Protocol", "HTTPS"]], { mermaidText: "Charges" }),
+        arrow("shop", "mail", "The bookshop sends the receipt.", "Mail is delivered by an external system.", [["Protocol", "SMTP"]], { mermaidText: "Sends mail" }),
       ],
-      nodes: {
+      nodeInteractions: {
         reader: {
           label: "Reader",
           tooltip: "A person using a browser. They are outside the software system.",
@@ -709,7 +709,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           kicker: "System",
           body: "Open the container diagram to see the web app, API, database, and worker.",
           facts: [["C4", "Software system"], ["Next", "Containers"]],
-          zoom: "c4-containers",
+          opensView: "c4-containers",
         },
         pay: {
           label: "Card processor",
@@ -728,7 +728,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     "c4-containers": {
-      id: "c4-containers",
+      viewId: "c4-containers",
       tab: "c4",
       parent: "c4",
       title: "Containers",
@@ -750,15 +750,15 @@ Rel(api, worker, "Enqueues")
 Rel(worker, db, "Updates", "SQL")
 Rel(worker, pay, "Captures", "HTTPS")
 UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")`,
-      edges: [
-        link("reader", "web", "The reader uses the web app in a browser.", "Static pages only. Rules stay in the API.", [["Protocol", "HTTPS"]], { match: "Uses" }),
-        link("web", "api", "The web app calls the API.", "JSON in, JSON out. The browser does not open a database connection.", [["Format", "JSON"]], { match: "Calls" }),
-        link("api", "db", "The API reads and writes the system of record.", "Users, books, and orders live here.", [["Protocol", "SQL"]], { match: "SQL" }),
-        link("api", "worker", "The API enqueues payment and mail.", "Checkout can return before the receipt is sent.", [["Pattern", "Queue"]], { match: "Enqueues" }),
-        link("worker", "db", "The worker updates the order after the API created it.", "Capture and fulfillment columns change here.", [["Protocol", "SQL"]], { match: "Updates" }),
-        link("worker", "pay", "The worker captures an approved charge.", "The raw card number never reaches the worker.", [["Protocol", "HTTPS"]], { match: "Captures" }),
+      edgeInteractions: [
+        arrow("reader", "web", "The reader uses the web app in a browser.", "Static pages only. Rules stay in the API.", [["Protocol", "HTTPS"]], { mermaidText: "Uses" }),
+        arrow("web", "api", "The web app calls the API.", "JSON in, JSON out. The browser does not open a database connection.", [["Format", "JSON"]], { mermaidText: "Calls" }),
+        arrow("api", "db", "The API reads and writes the system of record.", "Users, books, and orders live here.", [["Protocol", "SQL"]], { mermaidText: "SQL" }),
+        arrow("api", "worker", "The API enqueues payment and mail.", "Checkout can return before the receipt is sent.", [["Pattern", "Queue"]], { mermaidText: "Enqueues" }),
+        arrow("worker", "db", "The worker updates the order after the API created it.", "Capture and fulfillment columns change here.", [["Protocol", "SQL"]], { mermaidText: "Updates" }),
+        arrow("worker", "pay", "The worker captures an approved charge.", "The raw card number never reaches the worker.", [["Protocol", "HTTPS"]], { mermaidText: "Captures" }),
       ],
-      nodes: {
+      nodeInteractions: {
         reader: {
           label: "Reader",
           tooltip: "Same person as on the context diagram.",
@@ -779,7 +779,7 @@ UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")`,
           kicker: "Container",
           body: "Open the component diagram for auth, catalog, and orders.",
           facts: [["Tech", "Go"], ["Next", "Components"]],
-          zoom: "c4-api",
+          opensView: "c4-api",
         },
         db: {
           label: "Database",
@@ -805,7 +805,7 @@ UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")`,
       },
     },
     "c4-api": {
-      id: "c4-api",
+      viewId: "c4-api",
       tab: "c4",
       parent: "c4-containers",
       title: "API components",
@@ -823,13 +823,13 @@ Rel(auth, db, "Reads", "SQL")
 Rel(catalog, db, "Reads", "SQL")
 Rel(orders, db, "Writes", "SQL")
 UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
-      edges: [
-        link("orders", "auth", "Orders asks auth whether the session is valid.", "Catalog does not take this hop.", [["Needs", "Session"]], { match: "Checks session" }),
-        link("auth", "db", "Auth reads the user row.", "The password hash stays in the database.", [["Protocol", "SQL"]], { match: "Reads" }),
-        link("catalog", "db", "Catalog reads books.", "This path is read-only.", [["Protocol", "SQL"]], { match: "Reads" }),
-        link("orders", "db", "Orders inserts the order row.", "The worker updates that row later.", [["Protocol", "SQL"]], { match: "Writes" }),
+      edgeInteractions: [
+        arrow("orders", "auth", "Orders asks auth whether the session is valid.", "Catalog does not take this hop.", [["Needs", "Session"]], { mermaidText: "Checks session" }),
+        arrow("auth", "db", "Auth reads the user row.", "The password hash stays in the database.", [["Protocol", "SQL"]], { mermaidText: "Reads" }),
+        arrow("catalog", "db", "Catalog reads books.", "This path is read-only.", [["Protocol", "SQL"]], { mermaidText: "Reads" }),
+        arrow("orders", "db", "Orders inserts the order row.", "The worker updates that row later.", [["Protocol", "SQL"]], { mermaidText: "Writes" }),
       ],
-      nodes: {
+      nodeInteractions: {
         auth: {
           label: "Auth",
           tooltip: "Password checks and session lookup.",
@@ -861,7 +861,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     checkout: {
-      id: "checkout",
+      viewId: "checkout",
       tab: "checkout",
       parent: null,
       title: "Checkout",
@@ -883,18 +883,18 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   saved -->|approved| placed
   saved -->|declined| fail
   fail --> pay`,
-      edges: [
-        link("cart", "address", "A priced cart moves to the address step.", "Stock is checked again here.", [["From", "Cart"]]),
-        link("address", "pay", "A valid address unlocks payment.", "The address is stored on the draft order.", [["Next", "Payment method"]]),
-        link("pay", "card", "The reader pays with a new card.", "Double-click this arrow to open the token, charge, and capture steps.", [["Branch", "New card"]], { label: "New card", zoom: "checkout-card" }),
-        link("pay", "saved", "The reader pays with a card stored at the processor.", "Our server sends the processor customer id, not the card number.", [["Branch", "Saved card"]]),
-        link("card", "placed", "The new card was approved.", "The order becomes paid and the worker can capture it.", [["Result", "Approved"]]),
-        link("card", "fail", "The new card was declined.", "The draft order stays unpaid.", [["Result", "Declined"]]),
-        link("saved", "placed", "The saved card was approved.", "Same paid state as a new card.", [["Result", "Approved"]]),
-        link("saved", "fail", "The saved card was declined.", "The reader can pick another method.", [["Result", "Declined"]]),
-        link("fail", "pay", "A decline returns to the payment choice.", "Nothing has been captured.", [["Retry", "Yes"]]),
+      edgeInteractions: [
+        arrow("cart", "address", "A priced cart moves to the address step.", "Stock is checked again here.", [["From", "Cart"]]),
+        arrow("address", "pay", "A valid address unlocks payment.", "The address is stored on the draft order.", [["Next", "Payment method"]]),
+        arrow("pay", "card", "The reader pays with a new card.", "Double-click this arrow to open the token, charge, and capture steps.", [["Branch", "New card"]], { label: "New card", opensView: "checkout-card" }),
+        arrow("pay", "saved", "The reader pays with a card stored at the processor.", "Our server sends the processor customer id, not the card number.", [["Branch", "Saved card"]]),
+        arrow("card", "placed", "The new card was approved.", "The order becomes paid and the worker can capture it.", [["Result", "Approved"]]),
+        arrow("card", "fail", "The new card was declined.", "The draft order stays unpaid.", [["Result", "Declined"]]),
+        arrow("saved", "placed", "The saved card was approved.", "Same paid state as a new card.", [["Result", "Approved"]]),
+        arrow("saved", "fail", "The saved card was declined.", "The reader can pick another method.", [["Result", "Declined"]]),
+        arrow("fail", "pay", "A decline returns to the payment choice.", "Nothing has been captured.", [["Retry", "Yes"]]),
       ],
-      nodes: {
+      nodeInteractions: {
         cart: {
           label: "Cart",
           tooltip: "The server cart is priced again before payment.",
@@ -922,7 +922,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           kicker: "Step",
           body: "Open the inner diagram for the token, charge, and capture steps.",
           facts: [["Next", "Payment steps"]],
-          zoom: "checkout-card",
+          opensView: "checkout-card",
         },
         saved: {
           label: "Saved card",
@@ -948,7 +948,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     "checkout-card": {
-      id: "checkout-card",
+      viewId: "checkout-card",
       tab: "checkout",
       parent: "checkout",
       title: "Card payment",
@@ -963,13 +963,13 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   charge --> decision
   decision -->|approved| capture
   decision -->|declined| decline`,
-      edges: [
-        link("token", "charge", "The token is what our API is allowed to charge.", "The browser created it with the processor. We never see the card number.", [["Sends", "Token"]]),
-        link("charge", "decision", "The API asks the processor to authorize that token.", "The amount is the repriced cart total.", [["Caller", "API"]]),
-        link("decision", "capture", "An approval can be captured.", "The worker captures it after checkout returns.", [["Result", "Approved"]]),
-        link("decision", "decline", "A decline captures nothing.", "A timeout is treated the same way.", [["Result", "Declined"]]),
+      edgeInteractions: [
+        arrow("token", "charge", "The token is what our API is allowed to charge.", "The browser created it with the processor. We never see the card number.", [["Sends", "Token"]]),
+        arrow("charge", "decision", "The API asks the processor to authorize that token.", "The amount is the repriced cart total.", [["Caller", "API"]]),
+        arrow("decision", "capture", "An approval can be captured.", "The worker captures it after checkout returns.", [["Result", "Approved"]]),
+        arrow("decision", "decline", "A decline captures nothing.", "A timeout is treated the same way.", [["Result", "Declined"]]),
       ],
-      nodes: {
+      nodeInteractions: {
         token: {
           label: "Create payment token",
           tooltip: "The browser sends card data to the processor, not to our API.",
@@ -1008,7 +1008,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     login: {
-      id: "login",
+      viewId: "login",
       tab: "login",
       parent: null,
       title: "Login",
@@ -1024,15 +1024,15 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   DB-->>API: User row
   API-->>Web: Session cookie
   Web-->>Reader: Redirect home`,
-      edges: [
-        link("Reader", "Web", "The reader submits the login form.", "The password is typed into the web app.", [["Sends", "Email and password"]], { match: "Submit email and password" }),
-        link("Web", "API", "The web app asks the API to start a session.", "Double-click this arrow to open the password check.", [["Call", "POST /login"]], { match: "POST /login", label: "POST /login", zoom: "login-api" }),
-        link("API", "DB", "The API looks up the user by email.", "Postgres returns the hash, not a yes or no.", [["Query", "Users by email"]], { match: "Find user by email" }),
-        link("DB", "API", "Postgres returns the user row.", "The hash is compared in the API, not in the database.", [["Returns", "User row"]], { match: "User row" }),
-        link("API", "Web", "The API sets the session cookie.", "No cookie is set when the password is wrong.", [["Cookie", "Session id"]], { match: "Session cookie" }),
-        link("Web", "Reader", "The web app sends the reader home.", "The cookie stays in the browser for the next call.", [["Next", "Home"]], { match: "Redirect home" }),
+      edgeInteractions: [
+        arrow("Reader", "Web", "The reader submits the login form.", "The password is typed into the web app.", [["Sends", "Email and password"]], { mermaidText: "Submit email and password" }),
+        arrow("Web", "API", "The web app asks the API to start a session.", "Double-click this arrow to open the password check.", [["Call", "POST /login"]], { mermaidText: "POST /login", label: "POST /login", opensView: "login-api" }),
+        arrow("API", "DB", "The API looks up the user by email.", "Postgres returns the hash, not a yes or no.", [["Query", "Users by email"]], { mermaidText: "Find user by email" }),
+        arrow("DB", "API", "Postgres returns the user row.", "The hash is compared in the API, not in the database.", [["Returns", "User row"]], { mermaidText: "User row" }),
+        arrow("API", "Web", "The API sets the session cookie.", "No cookie is set when the password is wrong.", [["Cookie", "Session id"]], { mermaidText: "Session cookie" }),
+        arrow("Web", "Reader", "The web app sends the reader home.", "The cookie stays in the browser for the next call.", [["Next", "Home"]], { mermaidText: "Redirect home" }),
       ],
-      nodes: {
+      nodeInteractions: {
         Reader: {
           label: "Reader",
           tooltip: "Types an email and password into the web app.",
@@ -1053,7 +1053,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           kicker: "Participant",
           body: "Open the inner diagram for the lookup, hash check, and session write.",
           facts: [["Next", "Password check"]],
-          zoom: "login-api",
+          opensView: "login-api",
         },
         DB: {
           label: "Postgres",
@@ -1065,7 +1065,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     "login-api": {
-      id: "login-api",
+      viewId: "login-api",
       tab: "login",
       parent: "login",
       title: "Password check",
@@ -1081,14 +1081,14 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   missing -->|no| reject
   hash -->|yes| session
   hash -->|no| reject`,
-      edges: [
-        link("lookup", "missing", "The lookup result decides the next step.", "Unknown emails and bad passwords stay indistinguishable.", [["Next", "Found or 401"]]),
-        link("missing", "hash", "A found user continues to the hash check.", "The plaintext password is still only in this request.", [["When", "User exists"]], { label: "Yes" }),
-        link("missing", "reject", "An unknown email returns 401.", "The response does not say that the account is missing.", [["When", "No user"]], { label: "No" }),
-        link("hash", "session", "A matching hash creates a session.", "The cookie is HttpOnly and Secure.", [["When", "Match"]], { label: "Yes" }),
-        link("hash", "reject", "A bad password returns the same 401.", "No session cookie is set.", [["When", "No match"]], { label: "No" }),
+      edgeInteractions: [
+        arrow("lookup", "missing", "The lookup result decides the next step.", "Unknown emails and bad passwords stay indistinguishable.", [["Next", "Found or 401"]]),
+        arrow("missing", "hash", "A found user continues to the hash check.", "The plaintext password is still only in this request.", [["When", "User exists"]], { label: "Yes" }),
+        arrow("missing", "reject", "An unknown email returns 401.", "The response does not say that the account is missing.", [["When", "No user"]], { label: "No" }),
+        arrow("hash", "session", "A matching hash creates a session.", "The cookie is HttpOnly and Secure.", [["When", "Match"]], { label: "Yes" }),
+        arrow("hash", "reject", "A bad password returns the same 401.", "No session cookie is set.", [["When", "No match"]], { label: "No" }),
       ],
-      nodes: {
+      nodeInteractions: {
         lookup: {
           label: "Look up user",
           tooltip: "Select the user by email. The email is stored in lowercase.",
@@ -1127,7 +1127,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     order: {
-      id: "order",
+      viewId: "order",
       tab: "order",
       parent: null,
       title: "Order",
@@ -1142,18 +1142,18 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   Shipped --> Delivered
   Delivered --> [*]
   Cancelled --> [*]`,
-      edges: [
-        link("*", "Draft", "Checkout creates the order in this state.", "Nothing is charged yet.", [["From", "Start"]], { label: "Start → Draft" }),
-        link("Draft", "Placed", "The reader submitted checkout.", "Payment is now in flight.", [["Next", "Paid or Cancelled"]]),
-        link("Placed", "Paid", "The processor authorized the charge.", "Fulfillment can start.", [["Money", "Authorized"]]),
-        link("Placed", "Cancelled", "Payment failed, so the order stops.", "No warehouse work starts.", [["Money", "Not taken"]]),
-        link("Paid", "Fulfilling", "A paid order enters the warehouse.", "Double-click the Fulfilling state for the inner steps.", [["Next", "Picking"]]),
-        link("Fulfilling", "Shipped", "The carrier scanned the parcel.", "Tracking is stored on the order.", [["Has", "Tracking number"]]),
-        link("Shipped", "Delivered", "The carrier confirmed delivery.", "This is the successful path.", [["Next", "End"]]),
-        link("Delivered", "*", "Delivery closes the order.", "This is the successful end state.", [["Terminal", "Yes"]], { label: "Delivered → End" }),
-        link("Cancelled", "*", "A cancelled order ends here.", "No shipment is sent.", [["Terminal", "Yes"]], { label: "Cancelled → End" }),
+      edgeInteractions: [
+        arrow("*", "Draft", "Checkout creates the order in this state.", "Nothing is charged yet.", [["From", "Start"]], { label: "Start → Draft" }),
+        arrow("Draft", "Placed", "The reader submitted checkout.", "Payment is now in flight.", [["Next", "Paid or Cancelled"]]),
+        arrow("Placed", "Paid", "The processor authorized the charge.", "Fulfillment can start.", [["Money", "Authorized"]]),
+        arrow("Placed", "Cancelled", "Payment failed, so the order stops.", "No warehouse work starts.", [["Money", "Not taken"]]),
+        arrow("Paid", "Fulfilling", "A paid order enters the warehouse.", "Double-click the Fulfilling state for the inner steps.", [["Next", "Picking"]]),
+        arrow("Fulfilling", "Shipped", "The carrier scanned the parcel.", "Tracking is stored on the order.", [["Has", "Tracking number"]]),
+        arrow("Shipped", "Delivered", "The carrier confirmed delivery.", "This is the successful path.", [["Next", "End"]]),
+        arrow("Delivered", "*", "Delivery closes the order.", "This is the successful end state.", [["Terminal", "Yes"]], { label: "Delivered → End" }),
+        arrow("Cancelled", "*", "A cancelled order ends here.", "No shipment is sent.", [["Terminal", "Yes"]], { label: "Cancelled → End" }),
       ],
-      nodes: {
+      nodeInteractions: {
         Draft: {
           label: "Draft",
           tooltip: "Cart has started checkout. No charge yet.",
@@ -1188,7 +1188,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           kicker: "State",
           body: "Open the inner diagram for picking, packed, and handoff.",
           facts: [["Next", "Warehouse states"]],
-          zoom: "order-fulfilling",
+          opensView: "order-fulfilling",
         },
         Shipped: {
           label: "Shipped",
@@ -1207,7 +1207,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     "order-fulfilling": {
-      id: "order-fulfilling",
+      viewId: "order-fulfilling",
       tab: "order",
       parent: "order",
       title: "Fulfilling",
@@ -1220,15 +1220,15 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   Backordered --> Picking
   Packed --> HandedOff
   HandedOff --> [*]`,
-      edges: [
-        link("*", "Picking", "Fulfillment starts when staff pull books.", "The parent order is already paid.", [["From", "Fulfilling"]], { label: "Start → Picking" }),
-        link("Picking", "Packed", "Every title was found and the parcel is sealed.", "The next step is the carrier.", [["When", "In stock"]]),
-        link("Picking", "Backordered", "A title is missing, so packing waits.", "The reader is emailed. The order stays paid.", [["When", "Missing title"]]),
-        link("Backordered", "Picking", "Stock arrived, so picking starts again.", "This can happen more than once.", [["When", "Restocked"]]),
-        link("Packed", "HandedOff", "The carrier scanned the parcel.", "The parent order becomes Shipped.", [["Next", "Shipped"]]),
-        link("HandedOff", "*", "Handoff leaves this inner diagram.", "The parent state is now Shipped.", [["Parent", "Shipped"]], { label: "Handed off → End" }),
+      edgeInteractions: [
+        arrow("*", "Picking", "Fulfillment starts when staff pull books.", "The parent order is already paid.", [["From", "Fulfilling"]], { label: "Start → Picking" }),
+        arrow("Picking", "Packed", "Every title was found and the parcel is sealed.", "The next step is the carrier.", [["When", "In stock"]]),
+        arrow("Picking", "Backordered", "A title is missing, so packing waits.", "The reader is emailed. The order stays paid.", [["When", "Missing title"]]),
+        arrow("Backordered", "Picking", "Stock arrived, so picking starts again.", "This can happen more than once.", [["When", "Restocked"]]),
+        arrow("Packed", "HandedOff", "The carrier scanned the parcel.", "The parent order becomes Shipped.", [["Next", "Shipped"]]),
+        arrow("HandedOff", "*", "Handoff leaves this inner diagram.", "The parent state is now Shipped.", [["Parent", "Shipped"]], { label: "Handed off → End" }),
       ],
-      nodes: {
+      nodeInteractions: {
         Picking: {
           label: "Picking",
           tooltip: "Staff are pulling books from shelves.",
@@ -1260,26 +1260,26 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       },
     },
     how: {
-      id: "how",
+      viewId: "how",
       tab: "how",
       parent: null,
       title: "1. Mermaid draws",
       summary: "Start here. Mermaid turns the chart string into a picture. Double-click Picture to add the notes. Double-click Mermaid to read show().",
       chart: `flowchart LR
   chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
         picture: box("picture", {
           kicker: "Next",
-          zoom: "how-notes",
+          opensView: "how-notes",
           tooltip: "The SVG in the page. The next picture adds the notes.",
         }),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn],
     },
     "how-notes": {
-      id: "how-notes",
+      viewId: "how-notes",
       tab: "how",
       parent: "how",
       title: "2. Notes sit beside the chart",
@@ -1287,24 +1287,24 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       chart: `flowchart LR
   chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
   chart --> notes["Notes"]`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
         picture: box("picture", {
           kicker: "Code",
-          zoom: "how-edges",
+          opensView: "how-edges",
           tooltip: "The SVG. Open it to read how an arrow is matched.",
         }),
         notes: box("notes", {
           kicker: "Next",
-          zoom: "how-match",
-          tooltip: "The nodes and edges maps. The next picture adds the matcher.",
+          opensView: "how-match",
+          tooltip: "The node and edge interactions. The next picture adds the matcher.",
         }),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside],
     },
     "how-match": {
-      id: "how-match",
+      viewId: "how-match",
       tab: "how",
       parent: "how-notes",
       title: "3. Scripts match them",
@@ -1314,29 +1314,29 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   chart --> notes["Notes"]
   notes --> app["Scripts"]
   picture --> app`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
         picture: box("picture", {
           kicker: "Code",
-          zoom: "how-edges",
+          opensView: "how-edges",
           tooltip: "The SVG. Open it to read how an arrow is matched.",
         }),
         notes: box("notes", {
           kicker: "Code",
-          zoom: "how-bind",
+          opensView: "how-bind",
           tooltip: "The notes. Open them to read how a box is found.",
         }),
         app: box("app", {
           kicker: "Next",
-          zoom: "how-hover",
+          opensView: "how-hover",
           tooltip: "The matcher. The next picture adds hover.",
         }),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic],
     },
     "how-hover": {
-      id: "how-hover",
+      viewId: "how-hover",
       tab: "how",
       parent: "how-match",
       title: "4. Hover lights the neighbors",
@@ -1347,22 +1347,22 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   notes --> app["Scripts"]
   picture --> app
   app --> hover["Hover"]`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", zoom: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", zoom: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
+        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
         app: box("app"),
         hover: box("hover", {
           kicker: "Next",
-          zoom: "how-click",
+          opensView: "how-click",
           tooltip: "Pointer enter. The next picture adds click.",
         }),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover],
     },
     "how-click": {
-      id: "how-click",
+      viewId: "how-click",
       tab: "how",
       parent: "how-hover",
       title: "5. Click opens the panel",
@@ -1374,23 +1374,23 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   picture --> app
   app --> hover["Hover"]
   app --> tap["Click"]`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", zoom: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", zoom: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
+        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
         app: box("app"),
         hover: box("hover"),
         tap: box("tap", {
           kicker: "Next",
-          zoom: "how-twozoom",
+          opensView: "how-twozoom",
           tooltip: "Opens this panel. The next picture shows double-click.",
         }),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap],
     },
     "how-twozoom": {
-      id: "how-twozoom",
+      viewId: "how-twozoom",
       tab: "how",
       parent: "how-click",
       title: "6. Double-click draws another chart",
@@ -1403,24 +1403,24 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   app --> hover["Hover"]
   app --> tap["Click"]
   tap --> another["Another chart"]`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", zoom: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", zoom: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
+        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
         app: box("app"),
         hover: box("hover"),
         tap: box("tap"),
         another: box("another", {
           kicker: "Next",
-          zoom: "how-camera",
+          opensView: "how-camera",
           tooltip: "A different view, drawn from scratch. The next picture adds the camera.",
         }),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext],
     },
     "how-camera": {
-      id: "how-camera",
+      viewId: "how-camera",
       tab: "how",
       parent: "how-twozoom",
       title: "7. The wheel only scales",
@@ -1434,65 +1434,65 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   app --> tap["Click"]
   tap --> another["Another chart"]
   picture --> cam["Scale"]`,
-      nodes: {
+      nodeInteractions: {
         chart: box("chart"),
         mmd: box("mmd"),
-        picture: box("picture", { kicker: "Code", zoom: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
-        notes: box("notes", { kicker: "Code", zoom: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
+        picture: box("picture", { kicker: "Code", opensView: "how-edges", tooltip: "The SVG. Open it to read how an arrow is matched." }),
+        notes: box("notes", { kicker: "Code", opensView: "how-bind", tooltip: "The notes. Open them to read how a box is found." }),
         app: box("app"),
         hover: box("hover"),
         tap: box("tap"),
         another: box("another"),
         cam: box("cam"),
       },
-      edges: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext, HOW_ARROW.toCam],
+      edgeInteractions: [HOW_ARROW.draw, HOW_ARROW.drawn, HOW_ARROW.beside, HOW_ARROW.toApp, HOW_ARROW.fromPic, HOW_ARROW.toHover, HOW_ARROW.toTap, HOW_ARROW.toNext, HOW_ARROW.toCam],
     },
     "how-show": {
-      id: "how-show",
+      viewId: "how-show",
       tab: "how",
       parent: "how",
       title: "show() draws one view",
       summary: "What show() does, in order. Click a box for that step's code. Back returns to the first picture.",
       chart: `flowchart TD
-  hash["Hash"] --> showFn["show(id)"]
+  hash["Hash"] --> showFn["show(viewId)"]
   showFn --> render["mermaid.render"]
   render --> token["Drop a stale SVG"]
-  token --> bindN["bindNodes"]
-  bindN --> bindE["bindEdges"]
+  token --> bindN["bindNodeInteractions"]
+  bindN --> bindE["bindEdgeInteractions"]
   bindE --> fitBox["fit"]`,
-      nodes: {
+      nodeInteractions: {
         hash: {
           label: "Hash",
-          tooltip: "The last id in the hash is the view to draw.",
+          tooltip: "The last viewId in the hash is the view to draw.",
           kicker: "Entry",
           body: md`
-            openFromHash splits location.hash on slashes and keeps the last id. #how/how-notes opens the notes picture. The hash is updated with replaceState, so moving between views does not push browser history.
+            openFromHash splits location.hash on slashes and keeps the last viewId. #how/how-notes opens the notes picture. The hash is updated with replaceState, so moving between views does not push browser history.
 
             ~~~js
             function openFromHash() {
               const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-              const id = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
-              if (!app.views[id]) show(DIAGRAMS.tabs[0].id);
-              else show(id);
+              const viewId = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
+              if (!app.views[viewId]) show(DIAGRAMS.tabs[0].id);
+              else show(viewId);
             }
             ~~~
           `,
           facts: [["Function", "openFromHash"], ["File", "js/nav.js"]],
         },
         showFn: {
-          label: "show(id)",
+          label: "show(viewId)",
           tooltip: "Looks up the view and clears the panel.",
           kicker: "Function",
           body: md`
             app.views is DIAGRAMS.views. pathTo walks parent links for the breadcrumb. closePanel runs first so the old detail does not sit on top of the new picture.
 
             ~~~js
-            async function show(id, from) {
-              const view = app.views[id];
+            async function show(viewId, fromInteraction) {
+              const view = app.views[viewId];
               if (!view) return;
-              if (app.current) app.cams[app.current.id] = { ...app.cam };
-              const origin = itemEls(from);
-              app.current = view;
+              if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+              const origin = wiredElements(fromInteraction);
+              app.view = view;
               app.stack = pathTo(view);
               closePanel();
               const token = ++app.renderToken;
@@ -1503,9 +1503,9 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               if (token !== app.renderToken) return;
               app.els.camera.innerHTML = svg;
               const svgEl = app.els.camera.querySelector("svg");
-              enterView(app.cams[id]);
-              bindNodes(svgEl);
-              bindEdges(svgEl);
+              enterView(app.cams[viewId]);
+              bindNodeInteractions(svgEl);
+              bindEdgeInteractions(svgEl);
               applySearch();
             }
             ~~~
@@ -1526,12 +1526,12 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               flowchart: { htmlLabels: true, useMaxWidth: false },
             });
 
-            async function show(id, from) {
-              const view = app.views[id];
+            async function show(viewId, fromInteraction) {
+              const view = app.views[viewId];
               if (!view) return;
-              if (app.current) app.cams[app.current.id] = { ...app.cam };
-              const origin = itemEls(from);
-              app.current = view;
+              if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+              const origin = wiredElements(fromInteraction);
+              app.view = view;
               app.stack = pathTo(view);
               closePanel();
               const token = ++app.renderToken;
@@ -1542,9 +1542,9 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               if (token !== app.renderToken) return;
               app.els.camera.innerHTML = svg;
               const svgEl = app.els.camera.querySelector("svg");
-              enterView(app.cams[id]);
-              bindNodes(svgEl);
-              bindEdges(svgEl);
+              enterView(app.cams[viewId]);
+              bindNodeInteractions(svgEl);
+              bindEdgeInteractions(svgEl);
               applySearch();
             }
             ~~~
@@ -1568,29 +1568,29 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           facts: [["Variable", "app.renderToken"]],
         },
         bindN: {
-          label: "bindNodes",
+          label: "bindNodeInteractions",
           tooltip: "Attaches each note to the shape Mermaid drew.",
           kicker: "Bind",
           body: md`
             This is where a box becomes a button. The next diagrams cover the match itself. From the third picture, double-click Notes.
 
             ~~~js
-            function attach(host, node) {
-              host.classList.add("is-node");
-              host.dataset.nodeId = node.id;
-              host.setAttribute("role", "button");
-              host.addEventListener("pointerenter", (event) => showTooltip(event, node));
-              host.addEventListener("click", (event) => onNodeClick(event, node));
-              host.addEventListener("dblclick", (event) => onNodeDblClick(event, node));
-              if (node.zoom) addBadge(host);
+            function wireShape(shape, interaction) {
+              shape.classList.add("is-node");
+              shape.dataset.chartId = interaction.chartId;
+              shape.setAttribute("role", "button");
+              shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+              shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
+              shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+              if (interaction.opensView) addBadge(shape);
             }
             ~~~
           `,
-          zoom: "how-bind",
-          facts: [["Function", "bindNodes"]],
+          opensView: "how-bind",
+          facts: [["Function", "bindNodeInteractions"]],
         },
         bindE: {
-          label: "bindEdges",
+          label: "bindEdgeInteractions",
           tooltip: "Attaches each note to the arrow Mermaid drew.",
           kicker: "Bind",
           body: md`
@@ -1598,29 +1598,29 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
 
             ~~~js
             edges.forEach((edge) => {
-              const path = flowchartLinkPath(svg, edge);
-              if (!path || path.dataset.bound) return;
+              const path = findFlowchartArrow(svg, edge);
+              if (!path || path.dataset.wired) return;
               claimEdge(edge, [path, nearestFlowchartLabel(path, labels)]);
             });
 
             edges.forEach((edge) => {
-              if (used.has(edge) || !edge.match) return;
-              const message = messages.find((item) => !item.used && textMatches(item.label, edge.match));
+              if (used.has(edge) || !edge.mermaidText) return;
+              const message = messages.find((item) => !item.wired && textMatches(item.label, edge.mermaidText));
               if (!message) return;
-              message.used = true;
+              message.wired = true;
               claimEdge(edge, [message.line, message.text]);
             });
             ~~~
           `,
-          zoom: "how-edges",
-          facts: [["Function", "bindEdges"]],
+          opensView: "how-edges",
+          facts: [["Function", "bindEdgeInteractions"]],
         },
         fitBox: {
           label: "fit",
           tooltip: "Scales the new SVG so it sits in the viewport.",
           kicker: "Camera",
           body: md`
-            enterView() runs before bindNodes, so the matcher sees the picture at its final scale. A view opened before gets its saved camera from app.cams. A new view gets fit(), which sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel does not call fit(). It calls reveal(), which only pans.
+            enterView() runs before bindNodeInteractions, so the matcher sees the picture at its final scale. A view opened before gets its saved camera from app.cams. A new view gets fit(), which sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel does not call fit(). It calls reveal(), which only pans.
 
             ~~~js
             function fit() {
@@ -1641,17 +1641,17 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           facts: [["Also", "the Fit button"]],
         },
       },
-      edges: [
-        link("hash", "showFn", "The hash selects the view.", "Only the last segment is used.", [["Function", "openFromHash"]]),
-        link("showFn", "render", "show() asks Mermaid to draw.", "The notes are not in this call.", [["Arg", "view.chart"]]),
-        link("render", "token", "The await can finish late.", "A newer show() wins.", [["Check", "token !== app.renderToken"]]),
-        link("token", "bindN", "Boxes are bound after the SVG is inserted.", "mermaidShapesFor runs per node.", [["Function", "bindNodes"]]),
-        link("bindN", "bindE", "Arrows are bound after boxes.", "State arrows need the node centers from this pass.", [["Function", "bindEdges"]]),
-        link("bindE", "fitBox", "The camera was placed before the binders ran.", "enterView() restores app.cams[id] or calls fit().", [["Call", "enterView"]]),
+      edgeInteractions: [
+        arrow("hash", "showFn", "The hash selects the view.", "Only the last segment is used.", [["Function", "openFromHash"]]),
+        arrow("showFn", "render", "show() asks Mermaid to draw.", "The notes are not in this call.", [["Arg", "view.chart"]]),
+        arrow("render", "token", "The await can finish late.", "A newer show() wins.", [["Check", "token !== app.renderToken"]]),
+        arrow("token", "bindN", "Boxes are bound after the SVG is inserted.", "findMermaidShapes runs per chartId.", [["Function", "bindNodeInteractions"]]),
+        arrow("bindN", "bindE", "Arrows are bound after boxes.", "State arrows need the shape centers from this pass.", [["Function", "bindEdgeInteractions"]]),
+        arrow("bindE", "fitBox", "The camera was placed before the binders ran.", "enterView() restores app.cams[viewId] or calls fit().", [["Call", "enterView"]]),
       ],
     },
     "how-bind": {
-      id: "how-bind",
+      viewId: "how-bind",
       tab: "how",
       parent: "how-match",
       title: "Finding a box",
@@ -1665,14 +1665,14 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
   c4Id --> size
   seqName --> size
   stateId --> size
-  size --> wire["attach"]`,
-      nodes: {
+  size --> wire["wireShape"]`,
+      nodeInteractions: {
         kind: {
           label: "Chart type",
           tooltip: "The first line of view.chart chooses the pattern.",
           kicker: "Rule",
           body: md`
-            flowchart, C4, sequenceDiagram, and stateDiagram each name the shape differently. mermaidShapesFor runs only that pattern. A miss does not fall through to another one. bindNodes still copies the map key onto the note before matching, because the node object does not store id.
+            flowchart, C4, sequenceDiagram, and stateDiagram each name the shape differently. findMermaidShapes runs only that pattern. A miss does not fall through to another one. It takes the chartId. The stored node interaction does not keep that id; nodeInteractions() adds chartId from the map key.
 
             ~~~js
             function chartKind(chart) {
@@ -1694,7 +1694,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             Mermaid prefixes the id with the render id. The note api matches diagram-2-flowchart-api-3. The pattern is anchored at the end, and only g.node is considered.
 
             ~~~js
-            const pattern = new RegExp(\`(?:^|-)flowchart-\${id}-\\\\d+$\`);
+            const pattern = new RegExp(\`(?:^|-)flowchart-\${chartId}-\\\\d+$\`);
             svg.querySelectorAll("g.node").forEach((el) => {
               if (pattern.test(el.id)) groups.add(el);
             });
@@ -1710,7 +1710,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             The alias is the last piece of the shape id. reader matches diagram-5-reader. Markers such as diagram-5-arrowhead are not c4-shape groups, so they are not buttons.
 
             ~~~js
-            const pattern = new RegExp(\`(?:^|-)\${id}$\`);
+            const pattern = new RegExp(\`(?:^|-)\${chartId}$\`);
             svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
               if (pattern.test(el.id)) groups.add(el);
             });
@@ -1727,7 +1727,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
 
             ~~~js
             svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
-              if (el.getAttribute("name") === node.id) groups.add(shapeGroup(el));
+              if (el.getAttribute("name") === chartId) groups.add(shapeGroup(el));
             });
             ~~~
           `,
@@ -1741,7 +1741,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             The state name sits in the middle of the id. Draft matches diagram-1-state-Draft-1. The start and end dots are root_start and root_end, so they do not match a state name.
 
             ~~~js
-            const pattern = new RegExp(\`(?:^|-)state-\${id}-\\\\d+$\`);
+            const pattern = new RegExp(\`(?:^|-)state-\${chartId}-\\\\d+$\`);
             svg.querySelectorAll("g.node").forEach((el) => {
               if (pattern.test(el.id)) groups.add(el);
             });
@@ -1766,80 +1766,80 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           facts: [["Function", "visibleShape"]],
         },
         wire: {
-          label: "attach",
+          label: "wireShape",
           tooltip: "The shape becomes a button.",
           kicker: "Listen",
           body: md`
-            attach sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If zoom is set, addBadge draws the green ↘ from the shape's getBBox. Enter and Space fire the same click handler.
+            wireShape sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If opensView is set, addBadge draws the green ↘ from the shape's getBBox. Enter and Space fire the same click handler.
 
             ~~~js
-            function attach(host, node) {
-              host.classList.add("is-node");
-              host.dataset.nodeId = node.id;
-              host.setAttribute("role", "button");
-              host.addEventListener("pointerenter", (event) => showTooltip(event, node));
-              host.addEventListener("click", (event) => onNodeClick(event, node));
-              host.addEventListener("dblclick", (event) => onNodeDblClick(event, node));
-              if (node.zoom) addBadge(host);
+            function wireShape(shape, interaction) {
+              shape.classList.add("is-node");
+              shape.dataset.chartId = interaction.chartId;
+              shape.setAttribute("role", "button");
+              shape.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+              shape.addEventListener("click", (event) => onInteractionClick(event, interaction));
+              shape.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+              if (interaction.opensView) addBadge(shape);
             }
             ~~~
           `,
-          facts: [["Function", "attach"], ["Badge", "addBadge"]],
+          facts: [["Function", "wireShape"], ["Badge", "addBadge"]],
         },
       },
-      edges: [
-        link("kind", "flowId", "A flowchart uses the node id in the group id.", "The render prefix stays in front.", [["Ends", "flowchart-id-n"]]),
-        link("kind", "c4Id", "C4 uses the alias.", "Only c4-shape groups count.", [["Ends", "-alias"]]),
-        link("kind", "seqName", "Sequence uses the name attribute.", "Top and bottom boxes both match.", [["Attribute", "name"]]),
-        link("kind", "stateId", "A state uses the state name in the group id.", "Start and end dots are separate.", [["Ends", "state-name-n"]]),
-        link("flowId", "size", "Tiny geometry is dropped.", "Lifelines fail this test.", [["Minimum", "8px"]]),
-        link("c4Id", "size", "The same size check.", "A marker is already excluded.", [["Minimum", "8px"]]),
-        link("seqName", "size", "Actor boxes pass.", "The lifeline line is not selected.", [["Minimum", "8px"]]),
-        link("stateId", "size", "State boxes pass.", "The start dot is not a note.", [["Minimum", "8px"]]),
-        link("size", "wire", "The survivors get listeners.", "A zoom node also gets a ↘ badge.", [["Function", "attach"]]),
+      edgeInteractions: [
+        arrow("kind", "flowId", "A flowchart uses the node id in the group id.", "The render prefix stays in front.", [["Ends", "flowchart-id-n"]]),
+        arrow("kind", "c4Id", "C4 uses the alias.", "Only c4-shape groups count.", [["Ends", "-alias"]]),
+        arrow("kind", "seqName", "Sequence uses the name attribute.", "Top and bottom boxes both match.", [["Attribute", "name"]]),
+        arrow("kind", "stateId", "A state uses the state name in the group id.", "Start and end dots are separate.", [["Ends", "state-name-n"]]),
+        arrow("flowId", "size", "Tiny geometry is dropped.", "Lifelines fail this test.", [["Minimum", "8px"]]),
+        arrow("c4Id", "size", "The same size check.", "A marker is already excluded.", [["Minimum", "8px"]]),
+        arrow("seqName", "size", "Actor boxes pass.", "The lifeline line is not selected.", [["Minimum", "8px"]]),
+        arrow("stateId", "size", "State boxes pass.", "The start dot is not a note.", [["Minimum", "8px"]]),
+        arrow("size", "wire", "The survivors get listeners.", "A node interaction with opensView also gets a ↘ badge.", [["Function", "wireShape"]]),
       ],
     },
     "how-edges": {
-      id: "how-edges",
+      viewId: "how-edges",
       tab: "how",
       parent: "how-match",
       title: "Finding an arrow",
-      summary: "bindEdges claims each arrow once, in this order. Click a box for that matcher. The first hit wins.",
+      summary: "bindEdgeInteractions claims each arrow once, in this order. Click a box for that matcher. The first hit wins.",
       chart: `flowchart TD
   listed["Read the notes"] --> flowBox["Flowchart id"]
   flowBox --> seqBox["Sequence text"]
   seqBox --> c4Box["C4 text"]
   c4Box --> geoBox["State geometry"]
   geoBox --> hitBox["Wide hit stroke"]`,
-      nodes: {
+      nodeInteractions: {
         listed: {
           label: "Read the notes",
-          tooltip: "currentEdges() turns the view's edges into records.",
+          tooltip: "edgeInteractions() turns the view's edge interactions into records.",
           kicker: "0",
           body: md`
-            An edge can be a pair [from, to] or the object link() returns. currentEdges copies from, to, and a stable id from-to-index. The label shown in the panel is the two node labels joined by an arrow.
+            An edge can be a pair [from, to] or the object arrow() returns. edgeInteractions() copies from, to, and makes edgeId from-to-index. The label shown in the panel is the two node labels joined by an arrow.
 
             ~~~js
-            function currentEdges() {
-              return (current.edges || []).map((edge, index) => {
+            function edgeInteractions() {
+              return (app.view.edgeInteractions || []).map((edge, index) => {
                 const from = Array.isArray(edge) ? edge[0] : edge.from;
                 const to = Array.isArray(edge) ? edge[1] : edge.to;
-                return { ...edge, from, to, id: \`\${from}-\${to}-\${index}\` };
+                return { ...edge, from, to, edgeId: \`\${from}-\${to}-\${index}\`, kind: "edge" };
               });
             }
             ~~~
           `,
-          facts: [["Function", "currentEdges"]],
+          facts: [["Function", "edgeInteractions"]],
         },
         flowBox: {
           label: "Flowchart id",
           tooltip: "The path id ends in L_from_to_0.",
           kicker: "1",
           body: md`
-            Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. nearestFlowchartLabel picks the label whose center is within 160px of the path midpoint, and marks it claimed so the next arrow cannot take it.
+            Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. nearestFlowchartLabel picks the label whose center is within 160px of the path midpoint, and the binder marks it wired so the next arrow cannot take it.
 
             ~~~js
-            function flowchartLinkPath(svg, edge) {
+            function findFlowchartArrow(svg, edge) {
               const from = edge.from.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
               const to = edge.to.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
               const pattern = new RegExp(\`(?:^|-)L_\${from}_\${to}_\\\\d+$\`);
@@ -1862,17 +1862,17 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             }
             ~~~
           `,
-          facts: [["Function", "flowchartLinkPath"], ["Label", "nearestFlowchartLabel"]],
+          facts: [["Function", "findFlowchartArrow"], ["Label", "nearestFlowchartLabel"]],
         },
         seqBox: {
           label: "Sequence text",
           tooltip: "messageText, then the message line.",
           kicker: "2",
           body: md`
-            Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.match. startsWith is allowed so a short match still hits. Each message is used once.
+            Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.mermaidText. startsWith is allowed so a short mermaidText still hits. Each message is used once.
 
             ~~~js
-            function mermaidSequenceMessages(svg) {
+            function sequenceMessages(svg) {
               [...svg.children].forEach((el) => {
                 const cls = el.getAttribute("class") || "";
                 if (cls.includes("messageText")) text = el;
@@ -1882,14 +1882,14 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               });
             }
 
-            function mermaidC4Rels(svg) {
-              const host = [...svg.querySelectorAll("g")].find((group) => {
+            function c4Relations(svg) {
+              const relationshipGroup = [...svg.querySelectorAll("g")].find((group) => {
                 const kids = [...group.children];
                 return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
               });
-              [...host.children].forEach((el) => {
+              [...relationshipGroup.children].forEach((el) => {
                 if (el.tagName === "line" || el.tagName === "path") {
-                  rel = { strokes: [el], texts: [], used: false };
+                  rel = { strokes: [el], texts: [], wired: false };
                   rels.push(rel);
                 } else if (el.tagName === "text" && rel) rel.texts.push(el);
               });
@@ -1902,17 +1902,17 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             }
             ~~~
           `,
-          facts: [["Needs", "edge.match"], ["Function", "mermaidSequenceMessages"]],
+          facts: [["Needs", "edge.mermaidText"], ["Function", "sequenceMessages"]],
         },
         c4Box: {
           label: "C4 text",
           tooltip: "A line or path, then the text that follows it.",
           kicker: "3",
           body: md`
-            C4 puts every relationship in one group. A line or path starts a relationship. The text nodes after it belong to that relationship, until the next line. Two arrows that both say Reads are consumed in source order, because each match sets used.
+            C4 puts every relationship in one group. A line or path starts a relationship. The text nodes after it belong to that relationship, until the next line. Two arrows that both say Reads are consumed in source order, because each match sets wired.
 
             ~~~js
-            function mermaidSequenceMessages(svg) {
+            function sequenceMessages(svg) {
               [...svg.children].forEach((el) => {
                 const cls = el.getAttribute("class") || "";
                 if (cls.includes("messageText")) text = el;
@@ -1922,14 +1922,14 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               });
             }
 
-            function mermaidC4Rels(svg) {
-              const host = [...svg.querySelectorAll("g")].find((group) => {
+            function c4Relations(svg) {
+              const relationshipGroup = [...svg.querySelectorAll("g")].find((group) => {
                 const kids = [...group.children];
                 return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
               });
-              [...host.children].forEach((el) => {
+              [...relationshipGroup.children].forEach((el) => {
                 if (el.tagName === "line" || el.tagName === "path") {
-                  rel = { strokes: [el], texts: [], used: false };
+                  rel = { strokes: [el], texts: [], wired: false };
                   rels.push(rel);
                 } else if (el.tagName === "text" && rel) rel.texts.push(el);
               });
@@ -1942,7 +1942,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             }
             ~~~
           `,
-          facts: [["Function", "mermaidC4Rels"], ["Order", "Source order"]],
+          facts: [["Function", "c4Relations"], ["Order", "Source order"]],
         },
         geoBox: {
           label: "State geometry",
@@ -1952,8 +1952,8 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             State arrows are matched by where they start and end. getPointAtLength plus getScreenCTM gives a screen point. That point is compared with the centers of the boxes already bound. Start and end dots use the id *. Their groups match root_start or root_end.
 
             ~~~js
-            function matchStateArrowsByEnds(paths, edges, svg) {
-              const centers = nodeCentersOnScreen(svg);
+            function matchStateArrows(paths, edges, svg) {
+              const centers = shapeCentersOnScreen(svg);
               paths.forEach((path) => {
                 const length = path.getTotalLength();
                 const start = nearestPoint(centers, screenPoint(path, 1));
@@ -1964,10 +1964,10 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               });
             }
 
-            function nodeCentersOnScreen(svg) {
+            function shapeCentersOnScreen(svg) {
               svg.querySelectorAll(".is-node").forEach((el) => {
                 const box = el.getBoundingClientRect();
-                items.push({ id: el.dataset.nodeId, x: box.left + box.width / 2, y: box.top + box.height / 2 });
+                items.push({ chartId: el.dataset.chartId, x: box.left + box.width / 2, y: box.top + box.height / 2 });
               });
               svg.querySelectorAll("g.node").forEach((el) => {
                 if (!/root_start|root_end/.test(el.id)) return;
@@ -1976,7 +1976,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             }
             ~~~
           `,
-          facts: [["Function", "matchStateArrowsByEnds"], ["Start", "*"]],
+          facts: [["Function", "matchStateArrows"], ["Start", "*"]],
         },
         hitBox: {
           label: "Wide hit stroke",
@@ -2003,12 +2003,12 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           facts: [["Class", "edge-hit"], ["Width", "18px"]],
         },
       },
-      edges: [
-        link("listed", "flowBox", "Flowchart arrows are tried first.", "Their ids already name the endpoints.", [["Pattern", "L_from_to_n"]]),
-        link("flowBox", "seqBox", "Unclaimed arrows try sequence text.", "edge.match has to be set.", [["Pair", "messageText + messageLine"]]),
-        link("seqBox", "c4Box", "Then C4 relationships.", "Duplicate labels are taken in order.", [["Flag", "used"]]),
-        link("c4Box", "geoBox", "State arrows are what remain.", "They are matched by geometry.", [["Class", "path.transition"]]),
-        link("geoBox", "hitBox", "Every claimed stroke gets a fat hit target.", "The visible line stays thin.", [["Class", "edge-hit"]]),
+      edgeInteractions: [
+        arrow("listed", "flowBox", "Flowchart arrows are tried first.", "Their ids already name the endpoints.", [["Pattern", "L_from_to_n"]]),
+        arrow("flowBox", "seqBox", "Unclaimed arrows try sequence text.", "edge.mermaidText has to be set.", [["Pair", "messageText + messageLine"]]),
+        arrow("seqBox", "c4Box", "Then C4 relationships.", "Duplicate labels are taken in order.", [["Flag", "wired"]]),
+        arrow("c4Box", "geoBox", "State arrows are what remain.", "They are matched by geometry.", [["Class", "path.transition"]]),
+        arrow("geoBox", "hitBox", "Every claimed stroke gets a fat hit target.", "The visible line stays thin.", [["Class", "edge-hit"]]),
       ],
     },
   },

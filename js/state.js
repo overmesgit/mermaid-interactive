@@ -27,11 +27,54 @@ const app = {
     close: document.getElementById("panel-close"),
   },
   stack: [],
-  current: null,
-  selected: null,
+  view: null,
+  selectedInteraction: null,
   renderToken: 0,
   hashLock: false,
   cam: { x: 40, y: 32, s: 1 },
   cams: {},
   drag: null,
 };
+
+// The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
+function nodeInteractions() {
+  const stored = (app.view && app.view.nodeInteractions) || {};
+  return Object.entries(stored).map(([chartId, interaction]) => ({
+    ...interaction,
+    chartId,
+    kind: "node",
+  }));
+}
+
+function nodeInteraction(chartId) {
+  const stored = app.view && app.view.nodeInteractions && app.view.nodeInteractions[chartId];
+  if (!stored) return null;
+  return { ...stored, chartId, kind: "node" };
+}
+
+// The edge interactions for the diagram on screen. edgeId is from-to-index, so two arrows between the same shapes stay distinct.
+function edgeInteractions() {
+  const view = app.view;
+  if (!view) return [];
+  const interactions = view.nodeInteractions || {};
+  return (view.edgeInteractions || []).map((edge, index) => {
+    const from = Array.isArray(edge) ? edge[0] : edge.from;
+    const to = Array.isArray(edge) ? edge[1] : edge.to;
+    const fromLabel = interactions[from]?.label || from;
+    const toLabel = interactions[to]?.label || to;
+    return {
+      kicker: "Arrow",
+      label: `${fromLabel} → ${toLabel}`,
+      tooltip: `${fromLabel} to ${toLabel}`,
+      ...(Array.isArray(edge) ? {} : edge),
+      from,
+      to,
+      edgeId: `${from}-${to}-${index}`,
+      kind: "edge",
+    };
+  });
+}
+
+function edgeInteraction(edgeId) {
+  return edgeInteractions().find((edge) => edge.edgeId === edgeId) || null;
+}

@@ -10,7 +10,7 @@ function pathTo(view) {
 }
 
 function renderChrome() {
-  const { els, stack, current } = app;
+  const { els, stack } = app;
   const root = stack[0];
   els.tabs.querySelectorAll("button").forEach((button) => {
     if (button.dataset.id === root.tab) button.setAttribute("aria-current", "true");
@@ -29,21 +29,21 @@ function renderChrome() {
     button.textContent = view.title;
     const last = index === stack.length - 1;
     if (last) button.setAttribute("aria-current", "true");
-    if (!last) button.addEventListener("click", () => show(view.id));
+    if (!last) button.addEventListener("click", () => show(view.viewId));
     els.crumbs.appendChild(button);
   });
-  els.summary.textContent = current.summary;
-  const next = "#" + stack.map((view) => view.id).join("/");
+  els.summary.textContent = app.view.summary;
+  const next = "#" + stack.map((view) => view.viewId).join("/");
   if (location.hash !== next) history.replaceState(null, "", next);
 }
 
-// `from` is the note that was drilled through. The old picture zooms toward it before the swap.
-async function show(id, from) {
-  const view = app.views[id];
+// `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
+async function show(viewId, fromInteraction) {
+  const view = app.views[viewId];
   if (!view) return;
-  if (app.current) app.cams[app.current.id] = { ...app.cam };
-  const origin = itemEls(from);
-  app.current = view;
+  if (app.view) app.cams[app.view.viewId] = { ...app.cam };
+  const origin = wiredElements(fromInteraction);
+  app.view = view;
   app.stack = pathTo(view);
   closePanel();
   hideTooltip();
@@ -61,9 +61,9 @@ async function show(id, from) {
       svgEl.setAttribute("width", String(box.width));
       svgEl.setAttribute("height", String(box.height));
     }
-    enterView(app.cams[id]);
-    bindNodes(svgEl);
-    bindEdges(svgEl);
+    enterView(app.cams[viewId]);
+    bindNodeInteractions(svgEl);
+    bindEdgeInteractions(svgEl);
     relaxLabels(svgEl);
     applySearch();
   } catch (error) {
@@ -75,12 +75,12 @@ async function show(id, from) {
 
 function openFromHash() {
   const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-  const id = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
-  if (!app.views[id]) {
+  const viewId = ids.length ? ids[ids.length - 1] : DIAGRAMS.tabs[0].id;
+  if (!app.views[viewId]) {
     show(DIAGRAMS.tabs[0].id);
     return;
   }
-  show(id);
+  show(viewId);
 }
 
 function wireTabs() {
