@@ -1,4 +1,4 @@
-# ADR-025 The page is an explainer, and agents make it through a skill
+# ADR-025 The tool explains hard things, and agents use it through a skill
 
 - Status: accepted, skill layout superseded by [ADR-029](029-join-and-check-in-page.md)
 - Date: 2026-10-11

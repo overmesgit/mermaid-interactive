@@ -1,4 +1,4 @@
-# ADR-004 Arrows use the same notes and handlers as nodes
+# ADR-004 Arrows are clickable, the same way as shapes
 
 - Status: accepted
 - Date: 2026-10-10

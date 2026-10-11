@@ -1,4 +1,4 @@
-# ADR-014 Selection keeps the camera
+# ADR-014 Clicking a shape keeps the zoom and the position
 
 - Status: accepted
 - Date: 2026-10-11

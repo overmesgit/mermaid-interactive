@@ -1,4 +1,4 @@
-# ADR-007 The first How tab was a map of files
+# ADR-007 Explain the page with a map of its files
 
 - Status: superseded by [ADR-008](008-teach-in-the-tool.md)
 - Date: 2026-10-10

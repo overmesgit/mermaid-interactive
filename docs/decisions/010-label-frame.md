@@ -1,4 +1,4 @@
-# ADR-010 A click does not frame the label
+# ADR-010 Clicking a shape draws no box around its label
 
 - Status: accepted
 - Date: 2026-10-10

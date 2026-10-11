@@ -1,4 +1,4 @@
-# ADR-020 How moves with Back and Next
+# ADR-020 Step through the How lesson with buttons, not badges
 
 - Status: accepted, drill hiding and the Back label superseded by [ADR-021](021-lesson-stays.md)
 - Date: 2026-10-11

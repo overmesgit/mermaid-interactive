@@ -97,3 +97,7 @@ A `code/` folder, named from a fence by path and lines, packed into the page as 
 > 1 - 4 we can rewrite this time
 
 Every ADR Context now starts with the problem, then why it matters. The decisions index maps the names used before ADR-019 to today's. CONTEXT.md gained a writing rule and the missing terms. Rewriting accepted ADRs was allowed this once, for wording only. No decision changed.
+
+> clearer ADR titles, a simpler status column in the decisions index, and a "start here" section in format.md. lets make those
+
+ADR titles now say the choice in plain words. The decisions index groups ADRs by topic, with four status words: Current, partly replaced, Planned, Replaced. `format.md` starts with five steps, including the join command.

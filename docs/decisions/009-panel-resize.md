@@ -1,4 +1,4 @@
-# ADR-009 Drag the panel border to set its width
+# ADR-009 Drag the panel's border to resize it
 
 - Status: accepted
 - Date: 2026-10-10

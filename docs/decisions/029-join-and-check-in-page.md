@@ -1,4 +1,4 @@
-# ADR-029 The agent writes diagrams.js. The file is joined, and the page checks it
+# ADR-029 No Python: join the files with a shell command, and let the page check them
 
 - Status: accepted, not built yet
 - Date: 2026-10-11

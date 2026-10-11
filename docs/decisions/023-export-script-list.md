@@ -1,4 +1,4 @@
-# ADR-023 Export reads the script list from the page
+# ADR-023 Keep one list of scripts, in index.html
 
 - Status: accepted
 - Date: 2026-10-11

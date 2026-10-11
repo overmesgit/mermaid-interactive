@@ -1,4 +1,4 @@
-# ADR-024 How notes name a function instead of copying it
+# ADR-024 How notes show a function by name instead of a pasted copy
 
 - Status: accepted
 - Date: 2026-10-11

@@ -1,4 +1,4 @@
-# ADR-016 The panel links to connected shapes and arrows
+# ADR-016 The panel links to the connected shapes and arrows
 
 - Status: accepted
 - Date: 2026-10-11

@@ -1,4 +1,4 @@
-# ADR-015 Drill-down zooms toward the shape, and each view keeps its camera
+# ADR-015 Animate opening an inner diagram, and remember each diagram's zoom
 
 - Status: accepted
 - Date: 2026-10-11

@@ -1,6 +1,93 @@
 # Decisions
 
-Append-only. The current choice is the latest accepted ADR on that topic. An older file stays so the history is still readable. For what holds today, read the requirements in [CONTEXT.md](../../CONTEXT.md) first.
+One file per decision, numbered in the order they were made. Files are never deleted, so the history stays readable. For what holds today, read the requirements in [CONTEXT.md](../../CONTEXT.md) first.
+
+| Status | Meaning |
+| --- | --- |
+| Current | In force and built. |
+| Current, partly replaced by N | In force, except the part a later ADR changed. The ADR file says which part. |
+| Planned | Agreed, not built yet. |
+| Replaced by N | No longer in force. Read N instead. |
+
+## Agent mode
+
+How an agent writes an explanation and hands it over.
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [025](025-explainer-skill.md) | The tool explains hard things, and agents use it through a skill | Current, partly replaced by 029 |
+| [026](026-content-file.md) | Each explanation is one file, separate from the engine | Planned |
+| [027](027-one-file-from-a-template.md) | An agent delivers one HTML file | Planned, partly replaced by 029 |
+| [028](028-pinned-cdn.md) | Pin exact versions of Mermaid and marked | Planned |
+| [029](029-join-and-check-in-page.md) | No Python: join the files with a shell command, and let the page check them | Planned |
+
+## Finding and wiring shapes
+
+How a note finds its piece of Mermaid's SVG and becomes clickable.
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [001](001-bind-the-svg.md) | Add clicks to the SVG Mermaid draws, instead of extending Mermaid | Current |
+| [004](004-arrows.md) | Arrows are clickable, the same way as shapes | Current |
+| [018](018-box-by-chart-type.md) | Find shapes with one rule per chart type | Current |
+| [019](019-interaction-naming.md) | Names show whether a thing is Mermaid's or ours | Current, partly replaced by 023 |
+
+## Camera and inner diagrams
+
+Zooming the picture versus opening another diagram.
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [003](003-two-zooms.md) | Double-click opens an inner diagram. The wheel only zooms the camera | Current, partly replaced by 014 |
+| [014](014-selection-keeps-camera.md) | Clicking a shape keeps the zoom and the position | Current |
+| [015](015-drill-transition.md) | Animate opening an inner diagram, and remember each diagram's zoom | Current |
+
+## Side panel
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [009](009-panel-resize.md) | Drag the panel's border to resize it | Current, partly replaced by 014 |
+| [016](016-panel-links.md) | The panel links to the connected shapes and arrows | Current |
+
+## Notes and code in the panel
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [012](012-markdown-notes.md) | Panel notes are markdown | Replaced by 013 |
+| [013](013-notes-in-templates.md) | Keep How notes inside diagrams.js, not in separate files | Current, partly replaced by 024 |
+| [024](024-notes-name-functions.md) | How notes show a function by name instead of a pasted copy | Current |
+| [030](030-code-folder.md) | Show code from a code/ folder, packed into the page | Planned |
+
+## The How lesson
+
+The tab that explains this page, step by step.
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [007](007-file-map.md) | Explain the page with a map of its files | Replaced by 008 |
+| [008](008-teach-in-the-tool.md) | The How tab teaches in steps, with code in the panel | Replaced by 012 |
+| [020](020-lesson-steps.md) | Step through the How lesson with buttons, not badges | Current, partly replaced by 021 |
+| [021](021-lesson-stays.md) | Prev and Next keep their place, even inside an inner diagram | Current, partly replaced by 022 |
+| [022](022-lesson-on-diagram.md) | Prev and Next sit on the top left of the diagram | Current |
+
+## Look and feel
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [005](005-light-dim.md) | Hover fades the other shapes only a little | Current |
+| [006](006-selection.md) | Double-click does not select text in the diagram | Current |
+| [010](010-label-frame.md) | Clicking a shape draws no box around its label | Current |
+| [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current |
+
+## Files and export
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [002](002-static-page.md) | Plain static files, with no build step | Replaced by 011 |
+| [011](011-split-scripts.md) | Split app.js into one script per job, still with no build | Current, partly replaced by 019 and 023 |
+| [023](023-export-script-list.md) | Keep one list of scripts, in index.html | Current |
+
+## Old names
 
 ADRs written before [ADR-019](019-interaction-naming.md) use older names. The decisions still hold under the new names:
 
@@ -16,36 +103,3 @@ ADRs written before [ADR-019](019-interaction-naming.md) use older names. The de
 | `mermaidShapesFor` | `findMermaidShapes` |
 | note id | chartId |
 | the + badge | the ↘ badge ([ADR-015](015-drill-transition.md)) |
-
-| ADR | Status | Choice |
-| --- | --- | --- |
-| [001](001-bind-the-svg.md) | accepted | Bind the SVG Mermaid already drew |
-| [002](002-static-page.md) | superseded by 011 | Static files, Mermaid 11 from a CDN |
-| [003](003-two-zooms.md) | accepted, fit and wait superseded by 014 | Drill-down replaces the SVG. The wheel only scales |
-| [004](004-arrows.md) | accepted | Arrows use the same notes and handlers as nodes |
-| [005](005-light-dim.md) | accepted | Hover dim stays light |
-| [006](006-selection.md) | accepted | Double-click does not select the label |
-| [007](007-file-map.md) | superseded by 008 | The first How tab was a map of files |
-| [008](008-teach-in-the-tool.md) | superseded by 012 | How teaches in steps, with code in the panel |
-| [009](009-panel-resize.md) | accepted, fit superseded by 014 | Drag the panel border to set its width |
-| [010](010-label-frame.md) | accepted | A click does not frame the label |
-| [011](011-split-scripts.md) | accepted, script list superseded by 019 | Scripts split by job, still no build |
-| [012](012-markdown-notes.md) | superseded by 013 | Panel notes are markdown. How code lives in the note |
-| [013](013-notes-in-templates.md) | accepted, copied code superseded by 024 | How notes are markdown templates in diagrams.js |
-| [014](014-selection-keeps-camera.md) | accepted | A click selects and keeps the camera |
-| [015](015-drill-transition.md) | accepted | Drill-down zooms toward the shape. Each view keeps its camera |
-| [016](016-panel-links.md) | accepted | The panel links to connected shapes and arrows |
-| [017](017-compact-chrome.md) | accepted | One header row, help behind ?, system font |
-| [018](018-box-by-chart-type.md) | accepted | A box is matched by chart type |
-| [019](019-interaction-naming.md) | accepted, script list superseded by 023 | Names say whether a thing is Mermaid's or ours |
-| [020](020-lesson-steps.md) | accepted, drill hiding superseded by 021 | How moves with Back and Next |
-| [021](021-lesson-stays.md) | accepted, placement superseded by 022 | Prev and Next stay put, including inside a node |
-| [022](022-lesson-on-diagram.md) | accepted | Prev and Next sit on the top left of the diagram |
-| [023](023-export-script-list.md) | accepted | Export reads the script list from the page |
-| [024](024-notes-name-functions.md) | accepted | How notes name a function instead of copying it |
-| [025](025-explainer-skill.md) | accepted, skill layout superseded by 029 | The page is an explainer, and agents make it through a skill |
-| [026](026-content-file.md) | accepted, not built yet | One content file per explanation, apart from the engine |
-| [027](027-one-file-from-a-template.md) | accepted, template and build.py superseded by 029 | The agent hands over one HTML file, built from a template |
-| [028](028-pinned-cdn.md) | accepted, not built yet | Mermaid and marked load at exact versions |
-| [029](029-join-and-check-in-page.md) | accepted, not built yet | The agent writes diagrams.js. The file is joined, and the page checks it |
-| [030](030-code-folder.md) | accepted, not built yet | Notes show code from a code folder, packed into the page with gzip |

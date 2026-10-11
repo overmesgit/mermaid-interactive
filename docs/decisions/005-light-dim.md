@@ -1,4 +1,4 @@
-# ADR-005 Hover dim stays light
+# ADR-005 Hover fades the other shapes only a little
 
 - Status: accepted
 - Date: 2026-10-10

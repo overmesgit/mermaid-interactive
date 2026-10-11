@@ -1,4 +1,4 @@
-# ADR-013 How notes are markdown templates in diagrams.js
+# ADR-013 Keep How notes inside diagrams.js, not in separate files
 
 - Status: accepted, copied code superseded by [ADR-024](024-notes-name-functions.md)
 - Date: 2026-10-11

@@ -1,4 +1,4 @@
-# ADR-026 One content file per explanation, apart from the engine
+# ADR-026 Each explanation is one file, separate from the engine
 
 - Status: accepted, not built yet
 - Date: 2026-10-11

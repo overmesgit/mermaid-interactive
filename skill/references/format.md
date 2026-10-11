@@ -6,6 +6,35 @@ This is the only description of the format. The repo docs link here.
 
 Status: [ADR-026](../../docs/decisions/026-content-file.md) moves the helpers into the engine and gives each explanation its own file. That split is not built yet. Today the sample content and the helpers both live in `diagrams.js`. The fields below are the ones the engine reads today.
 
+## Start here
+
+1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
+2. **Put the code the notes show in `code/`,** next to `diagrams.js`. See [Code files](#code-files). Skip this if the notes show no code from files.
+3. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
+4. **Join it into one HTML file.** Without a `code/` folder:
+
+   ```bash
+   cat skill/assets/head.html diagrams.js skill/assets/tail.html > explanation.html
+   ```
+
+   With a `code/` folder, each file is also packed in, as gzip and base64:
+
+   ```bash
+   {
+     cat skill/assets/head.html diagrams.js skill/assets/tail.html
+     (cd code && find . -type f | sort | while read -r f; do
+       printf '<script type="application/gzip" data-file="%s">\n' "${f#./}"
+       gzip -cn "$f" | base64
+       printf '</script>\n'
+     done)
+   } > explanation.html
+   ```
+
+   Both need a POSIX shell: Linux, macOS, or Git Bash on Windows.
+5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
+
+Step 4 does not work yet. `head.html` and `tail.html` are not built ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+
 ## Shape
 
 ```js

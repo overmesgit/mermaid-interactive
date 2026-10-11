@@ -1,4 +1,4 @@
-# ADR-021 Prev and Next stay put, including inside a node
+# ADR-021 Prev and Next keep their place, even inside an inner diagram
 
 - Status: accepted, placement superseded by [ADR-022](022-lesson-on-diagram.md)
 - Date: 2026-10-11

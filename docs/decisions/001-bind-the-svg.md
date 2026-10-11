@@ -1,4 +1,4 @@
-# ADR-001 Bind the SVG Mermaid already drew
+# ADR-001 Add clicks to the SVG Mermaid draws, instead of extending Mermaid
 
 - Status: accepted
 - Date: 2026-10-10

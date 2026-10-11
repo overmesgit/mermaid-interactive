@@ -1,4 +1,4 @@
-# ADR-008 How teaches in steps, with code in the panel
+# ADR-008 The How tab teaches in steps, with code in the panel
 
 - Status: superseded by [ADR-012](012-markdown-notes.md)
 - Date: 2026-10-10

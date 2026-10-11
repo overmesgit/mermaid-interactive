@@ -1,4 +1,4 @@
-# ADR-011 Scripts split by job, still no build
+# ADR-011 Split app.js into one script per job, still with no build
 
 - Status: accepted. The script list is superseded by [ADR-019](019-interaction-naming.md).
 - Date: 2026-10-11

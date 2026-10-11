@@ -1,4 +1,4 @@
-# ADR-006 Double-click does not select the label
+# ADR-006 Double-click does not select text in the diagram
 
 - Status: accepted
 - Date: 2026-10-10

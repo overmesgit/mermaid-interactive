@@ -1,4 +1,4 @@
-# ADR-002 Static files, Mermaid 11 from a CDN
+# ADR-002 Plain static files, with no build step
 
 - Status: superseded by [ADR-011](011-split-scripts.md)
 - Date: 2026-10-10

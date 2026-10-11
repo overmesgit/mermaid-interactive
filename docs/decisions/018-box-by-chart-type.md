@@ -1,4 +1,4 @@
-# ADR-018 A box is matched by chart type
+# ADR-018 Find shapes with one rule per chart type
 
 - Status: accepted
 - Date: 2026-10-11

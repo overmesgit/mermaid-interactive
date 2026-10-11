@@ -1,4 +1,4 @@
-# ADR-017 One header row, help behind ?, system font
+# ADR-017 Fewer bars above the diagram, shortcuts behind ?, one font
 
 - Status: accepted
 - Date: 2026-10-11

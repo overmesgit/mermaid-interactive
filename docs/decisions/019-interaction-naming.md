@@ -1,4 +1,4 @@
-# ADR-019 Names say whether a thing is Mermaid's or ours
+# ADR-019 Names show whether a thing is Mermaid's or ours
 
 - Status: accepted, script list superseded by [ADR-023](023-export-script-list.md)
 - Date: 2026-10-11

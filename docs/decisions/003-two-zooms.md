@@ -1,4 +1,4 @@
-# ADR-003 Drill-down replaces the SVG. The wheel only scales
+# ADR-003 Double-click opens an inner diagram. The wheel only zooms the camera
 
 - Status: accepted
 - Date: 2026-10-10

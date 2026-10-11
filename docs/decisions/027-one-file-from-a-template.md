@@ -1,4 +1,4 @@
-# ADR-027 The agent hands over one HTML file, built from a template
+# ADR-027 An agent delivers one HTML file
 
 - Status: accepted, template slot and `build.py` superseded by [ADR-029](029-join-and-check-in-page.md)
 - Date: 2026-10-11

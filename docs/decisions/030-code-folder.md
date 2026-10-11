@@ -1,4 +1,4 @@
-# ADR-030 Notes show code from a code folder, packed into the page with gzip
+# ADR-030 Show code from a code/ folder, packed into the page
 
 - Status: accepted, not built yet
 - Date: 2026-10-11
