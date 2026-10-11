@@ -1,4 +1,4 @@
-// The details aside. A click on a node or an arrow fills it.
+// The details aside. A click on a shape or an arrow fills it.
 
 const PANEL_MIN = 240;
 const PANEL_GAP = 280;
@@ -114,22 +114,27 @@ function renderNote(el, source) {
   marked.lexer(source).forEach((token) => appendBlock(el, token));
 }
 
-// An arrow links to its two ends. A node links to every arrow that touches it.
-function renderLinks(item) {
-  const nodes = app.current.nodes;
+// An edge interaction links to its two ends. A node interaction links to every arrow that touches it.
+function renderLinks(interaction) {
   const rows = [];
-  if (item.from) {
-    if (nodes[item.from]) rows.push(["From", { ...nodes[item.from], id: item.from }, nodes[item.from].label]);
-    if (nodes[item.to]) rows.push(["To", { ...nodes[item.to], id: item.to }, nodes[item.to].label]);
+  if (interaction.kind === "edge") {
+    const from = nodeInteraction(interaction.from);
+    const to = nodeInteraction(interaction.to);
+    if (from) rows.push({ term: "From", target: from, text: from.label });
+    if (to) rows.push({ term: "To", target: to, text: to.label });
   } else {
-    currentEdges().forEach((edge) => {
+    edgeInteractions().forEach((edge) => {
       const suffix = edge.label.includes("→") ? "" : ` (${edge.label})`;
-      if (edge.from === item.id) rows.push(["Out", edge, `→ ${nodes[edge.to]?.label || "end"}${suffix}`]);
-      if (edge.to === item.id) rows.push(["In", edge, `← ${nodes[edge.from]?.label || "start"}${suffix}`]);
+      if (edge.from === interaction.chartId) {
+        rows.push({ term: "Out", target: edge, text: `→ ${nodeInteraction(edge.to)?.label || "end"}${suffix}` });
+      }
+      if (edge.to === interaction.chartId) {
+        rows.push({ term: "In", target: edge, text: `← ${nodeInteraction(edge.from)?.label || "start"}${suffix}` });
+      }
     });
   }
   app.panel.links.replaceChildren();
-  rows.forEach(([term, target, text]) => {
+  rows.forEach(({ term, target, text }) => {
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
     const button = document.createElement("button");
@@ -142,33 +147,33 @@ function renderLinks(item) {
   });
 }
 
-function openPanel(node) {
-  app.selected = node;
+function openPanel(interaction) {
+  app.selectedInteraction = interaction;
   const panel = app.panel;
-  panel.kicker.textContent = node.kicker || "";
-  panel.title.textContent = node.label;
-  panel.lead.textContent = node.tooltip;
-  renderNote(panel.body, node.body || "");
+  panel.kicker.textContent = interaction.kicker || "";
+  panel.title.textContent = interaction.label;
+  panel.lead.textContent = interaction.tooltip;
+  renderNote(panel.body, interaction.body || "");
   panel.facts.replaceChildren();
-  (node.facts || []).forEach(([term, detail]) => {
+  (interaction.facts || []).forEach(([term, detail]) => {
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
     dt.textContent = term;
     dd.textContent = detail;
     panel.facts.append(dt, dd);
   });
-  renderLinks(node);
-  panel.zoom.hidden = !node.zoom;
+  renderLinks(interaction);
+  panel.zoom.hidden = !interaction.opensView;
   app.els.panel.hidden = false;
   app.els.panel.setAttribute("aria-hidden", "false");
   app.els.workspace.classList.add("panel-open");
   panel.close.focus();
-  const selected = markSelected(node);
+  const selected = markSelected(interaction);
   requestAnimationFrame(() => reveal(selected));
 }
 
 function closePanel() {
-  app.selected = null;
+  app.selectedInteraction = null;
   markSelected(null);
   app.els.panel.hidden = true;
   app.els.panel.setAttribute("aria-hidden", "true");
@@ -176,24 +181,24 @@ function closePanel() {
   app.panel.zoom.hidden = true;
 }
 
-// Nodes and arrows share this. `node` is the note; an arrow note also has from and to.
+// Shapes and arrows share this. `interaction` is the node or edge interaction.
 // The panel opens at once. A double-click that drills in closes it again through show().
-function onNodeClick(event, node) {
+function onInteractionClick(event, interaction) {
   event.stopPropagation();
   hideTooltip();
   if (event.target.closest(".zoom-badge")) {
-    if (node.zoom) show(node.zoom, node);
+    if (interaction.opensView) show(interaction.opensView, interaction);
     return;
   }
-  openPanel(node);
+  openPanel(interaction);
 }
 
-function onNodeDblClick(event, node) {
+function onInteractionDblClick(event, interaction) {
   event.preventDefault();
   event.stopPropagation();
   window.getSelection()?.removeAllRanges();
-  if (node.zoom) show(node.zoom, node);
-  else openPanel(node);
+  if (interaction.opensView) show(interaction.opensView, interaction);
+  else openPanel(interaction);
 }
 
 function setPanelWidth(width) {
@@ -224,7 +229,7 @@ function wirePanel() {
       handle.removeEventListener("pointercancel", end);
       handle.classList.remove("is-dragging");
       document.documentElement.classList.remove("is-resizing");
-      requestAnimationFrame(() => reveal(markSelected(app.selected)));
+      requestAnimationFrame(() => reveal(markSelected(app.selectedInteraction)));
     }
     handle.addEventListener("pointermove", move);
     handle.addEventListener("pointerup", end);
@@ -233,6 +238,8 @@ function wirePanel() {
 
   app.panel.close.addEventListener("click", closePanel);
   app.panel.zoom.addEventListener("click", () => {
-    if (app.selected && app.selected.zoom) show(app.selected.zoom, app.selected);
+    if (app.selectedInteraction && app.selectedInteraction.opensView) {
+      show(app.selectedInteraction.opensView, app.selectedInteraction);
+    }
   });
 }

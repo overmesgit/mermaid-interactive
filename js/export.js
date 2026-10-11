@@ -5,6 +5,7 @@ const APP_SCRIPTS = [
   "js/camera.js",
   "js/highlight.js",
   "js/panel.js",
+  "js/mermaid-svg.js",
   "js/bind.js",
   "js/nav.js",
   "js/export.js",
@@ -23,7 +24,7 @@ async function exportHtml() {
     setStatus("Export needs a local server. Open the folder with a static server, then export.");
     return;
   }
-  const hash = app.stack.map((view) => view.id).join("/");
+  const hash = app.stack.map((view) => view.viewId).join("/");
   const safe = (source) => source.replace(/<\/script/gi, "<\\/script");
   const body = document.body.cloneNode(true);
   body.querySelectorAll("script").forEach((script) => script.remove());

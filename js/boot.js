@@ -44,7 +44,7 @@ wirePanel();
 
 document.getElementById("copy").addEventListener("click", async () => {
   try {
-    await navigator.clipboard.writeText(app.current.chart.trim() + "\n");
+    await navigator.clipboard.writeText(app.view.chart.trim() + "\n");
     setStatus("Copied the Mermaid source.");
   } catch {
     setStatus("Could not copy. Select the diagram source from the file instead.");
@@ -76,11 +76,11 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     hideTooltip();
     if (app.els.workspace.classList.contains("panel-open")) closePanel();
-    else if (app.stack.length > 1) show(app.stack[app.stack.length - 2].id);
+    else if (app.stack.length > 1) show(app.stack[app.stack.length - 2].viewId);
   }
   if (event.key === "Backspace" && !typing && app.stack.length > 1) {
     event.preventDefault();
-    show(app.stack[app.stack.length - 2].id);
+    show(app.stack[app.stack.length - 2].viewId);
   }
 });
 

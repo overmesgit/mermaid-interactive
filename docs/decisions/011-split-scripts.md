@@ -1,6 +1,6 @@
 # ADR-011 Scripts split by job, still no build
 
-- Status: accepted
+- Status: accepted. The script list is superseded by [ADR-019](019-interaction-naming.md).
 - Date: 2026-10-11
 - Supersedes: [ADR-002](002-static-page.md)
 

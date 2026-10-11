@@ -1,4 +1,4 @@
-// Hover dimming and the search filter. Both write is-dim on the bound SVG.
+// Hover dimming and the search filter. Both write is-dim on the wired SVG.
 
 function setStatus(text) {
   app.els.status.textContent = text;
@@ -8,8 +8,8 @@ function setStatus(text) {
   }, 2400);
 }
 
-function tooltipText(node) {
-  return node.zoom ? `${node.tooltip} Double-click to open the inner diagram.` : node.tooltip;
+function tooltipText(interaction) {
+  return interaction.opensView ? `${interaction.tooltip} Double-click to open the inner diagram.` : interaction.tooltip;
 }
 
 function placeTooltip(event) {
@@ -24,11 +24,10 @@ function placeTooltip(event) {
   tooltip.style.top = `${y}px`;
 }
 
-function showTooltip(event, item) {
-  app.els.tooltip.textContent = tooltipText(item);
+function showTooltip(event, interaction) {
+  app.els.tooltip.textContent = tooltipText(interaction);
   placeTooltip(event);
-  if (item.from) paint({ edgeId: item.id });
-  else paint({ nodeId: item.id });
+  highlightAround(interaction);
 }
 
 function hideTooltip() {
@@ -36,73 +35,74 @@ function hideTooltip() {
   applySearch();
 }
 
-function paint(focus) {
-  const edges = currentEdges();
-  const hotEdges = new Set();
-  const hotNodes = new Set();
-  if (focus.edgeId) {
-    hotEdges.add(focus.edgeId);
-    const edge = edges.find((item) => item.id === focus.edgeId);
-    if (edge) {
-      hotNodes.add(edge.from);
-      hotNodes.add(edge.to);
-    }
-  } else if (focus.nodeId) {
-    hotNodes.add(focus.nodeId);
+function highlightAround(interaction) {
+  const edges = edgeInteractions();
+  const litEdgeIds = new Set();
+  const litChartIds = new Set();
+  if (interaction.kind === "edge") {
+    litEdgeIds.add(interaction.edgeId);
+    litChartIds.add(interaction.from);
+    litChartIds.add(interaction.to);
+  } else {
+    litChartIds.add(interaction.chartId);
     edges.forEach((edge) => {
-      if (edge.from === focus.nodeId || edge.to === focus.nodeId) {
-        hotEdges.add(edge.id);
-        hotNodes.add(edge.from);
-        hotNodes.add(edge.to);
+      if (edge.from === interaction.chartId || edge.to === interaction.chartId) {
+        litEdgeIds.add(edge.edgeId);
+        litChartIds.add(edge.from);
+        litChartIds.add(edge.to);
       }
     });
   }
-  const active = Boolean(focus.edgeId || focus.nodeId);
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {
-    const on = !active || hotNodes.has(el.dataset.nodeId);
-    el.classList.toggle("is-dim", active && !on);
+    const on = litChartIds.has(el.dataset.chartId);
+    el.classList.toggle("is-dim", !on);
     el.classList.remove("is-hit");
   });
   app.els.camera.querySelectorAll(".is-edge:not(.edge-hit), .is-edge-label").forEach((el) => {
-    const on = !active || hotEdges.has(el.dataset.edgeId);
-    el.classList.toggle("is-dim", active && !on);
-    el.classList.toggle("is-hot", active && on);
+    const on = litEdgeIds.has(el.dataset.edgeId);
+    el.classList.toggle("is-dim", !on);
+    el.classList.toggle("is-hot", on);
   });
 }
 
-// The bound SVG pieces for a node or an arrow note.
-function itemEls(item) {
-  if (!item) return [];
-  const key = item.from ? "edgeId" : "nodeId";
-  const selector = item.from ? ".is-edge:not(.edge-hit), .is-edge-label" : ".is-node";
-  return [...app.els.camera.querySelectorAll(selector)].filter((el) => el.dataset[key] === item.id);
+// The wired SVG pieces for a node or edge interaction.
+function wiredElements(interaction) {
+  if (!interaction) return [];
+  if (interaction.kind === "edge") {
+    return [...app.els.camera.querySelectorAll(".is-edge:not(.edge-hit), .is-edge-label")].filter(
+      (el) => el.dataset.edgeId === interaction.edgeId
+    );
+  }
+  return [...app.els.camera.querySelectorAll(".is-node")].filter(
+    (el) => el.dataset.chartId === interaction.chartId
+  );
 }
 
 // The shape or arrow the panel describes. Hover and search do not touch is-selected.
-function markSelected(item) {
+function markSelected(interaction) {
   app.els.camera.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
-  const els = itemEls(item);
-  els.forEach((el) => el.classList.add("is-selected"));
-  return els;
+  const elements = wiredElements(interaction);
+  elements.forEach((el) => el.classList.add("is-selected"));
+  return elements;
 }
 
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
-  const haystack = (item) =>
-    [item.label, item.tooltip, item.body, item.kicker, item.match, ...(item.facts || []).flat()]
+  const haystack = (interaction) =>
+    [interaction.label, interaction.tooltip, interaction.body, interaction.kicker, interaction.mermaidText, ...(interaction.facts || []).flat()]
       .join(" ")
       .toLowerCase();
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {
-    const node = app.current.nodes[el.dataset.nodeId];
-    if (!node) return;
-    const hit = !query || haystack(node).includes(query);
+    const interaction = nodeInteraction(el.dataset.chartId);
+    if (!interaction) return;
+    const hit = !query || haystack(interaction).includes(query);
     el.classList.toggle("is-dim", Boolean(query) && !hit);
     el.classList.toggle("is-hit", Boolean(query) && hit);
   });
   app.els.camera.querySelectorAll(".is-edge:not(.edge-hit), .is-edge-label").forEach((el) => {
-    const edge = edgeById(el.dataset.edgeId);
-    if (!edge) return;
-    const hit = !query || haystack(edge).includes(query);
+    const interaction = edgeInteraction(el.dataset.edgeId);
+    if (!interaction) return;
+    const hit = !query || haystack(interaction).includes(query);
     el.classList.toggle("is-dim", Boolean(query) && !hit);
     el.classList.toggle("is-hot", Boolean(query) && hit);
   });
