@@ -14,6 +14,7 @@ const app = {
     status: document.getElementById("status"),
     search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
+    help: document.getElementById("help"),
   },
   panel: {
     kicker: document.getElementById("panel-kicker"),
@@ -21,6 +22,7 @@ const app = {
     lead: document.getElementById("panel-lead"),
     body: document.getElementById("panel-body"),
     facts: document.getElementById("panel-facts"),
+    links: document.getElementById("panel-links"),
     zoom: document.getElementById("panel-zoom"),
     close: document.getElementById("panel-close"),
   },
@@ -29,7 +31,7 @@ const app = {
   selected: null,
   renderToken: 0,
   hashLock: false,
-  clickTimer: 0,
   cam: { x: 40, y: 32, s: 1 },
+  cams: {},
   drag: null,
 };

@@ -4,12 +4,12 @@ mermaid.initialize({
   startOnLoad: false,
   securityLevel: "strict",
   theme: "base",
-  fontFamily: "Segoe UI, sans-serif",
+  fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
   flowchart: { htmlLabels: true, useMaxWidth: false, curve: "basis" },
   sequence: { useMaxWidth: false },
   c4: { useMaxWidth: false },
   themeVariables: {
-    fontFamily: "Segoe UI, sans-serif",
+    fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
     fontSize: "15px",
     background: "transparent",
     primaryColor: "#f3efe4",
@@ -60,9 +60,18 @@ app.els.search.addEventListener("input", applySearch);
 
 document.addEventListener("keydown", (event) => {
   const typing = event.target.closest("input, textarea");
+  // Escape on the open help closes only the help, not the panel behind it.
+  if (app.els.help.matches(":popover-open")) {
+    if (event.key === "Escape") app.els.help.hidePopover();
+    return;
+  }
   if (event.key === "/" && !typing) {
     event.preventDefault();
     app.els.search.focus();
+  }
+  if (event.key === "?" && !typing) {
+    event.preventDefault();
+    app.els.help.showPopover();
   }
   if (event.key === "Escape") {
     hideTooltip();

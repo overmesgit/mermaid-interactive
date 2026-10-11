@@ -24,7 +24,7 @@ When several elements match, an element that contains another match is dropped. 
 
 `visibleShape` then drops anything under 8 by 8 pixels. Sequence lifelines are tall and have almost no width, so they fail this test and do not become invisible click targets.
 
-`attach` makes the surviving group a button: hover, click, double-click, Enter, and Space. If the note has `zoom`, a green + badge is drawn from the group's box. Double-click or the badge calls `show(zoom)`.
+`attach` makes the surviving group a button: hover, click, double-click, Enter, and Space. If the note has `zoom`, a green ↘ badge is drawn from the group's box. Double-click or the badge calls `show(zoom)`.
 
 ## Arrows
 
@@ -39,7 +39,7 @@ Path coordinates ignore the camera's CSS transform. `getScreenCTM` includes it, 
 
 The visible stroke is too thin to hover. `wireMermaidEdge` clones it, strips the arrowhead, and puts an 18px transparent stroke (`.edge-hit`) on top. `pointer-events` is `stroke`, so the empty middle of the arrow is still a miss. Only the first stroke is a keyboard button. The label listens too, and it is not a second tab stop.
 
-An arrow uses the same click and double-click handlers as a box. An arrow with `zoom` has no + badge. The tooltip says to double-click.
+An arrow uses the same click and double-click handlers as a box. An arrow with `zoom` has no ↘ badge. The tooltip says to double-click.
 
 ## What the matcher does not do
 

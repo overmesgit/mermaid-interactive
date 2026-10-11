@@ -36,22 +36,26 @@ const HOW_BOX = {
       show() sends view.chart to mermaid.render and keeps a token. If the reader opens another view before this draw finishes, the token no longer matches and the late SVG is dropped. Double-click this box to walk that function.
 
       ~~~js
-      async function show(id) {
+      async function show(id, from) {
         const view = app.views[id];
         if (!view) return;
+        if (app.current) app.cams[app.current.id] = { ...app.cam };
+        const origin = itemEls(from);
         app.current = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
-        app.els.camera.innerHTML = "";
-        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        const [{ svg }] = await Promise.all([
+          mermaid.render(\`diagram-\${token}\`, view.chart),
+          leaveView(origin),
+        ]);
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
+        enterView(app.cams[id]);
         bindNodes(svgEl);
         bindEdges(svgEl);
         applySearch();
-        requestAnimationFrame(fit);
       }
       ~~~
     `,
@@ -66,22 +70,26 @@ const HOW_BOX = {
       The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodes and bindEdges run after that. They are what make the shapes and arrows clickable.
 
       ~~~js
-      async function show(id) {
+      async function show(id, from) {
         const view = app.views[id];
         if (!view) return;
+        if (app.current) app.cams[app.current.id] = { ...app.cam };
+        const origin = itemEls(from);
         app.current = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
-        app.els.camera.innerHTML = "";
-        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        const [{ svg }] = await Promise.all([
+          mermaid.render(\`diagram-\${token}\`, view.chart),
+          leaveView(origin),
+        ]);
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
+        enterView(app.cams[id]);
         bindNodes(svgEl);
         bindEdges(svgEl);
         applySearch();
-        requestAnimationFrame(fit);
       }
       ~~~
     `,
@@ -167,7 +175,7 @@ const HOW_BOX = {
     tooltip: "Opens the side panel.",
     kicker: "Input",
     body: md`
-      A shape that has an inner diagram waits 220ms before the panel opens, so a double-click can cancel the click. The green + badge does not wait. It calls show() at once. openPanel fills the title, the lead, this note, and the facts. The note is markdown, so the code below is part of that text. Then it calls fit(), which throws away the pan and zoom you had, because the stage just got narrower.
+      The panel opens on the first click. The green ↘ badge calls show() instead. openPanel fills the title, the lead, this note, and the facts. The note is markdown, so the code below is part of that text. markSelected puts is-selected on the shape or arrow, so the picture shows what the panel is about. The camera keeps its pan and zoom. reveal() only pans when the panel now covers the selected shape. renderLinks lists the two ends of an arrow, or every arrow in and out of a shape. Each link opens that note's panel.
 
       ~~~js
       function onNodeClick(event, node) {
@@ -175,29 +183,28 @@ const HOW_BOX = {
           show(node.zoom);
           return;
         }
-        const wait = node.zoom ? 220 : 0;
-        app.clickTimer = setTimeout(() => openPanel(node), wait);
+        openPanel(node);
       }
 
       function openPanel(node) {
         panel.title.textContent = node.label;
         renderNote(panel.body, node.body || "");
-        requestAnimationFrame(fit);
+        const selected = markSelected(node);
+        requestAnimationFrame(() => reveal(selected));
       }
       ~~~
     `,
-    facts: [["Function", "onNodeClick"], ["Wait", "220ms if zoom is set"]],
+    facts: [["Function", "onNodeClick"], ["Camera", "kept, reveal() pans if needed"]],
   },
   another: {
     label: "Another chart",
     tooltip: "show() swaps in a different view.",
     kicker: "Next",
     body: md`
-      This is a new SVG, not a closer look at the same one. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.
+      This is a new SVG, not a closer look at the same one. While Mermaid draws it, leaveView() zooms the old picture toward the shape you opened and fades it out. Each view keeps its own camera in app.cams, so stepping back up restores the pan and zoom you left. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.
 
       ~~~js
       function onNodeDblClick(event, node) {
-        clearTimeout(app.clickTimer);
         window.getSelection()?.removeAllRanges();
         if (node.zoom) show(node.zoom);
         else openPanel(node);
@@ -248,22 +255,26 @@ const HOW_ARROW = {
       mermaid.render gets view.chart and a fresh id. The notes stay in JavaScript.
 
       ~~~js
-      async function show(id) {
+      async function show(id, from) {
         const view = app.views[id];
         if (!view) return;
+        if (app.current) app.cams[app.current.id] = { ...app.cam };
+        const origin = itemEls(from);
         app.current = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
-        app.els.camera.innerHTML = "";
-        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        const [{ svg }] = await Promise.all([
+          mermaid.render(\`diagram-\${token}\`, view.chart),
+          leaveView(origin),
+        ]);
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
+        enterView(app.cams[id]);
         bindNodes(svgEl);
         bindEdges(svgEl);
         applySearch();
-        requestAnimationFrame(fit);
       }
       ~~~
     `,
@@ -277,22 +288,26 @@ const HOW_ARROW = {
       show() inserts that string into #camera. A stale render is ignored when app.renderToken has already moved on.
 
       ~~~js
-      async function show(id) {
+      async function show(id, from) {
         const view = app.views[id];
         if (!view) return;
+        if (app.current) app.cams[app.current.id] = { ...app.cam };
+        const origin = itemEls(from);
         app.current = view;
         app.stack = pathTo(view);
         closePanel();
         const token = ++app.renderToken;
-        app.els.camera.innerHTML = "";
-        const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+        const [{ svg }] = await Promise.all([
+          mermaid.render(\`diagram-\${token}\`, view.chart),
+          leaveView(origin),
+        ]);
         if (token !== app.renderToken) return;
         app.els.camera.innerHTML = svg;
         const svgEl = app.els.camera.querySelector("svg");
+        enterView(app.cams[id]);
         bindNodes(svgEl);
         bindEdges(svgEl);
         applySearch();
-        requestAnimationFrame(fit);
       }
       ~~~
     `,
@@ -407,14 +422,14 @@ const HOW_ARROW = {
           show(node.zoom);
           return;
         }
-        const wait = node.zoom ? 220 : 0;
-        app.clickTimer = setTimeout(() => openPanel(node), wait);
+        openPanel(node);
       }
 
       function openPanel(node) {
         panel.title.textContent = node.label;
         renderNote(panel.body, node.body || "");
-        requestAnimationFrame(fit);
+        const selected = markSelected(node);
+        requestAnimationFrame(() => reveal(selected));
       }
       ~~~
     `,
@@ -423,13 +438,12 @@ const HOW_ARROW = {
   toNext: link(
     "tap",
     "another",
-    "Double-click calls show(zoom) and clears the pending panel.",
+    "Double-click calls show(zoom), which closes the panel.",
     md`
-      A single click on a shape that can drill in waits 220ms. The double-click clears that timer, clears the text selection, and draws the next view.
+      The first click of a double-click has already opened the panel. The double-click clears the text selection and draws the next view. show() closes the panel on the way.
 
       ~~~js
       function onNodeDblClick(event, node) {
-        clearTimeout(app.clickTimer);
         window.getSelection()?.removeAllRanges();
         if (node.zoom) show(node.zoom);
         else openPanel(node);
@@ -1350,7 +1364,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       tab: "how",
       parent: "how-match",
       title: "4. Hover lights the neighbors",
-      summary: "Hover is the new piece. Double-click Hover to add click. The other + boxes open the code for drawing, boxes, and arrows.",
+      summary: "Hover is the new piece. Double-click Hover to add click. The other ↘ boxes open the code for drawing, boxes, and arrows.",
       chart: `flowchart LR
   chart["Chart text"] --> mmd["Mermaid"] --> picture["Picture"]
   chart --> notes["Notes"]
@@ -1497,22 +1511,26 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             app.views is DIAGRAMS.views. pathTo walks parent links for the breadcrumb. closePanel runs first so the old detail does not sit on top of the new picture.
 
             ~~~js
-            async function show(id) {
+            async function show(id, from) {
               const view = app.views[id];
               if (!view) return;
+              if (app.current) app.cams[app.current.id] = { ...app.cam };
+              const origin = itemEls(from);
               app.current = view;
               app.stack = pathTo(view);
               closePanel();
               const token = ++app.renderToken;
-              app.els.camera.innerHTML = "";
-              const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+              const [{ svg }] = await Promise.all([
+                mermaid.render(\`diagram-\${token}\`, view.chart),
+                leaveView(origin),
+              ]);
               if (token !== app.renderToken) return;
               app.els.camera.innerHTML = svg;
               const svgEl = app.els.camera.querySelector("svg");
+              enterView(app.cams[id]);
               bindNodes(svgEl);
               bindEdges(svgEl);
               applySearch();
-              requestAnimationFrame(fit);
             }
             ~~~
           `,
@@ -1532,22 +1550,26 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               flowchart: { htmlLabels: true, useMaxWidth: false },
             });
 
-            async function show(id) {
+            async function show(id, from) {
               const view = app.views[id];
               if (!view) return;
+              if (app.current) app.cams[app.current.id] = { ...app.cam };
+              const origin = itemEls(from);
               app.current = view;
               app.stack = pathTo(view);
               closePanel();
               const token = ++app.renderToken;
-              app.els.camera.innerHTML = "";
-              const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
+              const [{ svg }] = await Promise.all([
+                mermaid.render(\`diagram-\${token}\`, view.chart),
+                leaveView(origin),
+              ]);
               if (token !== app.renderToken) return;
               app.els.camera.innerHTML = svg;
               const svgEl = app.els.camera.querySelector("svg");
+              enterView(app.cams[id]);
               bindNodes(svgEl);
               bindEdges(svgEl);
               applySearch();
-              requestAnimationFrame(fit);
             }
             ~~~
           `,
@@ -1622,7 +1644,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           tooltip: "Scales the new SVG so it sits in the viewport.",
           kicker: "Camera",
           body: md`
-            fit() runs on the next frame, after layout. It sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel calls fit() again because the stage got narrower.
+            enterView() runs before bindNodes, so the matcher sees the picture at its final scale. A view opened before gets its saved camera from app.cams. A new view gets fit(), which sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel does not call fit(). It calls reveal(), which only pans.
 
             ~~~js
             function fit() {
@@ -1640,7 +1662,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             }
             ~~~
           `,
-          facts: [["Also", "openPanel calls fit()"]],
+          facts: [["Also", "the Fit button"]],
         },
       },
       edges: [
@@ -1649,7 +1671,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         link("render", "token", "The await can finish late.", "A newer show() wins.", [["Check", "token !== app.renderToken"]]),
         link("token", "bindN", "Boxes are bound after the SVG is inserted.", "mermaidShapesFor runs per node.", [["Function", "bindNodes"]]),
         link("bindN", "bindE", "Arrows are bound after boxes.", "State arrows need the node centers from this pass.", [["Function", "bindEdges"]]),
-        link("bindE", "fitBox", "Then the camera frames the picture.", "Search is applied just before fit.", [["Call", "requestAnimationFrame(fit)"]]),
+        link("bindE", "fitBox", "The camera was placed before the binders ran.", "enterView() restores app.cams[id] or calls fit().", [["Call", "enterView"]]),
       ],
     },
     "how-bind": {
@@ -1751,7 +1773,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           tooltip: "The shape becomes a button.",
           kicker: "5",
           body: md`
-            attach sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If zoom is set, addBadge draws the green plus from the shape's getBBox. Enter and Space fire the same click handler.
+            attach sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If zoom is set, addBadge draws the green ↘ from the shape's getBBox. Enter and Space fire the same click handler.
 
             ~~~js
             function attach(host, node) {
@@ -1772,7 +1794,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
         link("idBox", "nameBox", "Name is the second try.", "Sequence actors need it.", [["Attribute", "name"]]),
         link("nameBox", "words", "Text is the third try.", "State labels often land here.", [["Equals", "node.label"]]),
         link("words", "size", "Tiny geometry is dropped.", "Lifelines fail this test.", [["Minimum", "8px"]]),
-        link("size", "wire", "The survivors get listeners.", "A zoom node also gets a plus.", [["Function", "attach"]]),
+        link("size", "wire", "The survivors get listeners.", "A zoom node also gets a ↘ badge.", [["Function", "attach"]]),
       ],
     },
     "how-edges": {

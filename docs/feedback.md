@@ -51,3 +51,13 @@ The box was the HTML label's frame and scrollbar. [ADR-010](decisions/010-label-
 > Let create a documentation for this project. Main requirements. Main decision points. Main feedback that I provided.
 
 That request is this file, `CONTEXT.md`, and `docs/decisions/`. Implementation detail stays in the source and the How tab.
+
+## 2026-10-11
+
+> any suggestions for our frontend desing, ui, ux?
+
+Twelve suggestions. A chose the selection and camera fixes, the drill-down transition, panel links, and the compact chrome. [ADR-014](decisions/014-selection-keeps-camera.md), [ADR-015](decisions/015-drill-transition.md), [ADR-016](decisions/016-panel-links.md), [ADR-017](decisions/017-compact-chrome.md).
+
+> each time we open side bar it also moves diagram to the left, can we fix it?
+
+That was `fit()` on panel open, still running from a cached script. ADR-014 had already removed it.

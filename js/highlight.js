@@ -70,6 +70,22 @@ function paint(focus) {
   });
 }
 
+// The bound SVG pieces for a node or an arrow note.
+function itemEls(item) {
+  if (!item) return [];
+  const key = item.from ? "edgeId" : "nodeId";
+  const selector = item.from ? ".is-edge:not(.edge-hit), .is-edge-label" : ".is-node";
+  return [...app.els.camera.querySelectorAll(selector)].filter((el) => el.dataset[key] === item.id);
+}
+
+// The shape or arrow the panel describes. Hover and search do not touch is-selected.
+function markSelected(item) {
+  app.els.camera.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
+  const els = itemEls(item);
+  els.forEach((el) => el.classList.add("is-selected"));
+  return els;
+}
+
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
   const haystack = (item) =>

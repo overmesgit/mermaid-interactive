@@ -24,6 +24,60 @@ function fit() {
   applyCam();
 }
 
+// Pan the least distance that brings these elements inside the viewport. The scale stays.
+function reveal(els) {
+  const view = app.els.viewport.getBoundingClientRect();
+  const boxes = els.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
+  if (!boxes.length) return;
+  const pad = 24;
+  const left = Math.min(...boxes.map((box) => box.left));
+  const right = Math.max(...boxes.map((box) => box.right));
+  const top = Math.min(...boxes.map((box) => box.top));
+  const bottom = Math.max(...boxes.map((box) => box.bottom));
+  let dx = 0;
+  let dy = 0;
+  if (right > view.right - pad) dx = view.right - pad - right;
+  if (left + dx < view.left + pad) dx = view.left + pad - left;
+  if (bottom > view.bottom - pad) dy = view.bottom - pad - bottom;
+  if (top + dy < view.top + pad) dy = view.top + pad - top;
+  if (!dx && !dy) return;
+  app.cam.x += dx;
+  app.cam.y += dy;
+  applyCam();
+}
+
+const LEAVE_MS = 200;
+
+// Fade the old SVG out before show() swaps it. With origin elements, also zoom toward them.
+function leaveView(els) {
+  const { cam, els: ui } = app;
+  if (!ui.camera.querySelector("svg") || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return Promise.resolve();
+  }
+  ui.camera.classList.add("is-leaving");
+  const boxes = els.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
+  if (boxes.length) {
+    const view = ui.viewport.getBoundingClientRect();
+    const px = (Math.min(...boxes.map((b) => b.left)) + Math.max(...boxes.map((b) => b.right))) / 2 - view.left;
+    const py = (Math.min(...boxes.map((b) => b.top)) + Math.max(...boxes.map((b) => b.bottom))) / 2 - view.top;
+    const k = 1.8;
+    cam.x = px - (px - cam.x) * k;
+    cam.y = py - (py - cam.y) * k;
+    cam.s *= k;
+  }
+  applyCam();
+  return new Promise((resolve) => setTimeout(resolve, LEAVE_MS));
+}
+
+// The new SVG fades in through the base opacity transition on #camera.
+function enterView(saved) {
+  app.els.camera.classList.remove("is-leaving");
+  if (saved) {
+    Object.assign(app.cam, saved);
+    applyCam();
+  } else fit();
+}
+
 function zoomBy(factor) {
   const { cam, els } = app;
   const rect = els.viewport.getBoundingClientRect();

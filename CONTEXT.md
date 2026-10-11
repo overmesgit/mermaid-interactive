@@ -17,7 +17,7 @@ A, a software engineer. The useful way to work is in the code, in small steps, w
 - It runs in the browser.
 - A click on a node or an arrow opens a side panel with the notes for that shape.
 - Hover shows a tooltip.
-- If a shape has its own diagram, a double-click or the + badge opens that diagram.
+- If a shape has its own diagram, a double-click or the ↘ badge opens that diagram.
 - Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `zoom` is set.
 - Hover may dim unrelated shapes. The dim stays light.
 - Double-click drills in without selecting the label. Text in the panel stays selectable.

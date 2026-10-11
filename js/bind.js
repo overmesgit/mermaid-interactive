@@ -69,7 +69,7 @@ function addBadge(host) {
   const circle = document.createElementNS(SVG_NS, "circle");
   circle.setAttribute("r", "9");
   const path = document.createElementNS(SVG_NS, "path");
-  path.setAttribute("d", "M-4 0h8M0-4v8");
+  path.setAttribute("d", "M-3.5-3.5L3.5 3.5M3.5-1V3.5H-1");
   badge.append(circle, path);
   host.appendChild(badge);
 }

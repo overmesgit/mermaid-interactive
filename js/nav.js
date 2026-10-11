@@ -37,9 +37,12 @@ function renderChrome() {
   if (location.hash !== next) history.replaceState(null, "", next);
 }
 
-async function show(id) {
+// `from` is the note that was drilled through. The old picture zooms toward it before the swap.
+async function show(id, from) {
   const view = app.views[id];
   if (!view) return;
+  if (app.current) app.cams[app.current.id] = { ...app.cam };
+  const origin = itemEls(from);
   app.current = view;
   app.stack = pathTo(view);
   closePanel();
@@ -47,9 +50,8 @@ async function show(id) {
   renderChrome();
   // A slower mermaid.render must not overwrite a diagram the reader has already left.
   const token = ++app.renderToken;
-  app.els.camera.innerHTML = "";
   try {
-    const { svg } = await mermaid.render(`diagram-${token}`, view.chart);
+    const [{ svg }] = await Promise.all([mermaid.render(`diagram-${token}`, view.chart), leaveView(origin)]);
     if (token !== app.renderToken) return;
     app.els.camera.innerHTML = svg;
     const svgEl = app.els.camera.querySelector("svg");
@@ -59,13 +61,14 @@ async function show(id) {
       svgEl.setAttribute("width", String(box.width));
       svgEl.setAttribute("height", String(box.height));
     }
+    enterView(app.cams[id]);
     bindNodes(svgEl);
     bindEdges(svgEl);
     relaxLabels(svgEl);
     applySearch();
-    requestAnimationFrame(fit);
   } catch (error) {
     if (token !== app.renderToken) return;
+    app.els.camera.classList.remove("is-leaving");
     app.els.camera.textContent = "Could not draw this diagram. " + (error.message || error);
   }
 }

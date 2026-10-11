@@ -12,6 +12,7 @@
       <p class="eyebrow">Mermaid in the browser</p>
       <h1>Interactive diagrams</h1>
     </div>
+    <nav id="tabs" aria-label="Diagrams"></nav>
     <div class="tools">
       <label class="search">
         <span>Find</span>
@@ -21,8 +22,6 @@
       <button id="export" type="button">Export HTML</button>
     </div>
   </header>
-
-  <nav id="tabs" aria-label="Diagrams"></nav>
 
   <div class="workspace" id="workspace">
     <section class="stage-wrap">
@@ -35,12 +34,12 @@
           <button id="zoom-out" type="button" title="Zoom out camera">−</button>
           <button id="fit" type="button" title="Fit diagram">Fit</button>
           <button id="zoom-in" type="button" title="Zoom in camera">+</button>
+          <button id="help-open" type="button" title="How to use this page (?)" popovertarget="help">?</button>
         </div>
       </div>
       <div id="viewport">
         <div id="camera"></div>
       </div>
-      <p id="hint">Click a node or an arrow for details. Double-click a + or a marked arrow to open its diagram. Drag empty space to pan, scroll to zoom.</p>
     </section>
 
     <aside id="panel" hidden aria-hidden="true" aria-label="Details">
@@ -54,9 +53,25 @@
         <p id="panel-lead"></p>
         <div id="panel-body"></div>
         <dl id="panel-facts"></dl>
+        <dl id="panel-links" aria-label="Connections"></dl>
         <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
       </div>
     </aside>
+  </div>
+
+  <div id="help" popover aria-label="How to use this page">
+    <h2>How to use this page</h2>
+    <dl>
+      <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
+      <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
+      <dt>Drag</dt><dd>Pan empty space</dd>
+      <dt>Scroll</dt><dd>Zoom the camera</dd>
+      <dt><kbd>/</kbd></dt><dd>Find</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close the details, then step up</dd>
+      <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
+      <dt><kbd>Tab</kbd>, <kbd>Enter</kbd></dt><dd>Move to a shape, open its details</dd>
+      <dt><kbd>?</kbd></dt><dd>Show this list</dd>
+    </dl>
   </div>
 
   <div id="tooltip" role="tooltip" hidden></div>

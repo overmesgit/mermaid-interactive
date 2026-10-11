@@ -114,6 +114,34 @@ function renderNote(el, source) {
   marked.lexer(source).forEach((token) => appendBlock(el, token));
 }
 
+// An arrow links to its two ends. A node links to every arrow that touches it.
+function renderLinks(item) {
+  const nodes = app.current.nodes;
+  const rows = [];
+  if (item.from) {
+    if (nodes[item.from]) rows.push(["From", { ...nodes[item.from], id: item.from }, nodes[item.from].label]);
+    if (nodes[item.to]) rows.push(["To", { ...nodes[item.to], id: item.to }, nodes[item.to].label]);
+  } else {
+    currentEdges().forEach((edge) => {
+      const suffix = edge.label.includes("→") ? "" : ` (${edge.label})`;
+      if (edge.from === item.id) rows.push(["Out", edge, `→ ${nodes[edge.to]?.label || "end"}${suffix}`]);
+      if (edge.to === item.id) rows.push(["In", edge, `← ${nodes[edge.from]?.label || "start"}${suffix}`]);
+    });
+  }
+  app.panel.links.replaceChildren();
+  rows.forEach(([term, target, text]) => {
+    const dt = document.createElement("dt");
+    const dd = document.createElement("dd");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = text;
+    button.addEventListener("click", () => openPanel(target));
+    dt.textContent = term;
+    dd.append(button);
+    app.panel.links.append(dt, dd);
+  });
+}
+
 function openPanel(node) {
   app.selected = node;
   const panel = app.panel;
@@ -129,44 +157,42 @@ function openPanel(node) {
     dd.textContent = detail;
     panel.facts.append(dt, dd);
   });
+  renderLinks(node);
   panel.zoom.hidden = !node.zoom;
   app.els.panel.hidden = false;
   app.els.panel.setAttribute("aria-hidden", "false");
   app.els.workspace.classList.add("panel-open");
   panel.close.focus();
-  requestAnimationFrame(fit);
+  const selected = markSelected(node);
+  requestAnimationFrame(() => reveal(selected));
 }
 
 function closePanel() {
   app.selected = null;
-  const wasOpen = app.els.workspace.classList.contains("panel-open");
+  markSelected(null);
   app.els.panel.hidden = true;
   app.els.panel.setAttribute("aria-hidden", "true");
   app.els.workspace.classList.remove("panel-open");
   app.panel.zoom.hidden = true;
-  if (wasOpen) requestAnimationFrame(fit);
 }
 
 // Nodes and arrows share this. `node` is the note; an arrow note also has from and to.
-// The wait lets a double-click cancel the panel. The + badge does not wait.
+// The panel opens at once. A double-click that drills in closes it again through show().
 function onNodeClick(event, node) {
   event.stopPropagation();
   hideTooltip();
   if (event.target.closest(".zoom-badge")) {
-    clearTimeout(app.clickTimer);
-    if (node.zoom) show(node.zoom);
+    if (node.zoom) show(node.zoom, node);
     return;
   }
-  clearTimeout(app.clickTimer);
-  app.clickTimer = setTimeout(() => openPanel(node), node.zoom ? 220 : 0);
+  openPanel(node);
 }
 
 function onNodeDblClick(event, node) {
   event.preventDefault();
   event.stopPropagation();
-  clearTimeout(app.clickTimer);
   window.getSelection()?.removeAllRanges();
-  if (node.zoom) show(node.zoom);
+  if (node.zoom) show(node.zoom, node);
   else openPanel(node);
 }
 
@@ -198,7 +224,7 @@ function wirePanel() {
       handle.removeEventListener("pointercancel", end);
       handle.classList.remove("is-dragging");
       document.documentElement.classList.remove("is-resizing");
-      requestAnimationFrame(fit);
+      requestAnimationFrame(() => reveal(markSelected(app.selected)));
     }
     handle.addEventListener("pointermove", move);
     handle.addEventListener("pointerup", end);
@@ -207,6 +233,6 @@ function wirePanel() {
 
   app.panel.close.addEventListener("click", closePanel);
   app.panel.zoom.addEventListener("click", () => {
-    if (app.selected && app.selected.zoom) show(app.selected.zoom);
+    if (app.selected && app.selected.zoom) show(app.selected.zoom, app.selected);
   });
 }

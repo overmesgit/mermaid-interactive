@@ -1,0 +1,21 @@
+# ADR-014 Selection keeps the camera
+
+- Status: accepted
+- Date: 2026-10-11
+- Supersedes: the `fit()` and 220ms parts of [ADR-003](003-two-zooms.md), and `fit()` after a drag in [ADR-009](009-panel-resize.md)
+
+## Context
+
+Opening the panel called `fit()`, so a click threw away the pan and zoom the reader had chosen. Nothing in the picture showed which shape the panel described. A shape that could drill in waited 220ms before its panel opened, which felt slow.
+
+## Decision
+
+A click opens the panel at once. A double-click that drills in still works, because `show()` closes the panel.
+
+`markSelected` puts `is-selected` on the shape or arrow the panel describes. Hover and search do not touch that class. Closing the panel clears it.
+
+Opening the panel, closing it, and ending a resize do not call `fit()`. `reveal()` pans the least distance that brings the selected shape back inside the viewport. The scale does not change. `fit()` still runs when a view opens and from the Fit button.
+
+## Consequences
+
+Zoom survives reading the notes. The panel flashes open for the first click of a double-click before the next view replaces it.
