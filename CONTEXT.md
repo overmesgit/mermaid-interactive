@@ -26,7 +26,7 @@ A, a software engineer. The useful way to work is in the code, in small steps, w
 
 ## How it runs
 
-There is no build and no framework. The page is `index.html`, `styles.css`, `diagrams.js`, and the scripts in `js/`. Mermaid 11 and marked 15 load from jsDelivr. How notes are markdown strings in `diagrams.js`. `securityLevel` is `strict`, so Mermaid's own click syntax is off and this page binds the finished SVG. `show()` in `js/nav.js` is the only way to change the diagram. A panel note is markdown. `marked.lexer` turns it into elements, and the text is set with `textContent`.
+There is no build and no framework. The page is `index.html`, `styles.css`, `diagrams.js`, and the scripts in `js/`. Mermaid 11 and marked 15 load from jsDelivr. How notes are markdown strings in `diagrams.js`. A fence such as `~~~js source=show` shows that function as the page loaded it, so a whole function is named, not copied. `securityLevel` is `strict`, so Mermaid's own click syntax is off and this page binds the finished SVG. `show()` in `js/nav.js` is the only way to change the diagram. A panel note is markdown. `marked.lexer` turns it into elements, and the text is set with `textContent`.
 
 Open it through a local server. Export fails on `file://` because it has to read the CSS and scripts. On this machine Python and Node were not available, so the preview server is a PowerShell `HttpListener` on `http://127.0.0.1:8765/`.
 

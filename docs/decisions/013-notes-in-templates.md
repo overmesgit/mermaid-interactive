@@ -1,6 +1,6 @@
 # ADR-013 How notes are markdown templates in diagrams.js
 
-- Status: accepted
+- Status: accepted, copied code superseded by [ADR-024](024-notes-name-functions.md)
 - Date: 2026-10-11
 - Supersedes: [ADR-012](012-markdown-notes.md)
 

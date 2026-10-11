@@ -64,12 +64,22 @@ function appendInline(parent, tokens) {
   });
 }
 
+// A fence written as ~~~js source=show,openPanel shows those functions as the page loaded them, so a note cannot drift from the code.
+function codeText(token) {
+  const names = /^\w+ source=([\w,]+)$/.exec(token.lang || "");
+  if (!names) return token.text;
+  return names[1]
+    .split(",")
+    .map((name) => (typeof globalThis[name] === "function" ? globalThis[name].toString().replace(/\r/g, "") : `// ${name} is not loaded`))
+    .join("\n\n");
+}
+
 function appendBlock(parent, token) {
   if (token.type === "space" || token.type === "html" || token.type === "def" || token.type === "image") return;
   if (token.type === "code") {
     const pre = document.createElement("pre");
     const code = document.createElement("code");
-    code.textContent = token.text;
+    code.textContent = codeText(token);
     pre.append(code);
     parent.append(pre);
     return;

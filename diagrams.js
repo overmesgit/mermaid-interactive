@@ -35,28 +35,7 @@ const HOW_BOX = {
     body: md`
       show() sends view.chart to mermaid.render and keeps a token. If the reader opens another view before this draw finishes, the token no longer matches and the late SVG is dropped. Double-click this box to walk that function.
 
-      ~~~js
-      async function show(viewId, fromInteraction) {
-        const view = app.views[viewId];
-        if (!view) return;
-        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
-        const origin = wiredElements(fromInteraction);
-        app.view = view;
-        app.stack = pathTo(view);
-        closePanel();
-        const token = ++app.renderToken;
-        const [{ svg }] = await Promise.all([
-          mermaid.render(\`diagram-\${token}\`, view.chart),
-          leaveView(origin),
-        ]);
-        if (token !== app.renderToken) return;
-        app.els.camera.innerHTML = svg;
-        const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[viewId]);
-        bindNodeInteractions(svgEl);
-        bindEdgeInteractions(svgEl);
-        applySearch();
-      }
+      ~~~js source=show
       ~~~
     `,
     opensView: "how-show",
@@ -69,28 +48,7 @@ const HOW_BOX = {
     body: md`
       The page copies the SVG into #camera and sets its width and height from the viewBox, so later scaling uses the real size. bindNodeInteractions and bindEdgeInteractions run after that. They are what make the shapes and arrows clickable.
 
-      ~~~js
-      async function show(viewId, fromInteraction) {
-        const view = app.views[viewId];
-        if (!view) return;
-        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
-        const origin = wiredElements(fromInteraction);
-        app.view = view;
-        app.stack = pathTo(view);
-        closePanel();
-        const token = ++app.renderToken;
-        const [{ svg }] = await Promise.all([
-          mermaid.render(\`diagram-\${token}\`, view.chart),
-          leaveView(origin),
-        ]);
-        if (token !== app.renderToken) return;
-        app.els.camera.innerHTML = svg;
-        const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[viewId]);
-        bindNodeInteractions(svgEl);
-        bindEdgeInteractions(svgEl);
-        applySearch();
-      }
+      ~~~js source=show
       ~~~
     `,
     facts: [["Element", "#camera"], ["Then", "bindNodeInteractions, bindEdgeInteractions"]],
@@ -123,22 +81,7 @@ const HOW_BOX = {
     body: md`
       The first line of the chart picks the pattern. A flowchart node api is a g.node whose id ends in flowchart-api-3, after the render prefix diagram-2-. A C4 alias is a g.node.c4-shape whose id ends in -reader. A sequence actor is the name on the top and bottom boxes. A state Draft is a g.node whose id ends in state-Draft-1. A box under 8 by 8 pixels is ignored.
 
-      ~~~js
-      function findMermaidShapes(svg, node) {
-        const kind = chartKind(app.view.chart);
-        const id = escapeRegExp(node.id);
-        if (kind === "flowchart") {
-          const pattern = new RegExp(\`(?:^|-)flowchart-\${chartId}-\\\\d+$\`);
-          svg.querySelectorAll("g.node").forEach((el) => {
-            if (pattern.test(el.id)) groups.add(el);
-          });
-        } else if (kind === "c4") {
-          const pattern = new RegExp(\`(?:^|-)\${chartId}$\`);
-          svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
-            if (pattern.test(el.id)) groups.add(el);
-          });
-        }
-      }
+      ~~~js source=findMermaidShapes
       ~~~
     `,
     facts: [["Function", "findMermaidShapes"], ["File", "js/bind.js"]],
@@ -150,14 +93,7 @@ const HOW_BOX = {
     body: md`
       highlightAround() keeps this shape and every arrow that touches it. The others get is-dim. Leaving the shape calls applySearch(), so a click does not leave the highlight stuck. Search uses the same dim and also looks through arrow text. The opacity is 0.72. It used to be 0.28, which hid the rest of the picture too hard.
 
-      ~~~js
-      function highlightAround(interaction) {
-        // hot: this node and every edge that touches it
-        el.classList.toggle("is-dim", active && !on);
-        el.classList.toggle("is-hot", active && on);
-      }
-
-      .is-dim { opacity: 0.72; }
+      ~~~js source=highlightAround
       ~~~
     `,
     facts: [["Function", "highlightAround"], ["CSS", ".is-dim"]],
@@ -169,21 +105,7 @@ const HOW_BOX = {
     body: md`
       The panel opens on the first click. The green ↘ badge calls show() instead. openPanel fills the title, the lead, this note, and the facts. The note is markdown, so the code below is part of that text. markSelected puts is-selected on the shape or arrow, so the picture shows what the panel is about. The camera keeps its pan and zoom. reveal() only pans when the panel now covers the selected shape. renderLinks lists the two ends of an arrow, or every arrow in and out of a shape. Each link opens that note's panel.
 
-      ~~~js
-      function onInteractionClick(event, interaction) {
-        if (event.target.closest(".zoom-badge")) {
-          show(interaction.opensView);
-          return;
-        }
-        openPanel(interaction);
-      }
-
-      function openPanel(interaction) {
-        panel.title.textContent = interaction.label;
-        renderNote(panel.body, interaction.body || "");
-        const selected = markSelected(interaction);
-        requestAnimationFrame(() => reveal(selected));
-      }
+      ~~~js source=onInteractionClick,openPanel
       ~~~
     `,
     facts: [["Function", "onInteractionClick"], ["Camera", "kept, reveal() pans if needed"]],
@@ -195,14 +117,7 @@ const HOW_BOX = {
     body: md`
       This is a new SVG, not a closer look at the same one. While Mermaid draws it, leaveView() zooms the old picture toward the shape you opened and fades it out. Each view keeps its own camera in app.cams, so stepping back up restores the pan and zoom you left. pathTo() walks view.parent to build the breadcrumb. The hash becomes #parent/child through replaceState, so the browser Back button leaves the page instead of stepping up. Escape closes the panel first, then steps up. Backspace steps up when you are not typing in the search box.
 
-      ~~~js
-      function onInteractionDblClick(event, interaction) {
-        window.getSelection()?.removeAllRanges();
-        if (interaction.opensView) show(interaction.opensView);
-        else openPanel(interaction);
-      }
-
-      #camera, #camera * { user-select: none; }
+      ~~~js source=onInteractionDblClick
       ~~~
     `,
     facts: [["Function", "show"], ["Hash", "replaceState"]],
@@ -214,22 +129,7 @@ const HOW_BOX = {
     body: md`
       cam is x, y, and s. applyCam writes that as a CSS transform on #camera. Dragging empty space changes x and y. The drag ignores nodes, arrows, labels, and the wide hit stroke. Fit recomputes all three so the picture sits in the viewport. Double-click does not use this camera. It calls show().
 
-      ~~~js
-      app.cam = { x: 40, y: 32, s: 1 };
-
-      // The + / - buttons zoom at the center. The wheel zooms at the pointer.
-      function zoomAt(px, py, factor) {
-        const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, app.cam.s * factor));
-        const k = next / app.cam.s;
-        app.cam.x = px - (px - app.cam.x) * k;
-        app.cam.y = py - (py - app.cam.y) * k;
-        app.cam.s = next;
-        applyCam();
-      }
-
-      function applyCam() {
-        app.els.camera.style.transform = \`translate(\${app.cam.x}px, \${app.cam.y}px) scale(\${app.cam.s})\`;
-      }
+      ~~~js source=zoomAt,zoomBy,applyCam
       ~~~
     `,
     facts: [["Function", "zoomAt"], ["Range", "0.35 to 2.6"]],
@@ -244,28 +144,7 @@ const HOW_ARROW = {
     md`
       mermaid.render gets view.chart and a fresh id. The notes stay in JavaScript.
 
-      ~~~js
-      async function show(viewId, fromInteraction) {
-        const view = app.views[viewId];
-        if (!view) return;
-        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
-        const origin = wiredElements(fromInteraction);
-        app.view = view;
-        app.stack = pathTo(view);
-        closePanel();
-        const token = ++app.renderToken;
-        const [{ svg }] = await Promise.all([
-          mermaid.render(\`diagram-\${token}\`, view.chart),
-          leaveView(origin),
-        ]);
-        if (token !== app.renderToken) return;
-        app.els.camera.innerHTML = svg;
-        const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[viewId]);
-        bindNodeInteractions(svgEl);
-        bindEdgeInteractions(svgEl);
-        applySearch();
-      }
+      ~~~js source=show
       ~~~
     `,
     [["Call", "mermaid.render"]],
@@ -277,28 +156,7 @@ const HOW_ARROW = {
     md`
       show() inserts that string into #camera. A stale render is ignored when app.renderToken has already moved on.
 
-      ~~~js
-      async function show(viewId, fromInteraction) {
-        const view = app.views[viewId];
-        if (!view) return;
-        if (app.view) app.cams[app.view.viewId] = { ...app.cam };
-        const origin = wiredElements(fromInteraction);
-        app.view = view;
-        app.stack = pathTo(view);
-        closePanel();
-        const token = ++app.renderToken;
-        const [{ svg }] = await Promise.all([
-          mermaid.render(\`diagram-\${token}\`, view.chart),
-          leaveView(origin),
-        ]);
-        if (token !== app.renderToken) return;
-        app.els.camera.innerHTML = svg;
-        const svgEl = app.els.camera.querySelector("svg");
-        enterView(app.cams[viewId]);
-        bindNodeInteractions(svgEl);
-        bindEdgeInteractions(svgEl);
-        applySearch();
-      }
+      ~~~js source=show
       ~~~
     `,
     [["Guard", "token !== app.renderToken"]],
@@ -331,21 +189,7 @@ const HOW_ARROW = {
     md`
       bindNodeInteractions walks the node interactions on app.view. bindEdgeInteractions walks the edge interactions. Both run inside show(), after the SVG is in the page.
 
-      ~~~js
-      function wireShape(shape, interaction) {
-        shape.classList.add("is-node");
-        shape.dataset.chartId = interaction.chartId;
-        makeInteractive(shape, interaction, true);
-        if (interaction.opensView) addBadge(shape);
-      }
-
-      // Arrows call the same function, so a shape and an arrow listen the same way.
-      function makeInteractive(el, interaction, keyboardButton) {
-        if (keyboardButton) el.setAttribute("role", "button");
-        el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-        el.addEventListener("click", (event) => onInteractionClick(event, interaction));
-        el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
-      }
+      ~~~js source=wireShape,makeInteractive
       ~~~
     `,
     [["Order", "render, then bind"]],
@@ -357,14 +201,7 @@ const HOW_ARROW = {
     md`
       findMermaidShapes uses the chart type. Flowchart and state match a g.node id. C4 matches a g.node.c4-shape id. Sequence matches the name on the actor boxes.
 
-      ~~~js
-      function chartKind(chart) {
-        const line = chart.trim().split("\\n")[0].trim();
-        if (line.startsWith("flowchart")) return "flowchart";
-        if (line.startsWith("C4")) return "c4";
-        if (line.startsWith("sequenceDiagram")) return "sequence";
-        if (line.startsWith("stateDiagram")) return "state";
-      }
+      ~~~js source=chartKind
       ~~~
     `,
     [["Function", "findMermaidShapes"]],
@@ -376,14 +213,7 @@ const HOW_ARROW = {
     md`
       The tooltip is a fixed div. It is not a Mermaid tooltip. It follows the pointer and flips when it would leave the window.
 
-      ~~~js
-      function highlightAround(interaction) {
-        // hot: this node and every edge that touches it
-        el.classList.toggle("is-dim", active && !on);
-        el.classList.toggle("is-hot", active && on);
-      }
-
-      .is-dim { opacity: 0.72; }
+      ~~~js source=highlightAround
       ~~~
     `,
     [["Function", "showTooltip"]],
@@ -395,21 +225,7 @@ const HOW_ARROW = {
     md`
       Arrows use the same two handlers. watchEdge registers them on the hit stroke and on the label.
 
-      ~~~js
-      function onInteractionClick(event, interaction) {
-        if (event.target.closest(".zoom-badge")) {
-          show(interaction.opensView);
-          return;
-        }
-        openPanel(interaction);
-      }
-
-      function openPanel(interaction) {
-        panel.title.textContent = interaction.label;
-        renderNote(panel.body, interaction.body || "");
-        const selected = markSelected(interaction);
-        requestAnimationFrame(() => reveal(selected));
-      }
+      ~~~js source=onInteractionClick,openPanel
       ~~~
     `,
     [["Shared", "onInteractionClick"]],
@@ -421,14 +237,7 @@ const HOW_ARROW = {
     md`
       The first click of a double-click has already opened the panel. The double-click clears the text selection and draws the next view. show() closes the panel on the way.
 
-      ~~~js
-      function onInteractionDblClick(event, interaction) {
-        window.getSelection()?.removeAllRanges();
-        if (interaction.opensView) show(interaction.opensView);
-        else openPanel(interaction);
-      }
-
-      #camera, #camera * { user-select: none; }
+      ~~~js source=onInteractionDblClick
       ~~~
     `,
     [["Function", "onInteractionDblClick"]],
@@ -440,22 +249,7 @@ const HOW_ARROW = {
     md`
       zoomAt multiplies cam.s around one point: the viewport center for the buttons, the pointer for the wheel. The limits are 0.35 and 2.6.
 
-      ~~~js
-      app.cam = { x: 40, y: 32, s: 1 };
-
-      // The + / - buttons zoom at the center. The wheel zooms at the pointer.
-      function zoomAt(px, py, factor) {
-        const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, app.cam.s * factor));
-        const k = next / app.cam.s;
-        app.cam.x = px - (px - app.cam.x) * k;
-        app.cam.y = py - (py - app.cam.y) * k;
-        app.cam.s = next;
-        applyCam();
-      }
-
-      function applyCam() {
-        app.els.camera.style.transform = \`translate(\${app.cam.x}px, \${app.cam.y}px) scale(\${app.cam.s})\`;
-      }
+      ~~~js source=zoomAt,zoomBy,applyCam
       ~~~
     `,
     [["Function", "zoomAt"]],
@@ -1469,12 +1263,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             openFromHash splits location.hash on slashes and keeps the last viewId. #how/how-notes opens the notes picture. The hash is updated with replaceState, so moving between views does not push browser history.
 
-            ~~~js
-            function openFromHash() {
-              const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-              const viewId = ids[ids.length - 1];
-              show(app.views[viewId] ? viewId : DIAGRAMS.tabs[0].id);
-            }
+            ~~~js source=openFromHash
             ~~~
           `,
           facts: [["Function", "openFromHash"], ["File", "js/nav.js"]],
@@ -1486,28 +1275,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             app.views is DIAGRAMS.views. pathTo walks parent links for the breadcrumb. closePanel runs first so the old detail does not sit on top of the new picture.
 
-            ~~~js
-            async function show(viewId, fromInteraction) {
-              const view = app.views[viewId];
-              if (!view) return;
-              if (app.view) app.cams[app.view.viewId] = { ...app.cam };
-              const origin = wiredElements(fromInteraction);
-              app.view = view;
-              app.stack = pathTo(view);
-              closePanel();
-              const token = ++app.renderToken;
-              const [{ svg }] = await Promise.all([
-                mermaid.render(\`diagram-\${token}\`, view.chart),
-                leaveView(origin),
-              ]);
-              if (token !== app.renderToken) return;
-              app.els.camera.innerHTML = svg;
-              const svgEl = app.els.camera.querySelector("svg");
-              enterView(app.cams[viewId]);
-              bindNodeInteractions(svgEl);
-              bindEdgeInteractions(svgEl);
-              applySearch();
-            }
+            ~~~js source=show
             ~~~
           `,
           facts: [["File", "js/nav.js"]],
@@ -1525,28 +1293,9 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
               securityLevel: "strict",
               flowchart: { htmlLabels: true, useMaxWidth: false },
             });
+            ~~~
 
-            async function show(viewId, fromInteraction) {
-              const view = app.views[viewId];
-              if (!view) return;
-              if (app.view) app.cams[app.view.viewId] = { ...app.cam };
-              const origin = wiredElements(fromInteraction);
-              app.view = view;
-              app.stack = pathTo(view);
-              closePanel();
-              const token = ++app.renderToken;
-              const [{ svg }] = await Promise.all([
-                mermaid.render(\`diagram-\${token}\`, view.chart),
-                leaveView(origin),
-              ]);
-              if (token !== app.renderToken) return;
-              app.els.camera.innerHTML = svg;
-              const svgEl = app.els.camera.querySelector("svg");
-              enterView(app.cams[viewId]);
-              bindNodeInteractions(svgEl);
-              bindEdgeInteractions(svgEl);
-              applySearch();
-            }
+            ~~~js source=show
             ~~~
           `,
           facts: [["CDN", "mermaid@11"]],
@@ -1558,11 +1307,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             app.renderToken increments at the start of show(). After the await, the function returns if another show() has started. The same check wraps the error message.
 
-            ~~~js
-            const token = ++app.renderToken;
-            const { svg } = await mermaid.render(\`diagram-\${token}\`, view.chart);
-            if (token !== app.renderToken) return;
-            app.els.camera.innerHTML = svg;
+            ~~~js source=show
             ~~~
           `,
           facts: [["Variable", "app.renderToken"]],
@@ -1574,21 +1319,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             This is where a box becomes a button. The next diagrams cover the match itself. From the third picture, double-click Notes.
 
-            ~~~js
-            function wireShape(shape, interaction) {
-              shape.classList.add("is-node");
-              shape.dataset.chartId = interaction.chartId;
-              makeInteractive(shape, interaction, true);
-              if (interaction.opensView) addBadge(shape);
-            }
-
-            // Arrows call the same function, so a shape and an arrow listen the same way.
-            function makeInteractive(el, interaction, keyboardButton) {
-              if (keyboardButton) el.setAttribute("role", "button");
-              el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-              el.addEventListener("click", (event) => onInteractionClick(event, interaction));
-              el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
-            }
+            ~~~js source=wireShape,makeInteractive
             ~~~
           `,
           opensView: "how-bind",
@@ -1601,25 +1332,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             Arrows are harder than boxes because the four diagram types draw lines differently. That walk is the edges picture.
 
-            ~~~js
-            edges.forEach((edge) => {
-              const path = findFlowchartArrow(svg, edge);
-              if (!path || path.dataset.wired) return;
-              claimEdge(edge, [path, nearestFlowchartLabel(path, labels)]);
-            });
-
-            function claimByText(items, pieces) {
-              edges.forEach((edge) => {
-                if (wired.has(edge) || !edge.mermaidText) return;
-                const item = items.find((candidate) => !candidate.wired && textMatches(candidate.label, edge.mermaidText));
-                if (!item) return;
-                item.wired = true;
-                claimEdge(edge, pieces(item));
-              });
-            }
-
-            claimByText(sequenceMessages(svg), (message) => [message.line, message.text]);
-            claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
+            ~~~js source=bindEdgeInteractions
             ~~~
           `,
           opensView: "how-edges",
@@ -1632,19 +1345,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             enterView() runs before bindNodeInteractions, so the matcher sees the picture at its final scale. A view opened before gets its saved camera from app.cams. A new view gets fit(), which sets app.cam.x, app.cam.y, and app.cam.s. Opening the panel does not call fit(). It calls reveal(), which only pans.
 
-            ~~~js
-            function fit() {
-              const box = svg.viewBox.baseVal;
-              const pad = 48;
-              // Prev and Next sit on the top left of the diagram. Fit starts below them.
-              const top = app.els.lesson.hidden ? pad / 2 : app.els.lesson.offsetTop + app.els.lesson.offsetHeight + 12;
-              const height = app.els.viewport.clientHeight - top - pad / 2;
-              const s = Math.min((app.els.viewport.clientWidth - pad) / box.width, height / box.height, 1.35);
-              app.cam.s = Number.isFinite(s) && s > 0 ? s : 1;
-              app.cam.x = (app.els.viewport.clientWidth - box.width * app.cam.s) / 2;
-              app.cam.y = top + Math.max(0, (height - box.height * app.cam.s) / 2);
-              applyCam();
-            }
+            ~~~js source=fit
             ~~~
           `,
           facts: [["Also", "the Fit button"]],
@@ -1683,14 +1384,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             flowchart, C4, sequenceDiagram, and stateDiagram each name the shape differently. findMermaidShapes runs only that pattern. A miss does not fall through to another one. It takes the chartId. The stored node interaction does not keep that id; nodeInteractions() adds chartId from the map key.
 
-            ~~~js
-            function chartKind(chart) {
-              const line = chart.trim().split("\\n")[0].trim();
-              if (line.startsWith("flowchart")) return "flowchart";
-              if (line.startsWith("C4")) return "c4";
-              if (line.startsWith("sequenceDiagram")) return "sequence";
-              if (line.startsWith("stateDiagram")) return "state";
-            }
+            ~~~js source=chartKind
             ~~~
           `,
           facts: [["Function", "chartKind"]],
@@ -1703,7 +1397,8 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             Mermaid prefixes the id with the render id. The note api matches diagram-2-flowchart-api-3. The pattern is anchored at the end, and only g.node is considered.
 
             ~~~js
-            const pattern = new RegExp(\`(?:^|-)flowchart-\${chartId}-\\\\d+$\`);
+            const id = escapeRegExp(chartId);
+            const pattern = new RegExp(\`(?:^|-)flowchart-\${id}-\\\\d+$\`);
             svg.querySelectorAll("g.node").forEach((el) => {
               if (pattern.test(el.id)) groups.add(el);
             });
@@ -1719,7 +1414,8 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             The alias is the last piece of the shape id. reader matches diagram-5-reader. Markers such as diagram-5-arrowhead are not c4-shape groups, so they are not buttons.
 
             ~~~js
-            const pattern = new RegExp(\`(?:^|-)\${chartId}$\`);
+            const id = escapeRegExp(chartId);
+            const pattern = new RegExp(\`(?:^|-)\${id}$\`);
             svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
               if (pattern.test(el.id)) groups.add(el);
             });
@@ -1750,7 +1446,8 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
             The state name sits in the middle of the id. Draft matches diagram-1-state-Draft-1. The start and end dots are root_start and root_end, so they do not match a state name.
 
             ~~~js
-            const pattern = new RegExp(\`(?:^|-)state-\${chartId}-\\\\d+$\`);
+            const id = escapeRegExp(chartId);
+            const pattern = new RegExp(\`(?:^|-)state-\${id}-\\\\d+$\`);
             svg.querySelectorAll("g.node").forEach((el) => {
               if (pattern.test(el.id)) groups.add(el);
             });
@@ -1765,11 +1462,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             Sequence lifelines are groups with almost no width and a lot of height. getBBox catches them. Without this check they became invisible click targets.
 
-            ~~~js
-            function visibleShape(el) {
-              const box = el.getBBox();
-              return box.width >= 8 && box.height >= 8;
-            }
+            ~~~js source=visibleShape
             ~~~
           `,
           facts: [["Function", "visibleShape"]],
@@ -1781,21 +1474,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             wireShape sets role, tabindex, and the aria-label. It listens for pointer enter, click, and double-click. If opensView is set, addBadge draws the green ↘ from the shape's getBBox. Enter and Space fire the same click handler.
 
-            ~~~js
-            function wireShape(shape, interaction) {
-              shape.classList.add("is-node");
-              shape.dataset.chartId = interaction.chartId;
-              makeInteractive(shape, interaction, true);
-              if (interaction.opensView) addBadge(shape);
-            }
-
-            // Arrows call the same function, so a shape and an arrow listen the same way.
-            function makeInteractive(el, interaction, keyboardButton) {
-              if (keyboardButton) el.setAttribute("role", "button");
-              el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
-              el.addEventListener("click", (event) => onInteractionClick(event, interaction));
-              el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
-            }
+            ~~~js source=wireShape,makeInteractive
             ~~~
           `,
           facts: [["Function", "wireShape"], ["Badge", "addBadge"]],
@@ -1833,14 +1512,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             An edge can be a pair [from, to] or the object arrow() returns. edgeInteractions() copies from, to, and makes edgeId from-to-index. The label shown in the panel is the two node labels joined by an arrow.
 
-            ~~~js
-            function edgeInteractions() {
-              return (app.view.edgeInteractions || []).map((edge, index) => {
-                const from = Array.isArray(edge) ? edge[0] : edge.from;
-                const to = Array.isArray(edge) ? edge[1] : edge.to;
-                return { ...edge, from, to, edgeId: \`\${from}-\${to}-\${index}\`, kind: "edge" };
-              });
-            }
+            ~~~js source=edgeInteractions
             ~~~
           `,
           facts: [["Function", "edgeInteractions"]],
@@ -1852,28 +1524,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             Mermaid names flowchart arrows. The page builds a regex from the note's from and to. The label is a separate g.edgeLabel. nearestFlowchartLabel picks the label whose center is within 160px of the path midpoint, and the binder marks it wired so the next arrow cannot take it.
 
-            ~~~js
-            function findFlowchartArrow(svg, edge) {
-              const from = edge.from.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
-              const to = edge.to.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
-              const pattern = new RegExp(\`(?:^|-)L_\${from}_\${to}_\\\\d+$\`);
-              return [...svg.querySelectorAll("path.flowchart-link")]
-                .find((path) => pattern.test(path.id));
-            }
-
-            function nearestFlowchartLabel(path, labels) {
-              const mid = screenPoint(path, path.getTotalLength() / 2);
-              let best = null;
-              let bestDistance = 160;
-              labels.forEach((label) => {
-                const box = label.getBoundingClientRect();
-                const distance = Math.hypot(
-                  box.left + box.width / 2 - mid.x,
-                  box.top + box.height / 2 - mid.y
-                );
-                if (distance < bestDistance) best = label;
-              });
-            }
+            ~~~js source=findFlowchartArrow,nearestFlowchartLabel
             ~~~
           `,
           facts: [["Function", "findFlowchartArrow"], ["Label", "nearestFlowchartLabel"]],
@@ -1885,35 +1536,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             Sequence arrows are not named with the endpoints. The page walks the SVG children, pairs each messageText with the following messageLine, and compares the text to edge.mermaidText. startsWith is allowed so a short mermaidText still hits. Each message is used once.
 
-            ~~~js
-            function sequenceMessages(svg) {
-              [...svg.children].forEach((el) => {
-                const cls = el.getAttribute("class") || "";
-                if (cls.includes("messageText")) text = el;
-                else if (cls.includes("messageLine")) {
-                  messages.push({ line: el, text, label: norm(text ? text.textContent : "") });
-                }
-              });
-            }
-
-            function c4Relations(svg) {
-              const relationshipGroup = [...svg.querySelectorAll("g")].find((group) => {
-                const kids = [...group.children];
-                return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
-              });
-              [...relationshipGroup.children].forEach((el) => {
-                if (el.tagName === "line" || el.tagName === "path") {
-                  rel = { strokes: [el], texts: [], wired: false };
-                  rels.push(rel);
-                } else if (el.tagName === "text" && rel) rel.texts.push(el);
-              });
-            }
-
-            function textMatches(rendered, wanted) {
-              const left = norm(rendered).toLowerCase();
-              const right = norm(wanted).toLowerCase();
-              return left === right || left.startsWith(right);
-            }
+            ~~~js source=sequenceMessages,c4Relations,textMatches
             ~~~
           `,
           facts: [["Needs", "edge.mermaidText"], ["Function", "sequenceMessages"]],
@@ -1925,35 +1548,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             C4 puts every relationship in one group. A line or path starts a relationship. The text nodes after it belong to that relationship, until the next line. Two arrows that both say Reads are consumed in source order, because each match sets wired.
 
-            ~~~js
-            function sequenceMessages(svg) {
-              [...svg.children].forEach((el) => {
-                const cls = el.getAttribute("class") || "";
-                if (cls.includes("messageText")) text = el;
-                else if (cls.includes("messageLine")) {
-                  messages.push({ line: el, text, label: norm(text ? text.textContent : "") });
-                }
-              });
-            }
-
-            function c4Relations(svg) {
-              const relationshipGroup = [...svg.querySelectorAll("g")].find((group) => {
-                const kids = [...group.children];
-                return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
-              });
-              [...relationshipGroup.children].forEach((el) => {
-                if (el.tagName === "line" || el.tagName === "path") {
-                  rel = { strokes: [el], texts: [], wired: false };
-                  rels.push(rel);
-                } else if (el.tagName === "text" && rel) rel.texts.push(el);
-              });
-            }
-
-            function textMatches(rendered, wanted) {
-              const left = norm(rendered).toLowerCase();
-              const right = norm(wanted).toLowerCase();
-              return left === right || left.startsWith(right);
-            }
+            ~~~js source=sequenceMessages,c4Relations,textMatches
             ~~~
           `,
           facts: [["Function", "c4Relations"], ["Order", "Source order"]],
@@ -1965,29 +1560,7 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             State arrows are matched by where they start and end. getPointAtLength plus getScreenCTM gives a screen point. That point is compared with the centers of the boxes already bound. Start and end dots use the id *. Their groups match root_start or root_end.
 
-            ~~~js
-            function matchStateArrows(paths, edges, svg) {
-              const centers = shapeCentersOnScreen(svg);
-              paths.forEach((path) => {
-                const length = path.getTotalLength();
-                const start = nearestPoint(centers, screenPoint(path, 1));
-                const end = nearestPoint(centers, screenPoint(path, Math.max(1, length - 1)));
-                edges.forEach((edge) => {
-                  const forward = endpointDistance(start, end, edge);
-                });
-              });
-            }
-
-            function shapeCentersOnScreen(svg) {
-              svg.querySelectorAll(".is-node").forEach((el) => {
-                const box = el.getBoundingClientRect();
-                items.push({ chartId: el.dataset.chartId, x: box.left + box.width / 2, y: box.top + box.height / 2 });
-              });
-              svg.querySelectorAll("g.node").forEach((el) => {
-                if (!/root_start|root_end/.test(el.id)) return;
-                items.push({ id: "*", x: box.left + box.width / 2, y: box.top + box.height / 2 });
-              });
-            }
+            ~~~js source=matchStateArrows,shapeCentersOnScreen
             ~~~
           `,
           facts: [["Function", "matchStateArrows"], ["Start", "*"]],
@@ -1999,15 +1572,12 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
           body: md`
             addWideHitStroke clones the stroke, strips the arrowhead, and puts an 18px transparent stroke on top. pointer-events is stroke, so the empty middle of the arrow is still a miss. The click has to land on that wide stroke. Only the first stroke is the keyboard button. The label listens too, but it is not a second tab stop.
 
-            ~~~js
-            function addWideHitStroke(el) {
-              const hit = el.cloneNode(false);
-              hit.removeAttribute("marker-end");
-              hit.setAttribute("class", "edge-hit");
-              el.parentNode.insertBefore(hit, el.nextSibling);
-            }
+            ~~~js source=addWideHitStroke
+            ~~~
 
+            ~~~css
             .edge-hit {
+              fill: none;
               stroke: transparent;
               stroke-width: 18px;
               pointer-events: stroke;

@@ -16,7 +16,7 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [010](010-label-frame.md) | accepted | A click does not frame the label |
 | [011](011-split-scripts.md) | accepted, script list superseded by 019 | Scripts split by job, still no build |
 | [012](012-markdown-notes.md) | superseded by 013 | Panel notes are markdown. How code lives in the note |
-| [013](013-notes-in-templates.md) | accepted | How notes are markdown templates in diagrams.js |
+| [013](013-notes-in-templates.md) | accepted, copied code superseded by 024 | How notes are markdown templates in diagrams.js |
 | [014](014-selection-keeps-camera.md) | accepted | A click selects and keeps the camera |
 | [015](015-drill-transition.md) | accepted | Drill-down zooms toward the shape. Each view keeps its camera |
 | [016](016-panel-links.md) | accepted | The panel links to connected shapes and arrows |
@@ -27,3 +27,4 @@ Append-only. The current choice is the latest accepted ADR on that topic. An old
 | [021](021-lesson-stays.md) | accepted, placement superseded by 022 | Prev and Next stay put, including inside a node |
 | [022](022-lesson-on-diagram.md) | accepted | Prev and Next sit on the top left of the diagram |
 | [023](023-export-script-list.md) | accepted | Export reads the script list from the page |
+| [024](024-notes-name-functions.md) | accepted | How notes name a function instead of copying it |
