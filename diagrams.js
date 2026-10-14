@@ -294,7 +294,7 @@ const HOW_ARROW = {
     "lesson",
     "The tab's lesson field lists the steps in order.",
     md`
-      A lesson step is a normal view with no parent. Prev and Next sit on the top left of the diagram, and Next shows the title of the step it goes to.
+      A lesson step is a normal view with no parent. Prev and Next sit at the bottom of the diagram, and Next shows the title of the step it goes to.
 
       ~~~js source=renderLesson
       ~~~

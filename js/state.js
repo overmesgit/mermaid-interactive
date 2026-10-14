@@ -19,6 +19,7 @@ const app = {
     search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
     help: document.getElementById("help"),
+    storyOpen: document.getElementById("story-open"),
   },
   panel: {
     kicker: document.getElementById("panel-kicker"),

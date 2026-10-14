@@ -1,6 +1,6 @@
 # ADR-022 Prev and Next sit on the top left of the diagram
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-036](036-floating-controls.md): Prev and Next sit at the bottom centre now
 - Date: 2026-10-11
 - Supersedes: the stage-bar placement in [ADR-021](021-lesson-stays.md)
 

@@ -71,7 +71,7 @@ The tab that explains this page, step by step.
 | [008](008-teach-in-the-tool.md) | The How tab teaches in steps, with code in the panel | Replaced by 012 |
 | [020](020-lesson-steps.md) | Step through the How lesson with buttons, not badges | Current, partly replaced by 021 and 031 |
 | [021](021-lesson-stays.md) | Prev and Next keep their place, even inside an inner diagram | Current, partly replaced by 022 |
-| [022](022-lesson-on-diagram.md) | Prev and Next sit on the top left of the diagram | Current |
+| [022](022-lesson-on-diagram.md) | Prev and Next sit on the top left of the diagram | Current, partly replaced by 036 |
 | [031](031-how-starts-from-the-content-file.md) | The How lesson starts from the content file | Current |
 
 ## Look and feel
@@ -81,8 +81,9 @@ The tab that explains this page, step by step.
 | [005](005-light-dim.md) | Hover fades the other shapes only a little | Current |
 | [006](006-selection.md) | Double-click does not select text in the diagram | Current |
 | [010](010-label-frame.md) | Clicking a shape draws no box around its label | Current |
-| [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current |
+| [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current, partly replaced by 036 |
 | [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
+| [036](036-floating-controls.md) | Controls float over a full-window diagram | Current |
 
 ## Files and export
 

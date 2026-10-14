@@ -215,6 +215,7 @@ function renderParts() {
 function openStory() {
   app.selectedInteraction = null;
   markSelected(null);
+  app.els.storyOpen.setAttribute("aria-pressed", String(!app.storyHidden));
   if (app.storyHidden) {
     hidePanel();
     return;
@@ -237,6 +238,7 @@ function openStory() {
 
 function openPanel(interaction) {
   app.selectedInteraction = interaction;
+  app.els.storyOpen.setAttribute("aria-pressed", "false");
   const panel = app.panel;
   panel.kicker.textContent = interaction.kicker || "";
   panel.title.textContent = interaction.label;

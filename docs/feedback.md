@@ -127,3 +127,11 @@ With nothing selected, the side panel shows the view's story and its parts, with
 > we only save those areas? I think we should allow to save the whole file to expand in side panel if we need
 
 No folder and no list. The join collects the paths from the `file=` fences and reads them from the repo, or from git for an older version. Each whole file is packed. [ADR-035](decisions/035-code-from-the-repo.md).
+
+> can we improve UI and design? I think we don't need logo. buttons are ugly. we can move export, copy to menu. For find, remove label, just add search icon. we want minimalistic, balanced look where elements are aligned
+
+Five versions were built side by side. The floating one was picked: no header, the controls on small cards over the diagram, Copy and Export in a ⋯ menu, Find with a magnifier.
+
+> I really like floating. the only thing is the story of diagram will be hard to find. and make prev / next to jump less between steps, different step name make buttons jump too far
+
+The Story button has a label and sits before the diagram's name. The lesson card has a fixed width, so Prev and Next stay put. [ADR-036](decisions/036-floating-controls.md).

@@ -126,6 +126,8 @@ function showLesson(delta) {
 }
 
 function wireTabs() {
+  // An exported file already holds the buttons drawn when it was saved, without their listeners.
+  app.els.tabs.replaceChildren();
   DIAGRAMS.tabs.forEach((tab) => {
     const button = document.createElement("button");
     button.type = "button";

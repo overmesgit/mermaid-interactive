@@ -1,6 +1,6 @@
 # ADR-017 Fewer bars above the diagram, shortcuts behind ?, one font
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-036](036-floating-controls.md): there is no header now
 - Date: 2026-10-11
 
 ## Context

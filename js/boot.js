@@ -67,8 +67,9 @@ moreMenu.addEventListener("click", (event) => {
   if (event.target.closest("button")) moreMenu.hidePopover();
 });
 document.getElementById("fit").addEventListener("click", fit);
-document.getElementById("story-open").addEventListener("click", () => {
-  app.storyHidden = false;
+// Story is a switch: it shows the story, or hides it when the story is already showing.
+app.els.storyOpen.addEventListener("click", () => {
+  app.storyHidden = !app.storyHidden && !app.selectedInteraction && !app.els.panel.hidden;
   openStory();
 });
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));

@@ -151,7 +151,7 @@ button.icon:hover { color: var(--ink); }
 .float-bottom {
   bottom: var(--gutter);
   /* The side columns are as wide as the camera island, so the lesson stays centred and never runs under it. */
-  --side: calc(5 * var(--control) + 4 * 4px + 8px + 8px);
+  --side: calc(4 * var(--control) + 3 * 4px + 8px + 8px);
   grid-template-columns: var(--side) minmax(0, 1fr) var(--side);
   align-items: end;
 }
@@ -210,6 +210,34 @@ button.icon:hover { color: var(--ink); }
   min-width: 0;
 }
 
+.stage-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+/* A small labelled button on the canvas, so it reads as a button and not as part of the title. */
+.chip {
+  height: 24px;
+  gap: 4px;
+  padding: 0 8px 0 6px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: auto;
+}
+
+.chip:hover { background: var(--paper); color: var(--ink); }
+
+.chip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  box-shadow: none;
+  color: var(--accent);
+}
+
 #crumbs {
   display: flex;
   flex-wrap: wrap;
@@ -244,9 +272,9 @@ button.icon:hover { color: var(--ink); }
 
 .camera-controls .group { margin-left: 8px; }
 
+/* A fixed width, so Prev and Next stay put while the step names change length. */
 #lesson {
-  min-width: 0;
-  max-width: min(100%, 480px);
+  width: min(100%, 480px);
   cursor: default;
 }
 
@@ -267,7 +295,9 @@ button.icon:hover { color: var(--ink); }
 /* The one filled button on the page. */
 #lesson-next {
   display: block;
+  flex: 1;
   min-width: 0;
+  text-align: left;
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 600;
@@ -708,8 +738,7 @@ line.is-edge.is-selected:not(.edge-hit) {
   .search input { width: 100%; }
   .float-bottom { grid-template-columns: minmax(0, 1fr); }
   .float-bottom > .camera-controls { grid-row: 1; grid-column: 1; }
-  .float-bottom > #lesson { grid-row: 2; grid-column: 1; justify-self: stretch; max-width: none; }
-  #lesson-next { flex: 1; }
+  .float-bottom > #lesson { grid-row: 2; grid-column: 1; width: auto; justify-self: stretch; }
   #status { bottom: calc(var(--gutter) + 2 * (var(--control) + 8px) + 8px + 16px); }
 }
 
