@@ -4,14 +4,15 @@ One explanation is one content file. It is a classic script that sets `window.DI
 
 This is the only description of the format. The repo docs link here.
 
-Status: [ADR-026](../../docs/decisions/026-content-file.md) moves the helpers into the engine and gives each explanation its own file. That split is not built yet. Today the sample content and the helpers both live in `diagrams.js`. The fields below are the ones the engine reads today.
+Each explanation is its own file, and the page shows the one named in the link ([ADR-034](../../docs/decisions/034-pick-the-content-file.md)). [`examples/starter.js`](../../examples/starter.js) is a one-diagram file to copy.
 
 ## Start here
 
 1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
 2. **Put the code the notes show in `code/`,** next to `diagrams.js`. See [Code files](#code-files). Skip this if the notes show no code from files.
-3. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
-4. **Join it into one HTML file.** Without a `code/` folder:
+3. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. Skip this if you cannot open a browser.
+4. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
+5. **Join it into one HTML file.** Without a `code/` folder:
 
    ```bash
    cat skill/assets/head.html diagrams.js skill/assets/tail.html > explanation.html
@@ -31,9 +32,9 @@ Status: [ADR-026](../../docs/decisions/026-content-file.md) moves the helpers in
    ```
 
    Both need a POSIX shell: Linux, macOS, or Git Bash on Windows.
-5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
+6. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
 
-Step 4 does not work yet. `head.html` and `tail.html` are not built ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+Step 5 does not work yet. Until it does, the page's Export HTML button saves the file you are looking at as one HTML file. `head.html` and `tail.html` are not built ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
 
 ## Shape
 
@@ -80,6 +81,8 @@ The first line of `chart` picks the matcher. Only these four are clickable:
 | `stateDiagram-v2` | The state id. `HandedOff` in `state "Handed off" as HandedOff`. |
 
 Any other Mermaid type still draws. Nothing on it is clickable.
+
+Some ids are words Mermaid reserves, so the whole chart fails to draw. A state cannot be called `Note` in any case, because `note` starts a sticky note. A flowchart node cannot be called `end`. Give the shape another id and keep the word as its name: `state "Note" as Selected`.
 
 ## Captions
 

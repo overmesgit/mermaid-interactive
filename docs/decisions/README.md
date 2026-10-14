@@ -16,10 +16,11 @@ How an agent writes an explanation and hands it over.
 | ADR | Decision | Status |
 | --- | --- | --- |
 | [025](025-explainer-skill.md) | The tool explains hard things, and agents use it through a skill | Current, partly replaced by 029 |
-| [026](026-content-file.md) | Each explanation is one file, separate from the engine | Planned |
+| [026](026-content-file.md) | Each explanation is one file, separate from the engine | Current |
 | [027](027-one-file-from-a-template.md) | An agent delivers one HTML file | Planned, partly replaced by 029 |
 | [028](028-pinned-cdn.md) | Pin exact versions of Mermaid and marked | Planned |
 | [029](029-join-and-check-in-page.md) | No Python: join the files with a shell command, and let the page check them | Planned |
+| [034](034-pick-the-content-file.md) | Pick the content file with ?src= in the link | Current |
 
 ## Finding and wiring shapes
 
@@ -88,7 +89,7 @@ The tab that explains this page, step by step.
 | --- | --- | --- |
 | [002](002-static-page.md) | Plain static files, with no build step | Replaced by 011 |
 | [011](011-split-scripts.md) | Split app.js into one script per job, still with no build | Current, partly replaced by 019 and 023 |
-| [023](023-export-script-list.md) | Keep one list of scripts, in index.html | Current |
+| [023](023-export-script-list.md) | Keep one list of scripts, in index.html | Current, partly replaced by 034 |
 
 ## Old names
 

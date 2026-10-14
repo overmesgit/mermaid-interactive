@@ -1,15 +1,3 @@
-function arrow(from, to, tooltip, body, facts, more) {
-  return { from, to, kicker: "Arrow", tooltip, body, facts: facts || [], ...(more || {}) };
-}
-
-function md(strings, ...values) {
-  const text = strings.reduce((acc, part, i) => acc + part + (values[i] ?? ""), "");
-  const rows = text.replace(/^\n/, "").replace(/\n\s*$/, "").split("\n");
-  const widths = rows.filter((row) => row.trim()).map((row) => row.match(/^ */)[0].length);
-  const indent = widths.length ? Math.min(...widths) : 0;
-  return rows.map((row) => row.slice(indent)).join("\n").trim();
-}
-
 const HOW_BOX = {
   writer: {
     label: "Author or agent",
@@ -44,7 +32,7 @@ const HOW_BOX = {
       ],
       ~~~
 
-      Today the sample content and the two helpers, arrow() and md, share diagrams.js. The page you are reading is drawn from that file.
+      The two helpers, arrow() and md, are part of the page, so a content file holds only the explanation. The page you are reading is drawn from diagrams.js. A link with ?src= and another file's path draws that file instead.
     `,
     facts: [["File", "diagrams.js"], ["Format", "skill/references/format.md"]],
   },
@@ -323,7 +311,7 @@ const HOW_ARROW = {
       ~~~js source=localScripts
       ~~~
     `,
-    [["List", "the script tags in index.html"]],
+    [["List", "the script list in index.html"]],
   ),
   appToFile: arrow(
     "app",

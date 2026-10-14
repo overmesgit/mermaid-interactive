@@ -92,15 +92,36 @@
 
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
-  <script src="diagrams.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/camera.js"></script>
-  <script src="js/highlight.js"></script>
-  <script src="js/panel.js"></script>
-  <script src="js/mermaid-svg.js"></script>
-  <script src="js/bind.js"></script>
-  <script src="js/nav.js"></script>
-  <script src="js/export.js"></script>
-  <script src="js/boot.js"></script>
+  <script src="js/helpers.js"></script>
+  <script>
+    // The content file comes from ?src=, so one page can show any explanation. The engine starts after it, because js/state.js reads DIAGRAMS at once.
+    // Export inlines these scripts in this order, so this list is the only one.
+    (() => {
+      const engine = ["state", "camera", "highlight", "panel", "mermaid-svg", "bind", "nav", "export", "boot"].map((name) => `js/${name}.js`);
+      const src = new URLSearchParams(location.search).get("src") || "diagrams.js";
+      const fail = (text) => {
+        document.getElementById("camera").textContent = text;
+        console.error(text);
+      };
+      // Only a file from this site. A link with ?src=https://... could otherwise run anyone's script on this page.
+      const url = new URL(src, location.href);
+      if (url.origin !== location.origin || url.protocol !== location.protocol) {
+        fail(`Not loading ${src}. ?src= takes a path on this site, like examples/starter.js.`);
+        return;
+      }
+      const add = (path, onload) => {
+        const script = document.createElement("script");
+        script.src = path;
+        script.async = false;
+        if (onload) script.onload = onload;
+        script.onerror = () => fail(`Could not load ${path}.`);
+        document.body.append(script);
+      };
+      add(src, () => {
+        if (!window.DIAGRAMS) fail(`${src} loaded but did not set window.DIAGRAMS. The console shows why.`);
+        else engine.forEach((path) => add(path));
+      });
+    })();
+  </script>
 </body>
 </html>

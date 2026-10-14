@@ -41,7 +41,7 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 
 There is no build and no framework, so a change shows up on reload.
 
-- **Files.** `index.html`, `styles.css`, `diagrams.js` (the content), and the scripts in `js/` (the engine).
+- **Files.** `index.html`, `styles.css`, and the scripts in `js/` are the engine. `diagrams.js` is the sample content, and `examples/` holds more. `?src=` in the link picks which one the page shows.
 - **Libraries.** Mermaid 11 and marked 15 load from jsDelivr.
 - **Drawing.** Mermaid draws the SVG. `securityLevel` is `strict`, so Mermaid's own click handlers are off, and this page adds its own to the finished SVG.
 - **Changing the diagram.** `show()` in `js/nav.js` is the only way.
@@ -93,7 +93,7 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **opensView**. The viewId a double-click opens. This is not camera zoom.
 - **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
 - **engine**. The page itself: `index.html`, `styles.css`, and `js/`. It is the same for every explanation.
-- **content file**. One explanation: a script that sets `window.DIAGRAMS`. Today that is `diagrams.js`. The format is `skill/references/format.md`.
+- **content file**. One explanation: a script that sets `window.DIAGRAMS`. The page loads the one named by `?src=` in the link, or `diagrams.js` without it. `arrow()` and `md` come from `js/helpers.js`. The format is `skill/references/format.md`.
 - **code folder**. `code/` next to a content file. The files its notes show with `~~~lang file=path lines=a-b`. Not the engine's `js/`, which `source=` reads.
 - **inner diagram**. The view a shape or arrow opens with double-click or the ↘ badge. Opening one is called drill-down, or a drill.
 - **How note**. A panel note on the How tab, which explains this page's own code.

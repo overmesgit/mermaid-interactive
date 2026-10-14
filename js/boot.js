@@ -3,6 +3,8 @@
 mermaid.initialize({
   startOnLoad: false,
   securityLevel: "strict",
+  // On a bad chart, show() writes the error where the diagram goes. Without this, Mermaid also leaves its own error picture at the bottom of the page.
+  suppressErrorRendering: true,
   theme: "base",
   fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
   flowchart: { htmlLabels: true, useMaxWidth: false, curve: "basis" },

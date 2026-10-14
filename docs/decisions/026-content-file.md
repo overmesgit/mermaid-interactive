@@ -1,6 +1,6 @@
 # ADR-026 Each explanation is one file, separate from the engine
 
-- Status: accepted, not built yet
+- Status: accepted
 - Date: 2026-10-11
 
 ## Context
@@ -21,4 +21,4 @@ An agent writes one file and never touches the engine.
 
 A `~~~js source=name` fence ([ADR-024](024-notes-name-functions.md)) still prints a function the page has loaded. That only works for the engine's own code. A PR explanation pastes its code into the note.
 
-How the page picks a content file while someone is authoring one is decided with the code.
+How the page picks a content file while someone is authoring one is [ADR-034](034-pick-the-content-file.md).

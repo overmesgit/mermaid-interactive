@@ -15,6 +15,8 @@ Serve the folder over HTTP, then open `http://127.0.0.1:8765/`:
 python3 -m http.server 8765
 ```
 
+To open another content file, name it in the link: `http://127.0.0.1:8765/?src=examples/starter.js`. To start a new explanation, copy `examples/starter.js` and open the copy the same way.
+
 The sample tabs are a bookshop. The How tab explains the tool itself, step by step. Export needs that server. The downloaded file still loads Mermaid from the network.
 
 ## Docs
