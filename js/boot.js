@@ -14,29 +14,29 @@ mermaid.initialize({
     fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
     fontSize: "15px",
     background: "transparent",
-    primaryColor: "#f3efe4",
-    primaryTextColor: "#1c1915",
-    primaryBorderColor: "#2a2622",
-    secondaryColor: "#e4efe6",
-    secondaryTextColor: "#1c1915",
-    secondaryBorderColor: "#2a2622",
-    tertiaryColor: "#efe4d4",
-    tertiaryTextColor: "#1c1915",
-    tertiaryBorderColor: "#2a2622",
-    lineColor: "#5e584e",
-    textColor: "#1c1915",
-    mainBkg: "#f3efe4",
-    nodeBorder: "#2a2622",
-    actorBkg: "#f3efe4",
-    actorBorder: "#2a2622",
-    actorTextColor: "#1c1915",
-    signalColor: "#2a2622",
-    signalTextColor: "#1c1915",
-    noteBkgColor: "#efe4d4",
-    noteTextColor: "#1c1915",
-    noteBorderColor: "#2a2622",
-    activationBkgColor: "#e4efe6",
-    activationBorderColor: "#2a2622",
+    primaryColor: "#ffffff",
+    primaryTextColor: "#1e293b",
+    primaryBorderColor: "#475569",
+    secondaryColor: "#eef2f7",
+    secondaryTextColor: "#1e293b",
+    secondaryBorderColor: "#475569",
+    tertiaryColor: "#f1f5f9",
+    tertiaryTextColor: "#1e293b",
+    tertiaryBorderColor: "#475569",
+    lineColor: "#64748b",
+    textColor: "#1e293b",
+    mainBkg: "#ffffff",
+    nodeBorder: "#475569",
+    actorBkg: "#ffffff",
+    actorBorder: "#475569",
+    actorTextColor: "#1e293b",
+    signalColor: "#475569",
+    signalTextColor: "#1e293b",
+    noteBkgColor: "#fef9e7",
+    noteTextColor: "#1e293b",
+    noteBorderColor: "#cbd5e1",
+    activationBkgColor: "#e6eefd",
+    activationBorderColor: "#475569",
   },
 });
 
@@ -54,6 +54,18 @@ document.getElementById("copy").addEventListener("click", async () => {
 });
 
 document.getElementById("export").addEventListener("click", exportHtml);
+
+// The menu opens under its island, right edges aligned, and closes after a choice.
+const moreMenu = document.getElementById("more-menu");
+moreMenu.addEventListener("beforetoggle", (event) => {
+  if (event.newState !== "open") return;
+  const box = document.getElementById("more-open").closest(".island").getBoundingClientRect();
+  moreMenu.style.top = `${box.bottom + 8}px`;
+  moreMenu.style.right = `${document.documentElement.clientWidth - box.right}px`;
+});
+moreMenu.addEventListener("click", (event) => {
+  if (event.target.closest("button")) moreMenu.hidePopover();
+});
 document.getElementById("fit").addEventListener("click", fit);
 document.getElementById("story-open").addEventListener("click", () => {
   app.storyHidden = false;
@@ -68,9 +80,10 @@ app.els.search.addEventListener("input", applySearch);
 
 document.addEventListener("keydown", (event) => {
   const typing = event.target.closest("input, textarea");
-  // Escape on the open help closes only the help, not the panel behind it.
-  if (app.els.help.matches(":popover-open")) {
-    if (event.key === "Escape") app.els.help.hidePopover();
+  // Escape on the open help or menu closes only that, not the panel behind it.
+  const popup = document.querySelector("[popover]:popover-open");
+  if (popup) {
+    if (event.key === "Escape") popup.hidePopover();
     return;
   }
   if (event.key === "/" && !typing) {

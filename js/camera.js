@@ -13,9 +13,11 @@ function fit() {
     ? svg.viewBox.baseVal
     : { width: svg.getBoundingClientRect().width, height: svg.getBoundingClientRect().height };
   const pad = 48;
-  // Prev and Next sit on the top left of the diagram. Fit starts below them.
-  const top = els.lesson.hidden ? pad / 2 : els.lesson.offsetTop + els.lesson.offsetHeight + 12;
-  const height = els.viewport.clientHeight - top - pad / 2;
+  // The floating controls cover the top and the bottom of the canvas. Fit keeps the diagram between them.
+  const view = els.viewport.getBoundingClientRect();
+  const top = document.querySelector(".float-top").getBoundingClientRect().bottom - view.top + pad / 2;
+  const bottom = view.bottom - document.querySelector(".float-bottom").getBoundingClientRect().top + pad / 2;
+  const height = els.viewport.clientHeight - top - bottom;
   const s = Math.min(
     (els.viewport.clientWidth - pad) / box.width,
     height / box.height,
