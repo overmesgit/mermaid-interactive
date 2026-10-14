@@ -18,7 +18,7 @@ The code walks stay as inner diagrams: how one view is drawn, how a shape is fou
 
 Every note starts with the problem in plain words, then says why, then gives at most one example. Function and file names go in the facts and the code, not in the first sentence.
 
-The lesson shows only what is built. Joining the files with a shell command, the checks on load, and the `code/` folder join the lesson when they exist.
+The lesson shows only what is built. Joining the files with a shell command, the checks on load, and code files join the lesson when they exist.
 
 ## Consequences
 

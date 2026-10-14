@@ -58,7 +58,8 @@ Zooming the picture versus opening another diagram.
 | [012](012-markdown-notes.md) | Panel notes are markdown | Replaced by 013 |
 | [013](013-notes-in-templates.md) | Keep How notes inside diagrams.js, not in separate files | Current, partly replaced by 024 |
 | [024](024-notes-name-functions.md) | How notes show a function by name instead of a pasted copy | Current |
-| [030](030-code-folder.md) | Show code from a code/ folder, packed into the page | Planned |
+| [030](030-code-folder.md) | Show code from a code/ folder, packed into the page | Planned, partly replaced by 035 |
+| [035](035-code-from-the-repo.md) | Read code files from the repo, not a code/ folder | Planned |
 
 ## The How lesson
 

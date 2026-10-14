@@ -33,7 +33,7 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 - The How tab explains the page as a series of diagrams. Prev and Next move along that series, and they stay when a shape's inner diagram is open. The panel note is markdown, and the code is part of that note.
 - An explanation is one content file, apart from the engine ([ADR-026](docs/decisions/026-content-file.md)).
 - An agent can produce the HTML file without a browser or a script runtime. The page checks the content and shows a warning instead of drawing a dead shape ([ADR-029](docs/decisions/029-join-and-check-in-page.md)).
-- A note shows code from the explanation's `code/` folder by path and line range. The files are packed into the page as gzip ([ADR-030](docs/decisions/030-code-folder.md)).
+- A note shows a file from the repo the explanation is about, by path and line range, or an older version of it by git revision. The whole file is packed into the page as gzip, so the panel can open all of it ([ADR-030](docs/decisions/030-code-folder.md), [ADR-035](docs/decisions/035-code-from-the-repo.md)).
 - An explanation opened months later draws the same way. Mermaid and marked load at exact versions ([ADR-028](docs/decisions/028-pinned-cdn.md)).
 - Where a PR link points is not decided. The skill ends with the file, and publishing is a separate step.
 
@@ -94,7 +94,7 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
 - **engine**. The page itself: `index.html`, `styles.css`, and `js/`. It is the same for every explanation.
 - **content file**. One explanation: a script that sets `window.DIAGRAMS`. The page loads the one named by `?src=` in the link, or `diagrams.js` without it. `arrow()` and `md` come from `js/helpers.js`. The format is `skill/references/format.md`.
-- **code folder**. `code/` next to a content file. The files its notes show with `~~~lang file=path lines=a-b`. Not the engine's `js/`, which `source=` reads.
+- **code file**. A file a note shows with `~~~lang file=path lines=a-b`. The path starts at the root of the repo the explanation is about, and `rev:path` names an older version. Not the engine's `js/`, which `source=` reads.
 - **inner diagram**. The view a shape or arrow opens with double-click or the ↘ badge. Opening one is called drill-down, or a drill.
 - **How note**. A panel note on the How tab, which explains this page's own code.
 - **code walk**. A How view that steps through one function, such as `how-show`. It is an inner diagram, not a lesson step.

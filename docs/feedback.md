@@ -119,3 +119,11 @@ Each shape now has a short caption under its name, written in the Mermaid label.
 > hmm... adding some text block to diagram can be good how about adding default side panel with the explanation flow?
 
 With nothing selected, the side panel shows the view's story and its parts, with what a lesson step adds marked New. The captions stay. [ADR-033](decisions/033-story-panel.md).
+
+## 2026-10-14
+
+> instead of code folder can we provide list of files?
+
+> we only save those areas? I think we should allow to save the whole file to expand in side panel if we need
+
+No folder and no list. The join collects the paths from the `file=` fences and reads them from the repo, or from git for an older version. Each whole file is packed. [ADR-035](decisions/035-code-from-the-repo.md).

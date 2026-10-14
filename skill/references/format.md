@@ -9,32 +9,29 @@ Each explanation is its own file, and the page shows the one named in the link (
 ## Start here
 
 1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
-2. **Put the code the notes show in `code/`,** next to `diagrams.js`. See [Code files](#code-files). Skip this if the notes show no code from files.
-3. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. Skip this if you cannot open a browser.
-4. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
-5. **Join it into one HTML file.** Without a `code/` folder:
-
-   ```bash
-   cat skill/assets/head.html diagrams.js skill/assets/tail.html > explanation.html
-   ```
-
-   With a `code/` folder, each file is also packed in, as gzip and base64:
+2. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. Skip this if you cannot open a browser.
+3. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
+4. **Join it into one HTML file.** Run this from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
 
    ```bash
    {
-     cat skill/assets/head.html diagrams.js skill/assets/tail.html
-     (cd code && find . -type f | sort | while read -r f; do
-       printf '<script type="application/gzip" data-file="%s">\n' "${f#./}"
-       gzip -cn "$f" | base64
+     cat "$skill/assets/head.html" "$content" "$skill/assets/tail.html"
+     sed -n 's/^[[:space:]]*~~~.*[[:space:]]file=\([^[:space:]]*\).*/\1/p' "$content" | sort -u |
+     while read -r f; do
+       printf '<script type="application/gzip" data-file="%s">\n' "$f"
+       case "$f" in
+         *:*) git show "$f" ;;
+         *)   cat "$f" ;;
+       esac | gzip -cn | base64
        printf '</script>\n'
-     done)
+     done
    } > explanation.html
    ```
 
-   Both need a POSIX shell: Linux, macOS, or Git Bash on Windows.
-6. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
+   It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files.
+5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
 
-Step 5 does not work yet. Until it does, the page's Export HTML button saves the file you are looking at as one HTML file. `head.html` and `tail.html` are not built ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+Step 4 does not work yet. Until it does, the page's Export HTML button saves the file you are looking at as one HTML file. `head.html` and `tail.html` are not built ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
 
 ## Shape
 
@@ -146,20 +143,13 @@ body: md`
 `,
 ```
 
-Code that exists as a file comes from the code folder. Write it in the note only when it is a short sketch that is in no file.
+Code that exists as a file is named with `file=`, as in [Code files](#code-files). Write it in the note only when it is a short sketch that is in no file.
 
 A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from a PR is not loaded, so it would print `// name is not loaded`.
 
 ## Code files
 
-Put the files the explanation needs in a `code/` folder next to `diagrams.js`. The layout is yours. A file can be a whole source file, the part that matters, an older version, or a `.diff`.
-
-```
-code/
-  api/session.go
-  api/session.go.diff
-  old/session.go
-```
+The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and the join in step 4 finds every name, reads each file, and packs it into the page whole ([ADR-030](../../docs/decisions/030-code-folder.md), [ADR-035](../../docs/decisions/035-code-from-the-repo.md)).
 
 A note shows a file with an empty fence:
 
@@ -168,17 +158,21 @@ A note shows a file with an empty fence:
 ~~~
 ```
 
-- The path is relative to `code/`, with `/` between folders, and no `"`.
+- The path starts at the root of the repo, with `/` between folders. It cannot contain a space or `"`.
 - `lines` is 1-based and inclusive. Leave it out to show the whole file. `grep -n` gives the numbers.
-- The fence's language is used as written. Use `diff` for a `.diff` file.
+- The fence's language is used as written.
 
-The panel shows the snippet under a header with the path and the lines. Clicking the header opens the whole file, with that range highlighted. Several notes can point at the same file.
+To show an older version, put a git revision and `:` before the path, as `git show` takes it: `file=main:api/session.go`. A diff cannot be shown. Show the old and the new version in two notes instead.
 
-The files are packed into the page when it is joined ([ADR-030](../../docs/decisions/030-code-folder.md)). Do not paste them into `diagrams.js`.
+The lines are read when the page is joined. If the file may change before then, name the commit, as in `file=4f2c1e9:api/session.go`, so the lines stay where you wrote them.
+
+The panel shows the snippet under a header with the path and the lines. Clicking the header opens the whole file, with that range highlighted. Several notes can point at the same file, and it is packed once.
+
+Do not paste the files into `diagrams.js`.
 
 ## Example
 
-A change that adds a Redis session cache. Two lesson steps, before and after, and one drill into the new read path. The API note shows lines 12 to 24 of `code/api/session.go`.
+A change that adds a Redis session cache. Two lesson steps, before and after, and one drill into the new read path. The API note shows lines 12 to 24 of `api/session.go`.
 
 ```js
 window.DIAGRAMS = {
@@ -288,7 +282,7 @@ Today a miss is silent. The shape draws, and nothing happens on click.
 4. Both ends of every state edge interaction have a node interaction, or are `"*"`.
 5. Every `opensView`, `parent`, tab `id`, and `lesson` entry is a viewId in `views`.
 6. Every view's `viewId` equals its key.
-7. `diagrams.js` does not contain `</script`. It is joined into the page as the body of a script tag. Files in `code/` may contain it.
-8. Every `file=` names a file in `code/`, and its `lines` range ends inside that file.
+7. `diagrams.js` does not contain `</script`. It is joined into the page as the body of a script tag. Code files named with `file=` may contain it.
+8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 
-[ADR-029](../../docs/decisions/029-join-and-check-in-page.md) and [ADR-030](../../docs/decisions/030-code-folder.md) make the page run checks 1 to 6 and 8 on load, and list every interaction it could not wire after each draw. A problem shows as a warning on the page. Until that is built, check by hand. An agent that cannot open a browser always checks by hand.
+[ADR-029](../../docs/decisions/029-join-and-check-in-page.md) [ADR-030](../../docs/decisions/030-code-folder.md), and [ADR-035](../../docs/decisions/035-code-from-the-repo.md) make the page run checks 1 to 6 and 8 on load, and list every interaction it could not wire after each draw. A problem shows as a warning on the page. Until that is built, check by hand. An agent that cannot open a browser always checks by hand.
