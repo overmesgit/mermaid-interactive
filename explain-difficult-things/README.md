@@ -1,6 +1,6 @@
 # Explain difficult things
 
-How to explain a hard concept, subsystem, or pull request. These notes are the input for the "how to explain" part of `skill/SKILL.md` ([ADR-025](../docs/decisions/025-explainer-skill.md)). They are not rules yet.
+How to explain a hard concept, subsystem, or pull request. These notes are the source of the "How to explain" part of [`skill/SKILL.md`](../skill/SKILL.md) ([ADR-025](../docs/decisions/025-explainer-skill.md)). The skill keeps a short version, so change both together.
 
 Read the ideas in order. Each is one screen: the rule, why, how, an example, and when it backfires. The sources behind them are in [research/](research/).
 

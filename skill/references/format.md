@@ -9,9 +9,7 @@ Each explanation is its own file, and the page shows the one named in the link (
 ## Start here
 
 1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
-2. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. An amber ⚠ chip by Find means the page found mistakes. Skip this if you cannot open a browser.
-3. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
-4. **Put it into the page.** The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes. The command below copies the page with your content file in place of that line. Run it from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
+2. **Put it into the page.** The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes. The command below copies the page with your content file in place of that line. Run it from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
 
    ```bash
    {
@@ -29,9 +27,13 @@ Each explanation is its own file, and the page shows the one named in the link (
    ```
 
    It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files.
+3. **Look at it.** Open `explanation.html` in a browser. It opens from disk and needs no server, but it loads Mermaid from the network. An amber ⚠ chip by Find means the page found mistakes. Click it for the list. Walk every lesson step and open every inner diagram, because an arrow is only checked once its diagram is drawn. After an edit, run step 2 again and reload. Skip this if you cannot open a browser.
+4. **Check it** against [the checklist](#check-before-handing-it-over). If you could not open a browser, this is the only check. A mistake does not stop the page. It only leaves a shape that does nothing on click.
 5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
 
 The template is described in [ADR-037](../../docs/decisions/037-fill-a-template.md).
+
+Inside this repo there is a quicker loop for step 3. Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the content file's path, like `?src=examples/starter.js`. Reload after each edit. No join is needed, and files named with `file=` are read from the server.
 
 ## Shape
 

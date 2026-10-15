@@ -1,6 +1,6 @@
 # ADR-025 The tool explains hard things, and agents use it through a skill
 
-- Status: accepted, skill layout superseded by [ADR-029](029-join-and-check-in-page.md)
+- Status: accepted, skill layout superseded by [ADR-029](029-join-and-check-in-page.md) and [ADR-037](037-fill-a-template.md)
 - Date: 2026-10-11
 
 ## Context
