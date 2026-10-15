@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="99111850" />
+  <meta name="engine-fingerprint" content="d026de1e" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #1e293b;
@@ -782,6 +782,29 @@ line.is-edge:not(.edge-hit).is-hot {
   fill: var(--accent-soft) !important;
   stroke: var(--accent) !important;
   stroke-width: 3px !important;
+}
+
+/* An icon shape keeps its background one group deeper, behind the icon. The last group is a transparent hit area in front of it, so only the first is styled. */
+.is-hit.icon-shape > g:first-child > path {
+  stroke: var(--accent) !important;
+  stroke-width: 2.5px !important;
+}
+
+.is-selected.icon-shape > g:first-child > path {
+  fill: var(--accent-soft) !important;
+  stroke: var(--accent) !important;
+  stroke-width: 3px !important;
+}
+
+/* An image shape's picture covers its whole box, so a stroke on the box would be hidden. A ring just outside the picture shows instead. */
+.is-hit.image-shape > image {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.is-selected.image-shape > image {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 
 path.is-edge.is-selected:not(.edge-hit),
@@ -1857,7 +1880,7 @@ function chartKind(chart) {
 function shapeGroup(el) {
   return (
     el.closest(
-      "g.node, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
+      "g.node, g.image-shape, g.icon-shape, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
     ) ||
     el.closest("g") ||
     el
@@ -1871,8 +1894,9 @@ function findMermaidShapes(svg, chartId) {
   const groups = new Set();
   if (kind === "flowchart") {
     // diagram-<n>-flowchart-<chartId>-<number>
+    // Image and icon shapes are drawn without the node class, so a lookup for g.node alone never finds them.
     const pattern = new RegExp(`(?:^|-)flowchart-${id}-\\d+$`);
-    svg.querySelectorAll("g.node").forEach((el) => {
+    svg.querySelectorAll("g.node, g.image-shape, g.icon-shape").forEach((el) => {
       if (pattern.test(el.id)) groups.add(el);
     });
   } else if (kind === "c4") {

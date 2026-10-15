@@ -81,6 +81,8 @@ The first line of `chart` picks the matcher. Only these four are clickable:
 
 Any other Mermaid type still draws. Nothing on it is clickable.
 
+In a flowchart, an image node, `a@{ img: "...", label: "..." }`, and an icon node, `a@{ icon: "fa:user", label: "..." }`, are clickable like any other node. An image can be a `data:` URI, so it needs no file next to the page. An icon only draws when the page has its icon pack, which this page does not load, so it shows a `?`.
+
 Some ids are words Mermaid reserves, so the whole chart fails to draw. A state cannot be called `Note` in any case, because `note` starts a sticky note. A flowchart node cannot be called `end`. Give the shape another id and keep the word as its name: `state "Note" as Selected`.
 
 ## Captions

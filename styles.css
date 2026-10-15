@@ -777,6 +777,29 @@ line.is-edge:not(.edge-hit).is-hot {
   stroke-width: 3px !important;
 }
 
+/* An icon shape keeps its background one group deeper, behind the icon. The last group is a transparent hit area in front of it, so only the first is styled. */
+.is-hit.icon-shape > g:first-child > path {
+  stroke: var(--accent) !important;
+  stroke-width: 2.5px !important;
+}
+
+.is-selected.icon-shape > g:first-child > path {
+  fill: var(--accent-soft) !important;
+  stroke: var(--accent) !important;
+  stroke-width: 3px !important;
+}
+
+/* An image shape's picture covers its whole box, so a stroke on the box would be hidden. A ring just outside the picture shows instead. */
+.is-hit.image-shape > image {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.is-selected.image-shape > image {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
 path.is-edge.is-selected:not(.edge-hit),
 line.is-edge.is-selected:not(.edge-hit) {
   stroke: var(--accent) !important;

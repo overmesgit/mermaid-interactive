@@ -20,7 +20,7 @@ An edge interaction is either `[from, to]` or the object `arrow()` returns. `fro
 
 Mermaid prefixes every DOM id with the render id, `diagram-<n>-`.
 
-1. **Flowchart.** A `g.node` whose id ends in `flowchart-<chartId>-<number>`. `api` matches `diagram-2-flowchart-api-3`.
+1. **Flowchart.** A `g.node` whose id ends in `flowchart-<chartId>-<number>`. `api` matches `diagram-2-flowchart-api-3`. Mermaid draws an image node as `g.image-shape` and an icon node as `g.icon-shape`, without the `node` class, so those two are looked for as well.
 2. **C4.** A `g.node.c4-shape` whose id ends in `-<chartId>`. `reader` matches `diagram-5-reader`. Markers are not shape groups, so they do not match.
 3. **Sequence.** `name` equals the chartId, on `rect.actor` or `g.actor-man` only. The top and bottom boxes both match, so one interaction is wired twice. Lifelines carry the same name and are not selected.
 4. **State.** A `g.node` whose id ends in `state-<chartId>-<number>`. `Draft` matches `diagram-1-state-Draft-1`. The start and end dots are `root_start` and `root_end`, so they do not match a state name.

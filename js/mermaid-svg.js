@@ -20,7 +20,7 @@ function chartKind(chart) {
 function shapeGroup(el) {
   return (
     el.closest(
-      "g.node, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
+      "g.node, g.image-shape, g.icon-shape, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
     ) ||
     el.closest("g") ||
     el
@@ -34,8 +34,9 @@ function findMermaidShapes(svg, chartId) {
   const groups = new Set();
   if (kind === "flowchart") {
     // diagram-<n>-flowchart-<chartId>-<number>
+    // Image and icon shapes are drawn without the node class, so a lookup for g.node alone never finds them.
     const pattern = new RegExp(`(?:^|-)flowchart-${id}-\\d+$`);
-    svg.querySelectorAll("g.node").forEach((el) => {
+    svg.querySelectorAll("g.node, g.image-shape, g.icon-shape").forEach((el) => {
       if (pattern.test(el.id)) groups.add(el);
     });
   } else if (kind === "c4") {
