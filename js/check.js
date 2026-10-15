@@ -87,25 +87,30 @@ async function checkCharts() {
 }
 
 // Each file= must name a file the page holds, and its lines must fit inside it. A wrong path or revision packs an empty file.
+// A missing file is one problem, however many notes name it.
 async function checkCodeFiles() {
   const found = [];
-  for (const fence of fileFences()) {
-    const say = (text) => found.push({ viewId: fence.viewId, text: `${fence.where}: ${text}` });
+  const byPath = new Map();
+  fileFences().forEach((fence) => byPath.set(fence.path, [...(byPath.get(fence.path) || []), fence]));
+  for (const [path, fences] of byPath) {
+    const where = fences.length === 1 ? `It is named in ${fences[0].where}.` : `${fences.length} notes name it: ${fences.map((fence) => fence.where).join("; ")}.`;
     let text;
     try {
-      text = await codeFile(fence.path);
+      text = await codeFile(path);
     } catch (error) {
-      say(error.message);
+      if (!error.preview) found.push({ viewId: fences[0].viewId, text: `${error.message} ${where}` });
       continue;
     }
     if (!text) {
-      say(`${fence.path} is empty. A wrong path or revision packs an empty file.`);
+      found.push({ viewId: fences[0].viewId, text: `${path} is empty. A wrong path or revision packs an empty file. ${where}` });
       continue;
     }
     const count = splitLines(text).length;
-    if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
-      say(`${fence.path} has ${count} lines, so ${rangeText(fence)} cannot be shown.`);
-    }
+    fences.forEach((fence) => {
+      if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
+        found.push({ viewId: fence.viewId, text: `${fence.where}: ${path} has ${count} lines, so ${rangeText(fence)} cannot be shown.` });
+      }
+    });
   }
   return found;
 }

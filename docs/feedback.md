@@ -147,3 +147,7 @@ An agent has no browser, so it cannot press Export. The skill has to carry the p
 > how about replacing some tag inside html to inject diagrams? maaa maybe not the final solution but should be good for now
 
 One template with a marker line replaces the two halves. The page's Export makes it when the link has `?template`. Loading the engine from a CDN stays open for later. [ADR-037](decisions/037-fill-a-template.md).
+
+> i opened file://wsl.localhost/Ubuntu/home/overmes/mermaid-interactive/index.html?src=examples/pr-checks.js#problem [and the ⚠ list showed seven lines, one per note, all saying a 4c92d28: file is not in this page]
+
+A preview cannot read files from git history, or any file when opened from disk. That is a limit of previewing, not a mistake, so the checks no longer list it, and the panel says why in place of the code. A missing file is one problem however many notes name it, and the list's heading no longer says every line is a dead shape. [ADR-038](decisions/038-code-files-in-preview-and-export.md).

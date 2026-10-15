@@ -59,16 +59,28 @@ function codeFile(path) {
   return codeFiles.get(path);
 }
 
+// An error with `preview` set is a limit of previewing, not a mistake in the content, so the checks do not list it.
+function codeFileError(message, preview) {
+  return Object.assign(new Error(message), { preview });
+}
+
 async function loadCodeFile(path) {
   await pageParsed;
   const packed = [...document.querySelectorAll('script[type="application/gzip"]')].find((script) => script.dataset.file === path);
   if (packed) return unpack(packed.textContent);
-  // A preview with ?src= has nothing packed, so the file is read from the server, which serves the repo. A revision is only in git.
-  if (location.protocol.startsWith("http") && !path.includes(":")) {
-    const response = await fetch(new URL(path, location.href));
-    if (response.ok) return response.text();
+  // Only a joined page has packed files. A preview through index.html?src= marks its content script, and reads files from the server instead.
+  if (!document.querySelector("script[data-content]")) {
+    throw codeFileError(`${path} is not packed in this page. Join the page from the repo root, so the file is packed.`, false);
   }
-  throw new Error(`${path} is not in this page. Join the page from the repo root, so the file is packed.`);
+  if (path.includes(":")) {
+    throw codeFileError(`This preview cannot show ${path}, because it comes from git history. The joined page shows it.`, true);
+  }
+  if (!location.protocol.startsWith("http")) {
+    throw codeFileError(`A page opened from disk cannot read ${path}. Serve the folder over HTTP, or join the page.`, true);
+  }
+  const response = await fetch(new URL(path, location.href));
+  if (!response.ok) throw codeFileError(`${path} was not found on the server (${response.status}). Check the path from the repo root.`, false);
+  return response.text();
 }
 
 function rangeText(fence) {

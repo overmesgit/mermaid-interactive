@@ -961,7 +961,7 @@ line.is-edge.is-selected:not(.edge-hit) {
 
   <div id="checks" class="menu" popover="" aria-label="Problems in this explanation">
     <h2>Problems in this explanation</h2>
-    <p>Until they are fixed, these shapes and arrows do nothing on click. The console lists them too.</p>
+    <p>Each line says what is wrong and what it breaks. The console lists them too.</p>
     <ul></ul>
   </div>
 
@@ -1745,16 +1745,28 @@ function codeFile(path) {
   return codeFiles.get(path);
 }
 
+// An error with `preview` set is a limit of previewing, not a mistake in the content, so the checks do not list it.
+function codeFileError(message, preview) {
+  return Object.assign(new Error(message), { preview });
+}
+
 async function loadCodeFile(path) {
   await pageParsed;
   const packed = [...document.querySelectorAll('script[type="application/gzip"]')].find((script) => script.dataset.file === path);
   if (packed) return unpack(packed.textContent);
-  // A preview with ?src= has nothing packed, so the file is read from the server, which serves the repo. A revision is only in git.
-  if (location.protocol.startsWith("http") && !path.includes(":")) {
-    const response = await fetch(new URL(path, location.href));
-    if (response.ok) return response.text();
+  // Only a joined page has packed files. A preview through index.html?src= marks its content script, and reads files from the server instead.
+  if (!document.querySelector("script[data-content]")) {
+    throw codeFileError(`${path} is not packed in this page. Join the page from the repo root, so the file is packed.`, false);
   }
-  throw new Error(`${path} is not in this page. Join the page from the repo root, so the file is packed.`);
+  if (path.includes(":")) {
+    throw codeFileError(`This preview cannot show ${path}, because it comes from git history. The joined page shows it.`, true);
+  }
+  if (!location.protocol.startsWith("http")) {
+    throw codeFileError(`A page opened from disk cannot read ${path}. Serve the folder over HTTP, or join the page.`, true);
+  }
+  const response = await fetch(new URL(path, location.href));
+  if (!response.ok) throw codeFileError(`${path} was not found on the server (${response.status}). Check the path from the repo root.`, false);
+  return response.text();
 }
 
 function rangeText(fence) {
@@ -2286,25 +2298,30 @@ async function checkCharts() {
 }
 
 // Each file= must name a file the page holds, and its lines must fit inside it. A wrong path or revision packs an empty file.
+// A missing file is one problem, however many notes name it.
 async function checkCodeFiles() {
   const found = [];
-  for (const fence of fileFences()) {
-    const say = (text) => found.push({ viewId: fence.viewId, text: `${fence.where}: ${text}` });
+  const byPath = new Map();
+  fileFences().forEach((fence) => byPath.set(fence.path, [...(byPath.get(fence.path) || []), fence]));
+  for (const [path, fences] of byPath) {
+    const where = fences.length === 1 ? `It is named in ${fences[0].where}.` : `${fences.length} notes name it: ${fences.map((fence) => fence.where).join("; ")}.`;
     let text;
     try {
-      text = await codeFile(fence.path);
+      text = await codeFile(path);
     } catch (error) {
-      say(error.message);
+      if (!error.preview) found.push({ viewId: fences[0].viewId, text: `${error.message} ${where}` });
       continue;
     }
     if (!text) {
-      say(`${fence.path} is empty. A wrong path or revision packs an empty file.`);
+      found.push({ viewId: fences[0].viewId, text: `${path} is empty. A wrong path or revision packs an empty file. ${where}` });
       continue;
     }
     const count = splitLines(text).length;
-    if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
-      say(`${fence.path} has ${count} lines, so ${rangeText(fence)} cannot be shown.`);
-    }
+    fences.forEach((fence) => {
+      if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
+        found.push({ viewId: fence.viewId, text: `${fence.where}: ${path} has ${count} lines, so ${rangeText(fence)} cannot be shown.` });
+      }
+    });
   }
   return found;
 }

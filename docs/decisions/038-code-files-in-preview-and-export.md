@@ -20,4 +20,4 @@ A preview shows working-tree files as they are now, and the joined page shows th
 
 A preview of an explanation about another repo cannot read that repo's files. The joined page can.
 
-The page's check reports a missing file in the preview too, so a revision path is listed there until the join.
+A file the preview cannot read because of how it was opened, from git history or from disk, is not a mistake in the content. The panel says why in place of the code, and the checks do not list it. A path the server does not have is listed, because that is a mistake. Several notes naming one missing file make one problem, not one each.
