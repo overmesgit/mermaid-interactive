@@ -161,3 +161,9 @@ Hosting stays open in the TODO. For now whoever uses the file hosts it. No ADR, 
 > [Warn when the template is out of date] this we can fix
 
 The template carries a fingerprint of the files it was made from, and the page served from this repo warns when they differ. [ADR-039](decisions/039-stale-template-warning.md).
+
+> sorry I forgot what is this skill.md for? how to use this diagram tool?
+
+> I think we are not ready to provide skill on how to craete a good explanation it will come later now we should concentrate on explaining how to use our digram tool
+
+SKILL.md is now a manual for the tool: what the reader gets, a short working content file, how to build and check `explanation.html`, the mistakes that are easy to make, and code from the repo. The explanation guidance moved to `explain-difficult-things/skill-draft.md`. [ADR-040](decisions/040-skill-teaches-the-tool-first.md).

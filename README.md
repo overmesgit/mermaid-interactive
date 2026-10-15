@@ -5,7 +5,7 @@ A page for explaining hard things: a concept, a subsystem, a pull request. An ex
 There are two ways to make one.
 
 - **By hand.** Edit the content, run the page, and export.
-- **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to explain, the format, and the workflow. The agent writes one content file, like `diagrams.js`, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
+- **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
 
 ## Run it
 

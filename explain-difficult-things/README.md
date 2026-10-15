@@ -1,6 +1,6 @@
 # Explain difficult things
 
-How to explain a hard concept, subsystem, or pull request. These notes are the source of the "How to explain" part of [`skill/SKILL.md`](../skill/SKILL.md) ([ADR-025](../docs/decisions/025-explainer-skill.md)). The skill keeps a short version, so change both together.
+How to explain a hard concept, subsystem, or pull request. These notes will become the "how to explain" part of [`skill/SKILL.md`](../skill/SKILL.md). For now the skill only teaches how to use the tool ([ADR-040](../docs/decisions/040-skill-teaches-the-tool-first.md)). [skill-draft.md](skill-draft.md) is a short version, written for the skill and set aside until then.
 
 Read the ideas in order. Each is one screen: the rule, why, how, an example, and when it backfires. The sources behind them are in [research/](research/).
 

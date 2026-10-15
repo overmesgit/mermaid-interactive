@@ -23,6 +23,7 @@ How an agent writes an explanation and hands it over.
 | [034](034-pick-the-content-file.md) | Pick the content file with ?src= in the link | Current |
 | [037](037-fill-a-template.md) | Fill one template by replacing a marker line | Current, partly replaced by 039 |
 | [039](039-stale-template-warning.md) | Warn when the skill's template is older than the engine | Current |
+| [040](040-skill-teaches-the-tool-first.md) | The skill teaches the tool first. How to explain comes later | Current |
 
 ## Finding and wiring shapes
 
