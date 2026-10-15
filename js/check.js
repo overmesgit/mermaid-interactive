@@ -63,6 +63,12 @@ function checkContent() {
         });
       }
     });
+    // Mermaid names an arrow written as `a e1@--> b` after its id instead of its ends, so the page cannot find it.
+    if (kind === "flowchart") {
+      for (const [, id] of chart.matchAll(/\b([\w-]+)@(?=[-=.~])/g)) {
+        say(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
+      }
+    }
     // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
     const texts = [
       ["the story", view.story],

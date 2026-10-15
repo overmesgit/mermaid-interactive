@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="4196a7a4" />
+  <meta name="engine-fingerprint" content="ebd21a15" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #1e293b;
@@ -781,6 +781,23 @@ line.is-edge:not(.edge-hit).is-hot {
   stroke-width: 2.5px !important;
 }
 
+path.is-edge.is-flow:not(.edge-hit, .is-dim),
+line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important; }
+
+/* A lit arrow flows from its start to its end, so the reader sees which way it goes. Mermaid draws every stroke in that direction.
+   A reader who asked for less motion sees the color alone. */
+@media (prefers-reduced-motion: no-preference) {
+  path.is-edge:not(.edge-hit):is(.is-hot, .is-selected, .is-flow:not(.is-dim)),
+  line.is-edge:not(.edge-hit):is(.is-hot, .is-selected, .is-flow:not(.is-dim)) {
+    stroke-dasharray: 8 5 !important;
+    animation: edge-flow 0.8s linear infinite;
+  }
+}
+
+@keyframes edge-flow {
+  to { stroke-dashoffset: -13; }
+}
+
 .is-dim { opacity: 0.72; }
 
 .is-hit > rect,
@@ -1365,6 +1382,17 @@ function markSelected(interaction) {
   return elements;
 }
 
+// A lit arrow flows from start to end, so the reader sees which way it goes. With nothing selected on a lesson step,
+// the arrows that step adds keep flowing, so what is new stands out before anything is clicked.
+function markStepFlow() {
+  const added = app.selectedInteraction ? null : addedInStep();
+  const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
+  app.els.camera.querySelectorAll(".is-edge").forEach((el) => {
+    const edge = edges.get(el.dataset.edgeId);
+    el.classList.toggle("is-flow", Boolean(added && edge && added.has(partKey(edge))));
+  });
+}
+
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
   const haystack = (interaction) =>
@@ -1671,6 +1699,7 @@ function renderParts() {
 function openStory() {
   app.selectedInteraction = null;
   markSelected(null);
+  markStepFlow();
   app.els.storyOpen.setAttribute("aria-pressed", String(!app.storyHidden));
   if (app.storyHidden) {
     hidePanel();
@@ -1715,6 +1744,7 @@ function openPanel(interaction) {
   showPanel();
   panel.close.focus();
   const selected = markSelected(interaction);
+  markStepFlow();
   requestAnimationFrame(() => reveal(selected));
 }
 
@@ -2378,6 +2408,12 @@ function checkContent() {
         });
       }
     });
+    // Mermaid names an arrow written as `a e1@--> b` after its id instead of its ends, so the page cannot find it.
+    if (kind === "flowchart") {
+      for (const [, id] of chart.matchAll(/\b([\w-]+)@(?=[-=.~])/g)) {
+        say(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
+      }
+    }
     // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
     const texts = [
       ["the story", view.story],
@@ -2565,6 +2601,7 @@ async function show(viewId, fromInteraction) {
     app.shownViewId = viewId;
     reportDrawn(viewId, [...bindNodeInteractions(svgEl), ...bindEdgeInteractions(svgEl)]);
     relaxLabels(svgEl);
+    markStepFlow();
     applySearch();
   } catch (error) {
     if (token !== app.renderToken) return;

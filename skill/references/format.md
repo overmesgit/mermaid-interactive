@@ -122,7 +122,7 @@ arrow(from, to, tooltip, body, facts, more)
 
 How an arrow is found depends on the chart type:
 
-- **Flowchart.** By `from` and `to`. The chart must draw that arrow as `from --> to`, with any arrow style or label. Two arrows between the same pair are taken in order.
+- **Flowchart.** By `from` and `to`. The chart must draw that arrow as `from --> to`, with any arrow style or label. Two arrows between the same pair are taken in order. Do not give an arrow an id, as in `from e1@--> to`. Mermaid then names the arrow after the id, so the page cannot find it. The page animates lit arrows itself, so the id is not needed for that.
 - **Sequence.** By `mermaidText`, which is required. The message text must equal it, or start with it. Case and spacing are ignored. Two messages with the same text are taken in source order.
 - **C4.** By `mermaidText`, the same way. The text is the relationship label, `"Reads"` in `Rel(api, db, "Reads")`.
 - **State.** By position. The engine finds the nearest wired state at each end of the path, so both ends need a node interaction. Write the start and end dots as `"*"`.
@@ -171,7 +171,7 @@ The [API](#api) loads the session, which costs one query per call.
 - A part shown as a card in the story is left out of the list under it.
 - The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first.
 
-So a story can walk the picture: a sentence, the part it is about, the next sentence.
+So a story can walk the picture: a sentence, the part it is about, the next sentence. On a lesson step, the arrows the step adds already flow in the picture, so the story can name them in the order they matter.
 
 ## Code files
 
@@ -313,5 +313,6 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it.
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 9. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
+10. No flowchart arrow has an id, like `e1@-->`.
 
-On load the page runs checks 1, 3 to 6, and 8 and 9 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 6, and 8 to 10 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).

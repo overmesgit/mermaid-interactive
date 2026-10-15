@@ -95,7 +95,9 @@ const HOW_BOX = {
 
       The fade is light on purpose, because a heavy fade hid the rest of the picture. Moving away puts back the search filter, if there is one, because search uses the same fade.
 
-      ~~~js source=highlightAround
+      The arrows that stay solid also flow from start to end, so you can see which way each one goes. On a lesson step, the arrows the step adds flow before you point at anything.
+
+      ~~~js source=highlightAround,markStepFlow
       ~~~
     `,
     facts: [["Function", "highlightAround"], ["Fade", "opacity 0.72"]],

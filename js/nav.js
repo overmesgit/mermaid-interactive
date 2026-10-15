@@ -70,6 +70,7 @@ async function show(viewId, fromInteraction) {
     app.shownViewId = viewId;
     reportDrawn(viewId, [...bindNodeInteractions(svgEl), ...bindEdgeInteractions(svgEl)]);
     relaxLabels(svgEl);
+    markStepFlow();
     applySearch();
   } catch (error) {
     if (token !== app.renderToken) return;

@@ -88,6 +88,7 @@ The tab that explains this page, step by step.
 | [010](010-label-frame.md) | Clicking a shape draws no box around its label | Current |
 | [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current, partly replaced by 036 |
 | [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
+| [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current |
 | [036](036-floating-controls.md) | Controls float over a full-window diagram | Current |
 
 ## Files and export

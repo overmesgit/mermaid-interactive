@@ -89,6 +89,17 @@ function markSelected(interaction) {
   return elements;
 }
 
+// A lit arrow flows from start to end, so the reader sees which way it goes. With nothing selected on a lesson step,
+// the arrows that step adds keep flowing, so what is new stands out before anything is clicked.
+function markStepFlow() {
+  const added = app.selectedInteraction ? null : addedInStep();
+  const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
+  app.els.camera.querySelectorAll(".is-edge").forEach((el) => {
+    const edge = edges.get(el.dataset.edgeId);
+    el.classList.toggle("is-flow", Boolean(added && edge && added.has(partKey(edge))));
+  });
+}
+
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
   const haystack = (interaction) =>

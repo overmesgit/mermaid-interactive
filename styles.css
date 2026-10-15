@@ -774,6 +774,23 @@ line.is-edge:not(.edge-hit).is-hot {
   stroke-width: 2.5px !important;
 }
 
+path.is-edge.is-flow:not(.edge-hit, .is-dim),
+line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important; }
+
+/* A lit arrow flows from its start to its end, so the reader sees which way it goes. Mermaid draws every stroke in that direction.
+   A reader who asked for less motion sees the color alone. */
+@media (prefers-reduced-motion: no-preference) {
+  path.is-edge:not(.edge-hit):is(.is-hot, .is-selected, .is-flow:not(.is-dim)),
+  line.is-edge:not(.edge-hit):is(.is-hot, .is-selected, .is-flow:not(.is-dim)) {
+    stroke-dasharray: 8 5 !important;
+    animation: edge-flow 0.8s linear infinite;
+  }
+}
+
+@keyframes edge-flow {
+  to { stroke-dashoffset: -13; }
+}
+
 .is-dim { opacity: 0.72; }
 
 .is-hit > rect,

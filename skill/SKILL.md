@@ -14,7 +14,7 @@ This skill covers how to use the tool: what the page does, what to write, how to
 - **Tabs** across the top. Each opens one diagram.
 - **A lesson**, if the tab has one. Prev, Next, and the arrow keys walk its steps, one diagram per step.
 - **A story** in the side panel, shown when nothing is selected. It says what the diagram shows, and can put a part's card between its sentences, where it talks about that part.
-- **A tooltip** on hover over any shape or arrow you wrote a note for.
+- **A tooltip** on hover over any shape or arrow you wrote a note for. The arrows it lights flow from start to end, and so do the arrows a lesson step adds.
 - **A note** in the side panel on click. It can hold markdown, code from the repo, and facts, and it links to the connected shapes.
 - **An inner diagram** on double-click, or the ↘ badge, for a shape or arrow that has one. Backspace goes back up.
 - **Find** to filter shapes by name, and pan and zoom with the mouse.

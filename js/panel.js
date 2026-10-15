@@ -281,6 +281,7 @@ function renderParts() {
 function openStory() {
   app.selectedInteraction = null;
   markSelected(null);
+  markStepFlow();
   app.els.storyOpen.setAttribute("aria-pressed", String(!app.storyHidden));
   if (app.storyHidden) {
     hidePanel();
@@ -325,6 +326,7 @@ function openPanel(interaction) {
   showPanel();
   panel.close.focus();
   const selected = markSelected(interaction);
+  markStepFlow();
   requestAnimationFrame(() => reveal(selected));
 }
 

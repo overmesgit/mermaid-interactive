@@ -25,6 +25,7 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 - A click on a node or an arrow opens a side panel with the notes for that shape.
 - With nothing selected, the side panel shows the view's story and a list of its shapes and arrows. Close hides it until the Story button. Escape from a note goes back to the story ([ADR-033](docs/decisions/033-story-panel.md)).
 - The story can show a part's card between its paragraphs, where the text talks about that part. Those parts are not listed again under it ([ADR-041](docs/decisions/041-story-links-to-parts.md)).
+- A lit arrow flows from its start to its end: selected, hovered, found by search, or new on this lesson step ([ADR-042](docs/decisions/042-lit-arrows-flow.md)).
 - Hover shows a tooltip.
 - If a shape has its own diagram, a double-click or the ↘ badge opens that diagram.
 - Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `opensView` is set.
