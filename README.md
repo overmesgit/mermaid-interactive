@@ -17,6 +17,8 @@ python3 -m http.server 8765
 
 To open another content file, name it in the link: `http://127.0.0.1:8765/?src=examples/starter.js`. To start a new explanation, copy `examples/starter.js` and open the copy the same way.
 
+`examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, which only git has, so join it instead of opening it with `?src=`. Run step 2 of the [format](skill/references/format.md) from the repo root with `content=examples/pr-checks.js`, then open `explanation.html`.
+
 The sample tabs are a bookshop. The How tab explains the tool itself, step by step. Export needs that server. The downloaded file still loads Mermaid from the network.
 
 After changing the engine, rebuild the skill's template: open `http://127.0.0.1:8765/?template`, press Export HTML, and save the file as `skill/assets/explainer.html`. See [ADR-037](docs/decisions/037-fill-a-template.md).

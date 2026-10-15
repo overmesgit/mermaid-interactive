@@ -4,7 +4,7 @@ One explanation is one content file. It is a classic script that sets `window.DI
 
 This is the only description of the format. The repo docs link here.
 
-Each explanation is its own file, and the page shows the one named in the link ([ADR-034](../../docs/decisions/034-pick-the-content-file.md)). [`examples/starter.js`](../../examples/starter.js) is a one-diagram file to copy.
+Each explanation is its own file, and the page shows the one named in the link ([ADR-034](../../docs/decisions/034-pick-the-content-file.md)). [`examples/starter.js`](../../examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](../../examples/pr-checks.js) explains a real commit in four steps, with code from that commit.
 
 ## Start here
 
@@ -131,7 +131,7 @@ An arrow with `opensView` has no ↘ badge. Its tooltip should say to double-cli
 
 `body` is markdown. The panel renders paragraphs, headings, lists, blockquotes, code fences, inline code, bold, italic, and `http`/`https` links. HTML and images are dropped.
 
-Write a note that holds code with the `md` tag and `~~~` fences. A backtick fence would end the JavaScript template. `md` strips the shared indent and does nothing else.
+Write a note that holds code with the `md` tag and `~~~` fences. A backtick fence would end the JavaScript template. `md` strips the shared indent and does nothing else. For the same reason, inline code needs escaped backticks: write `` \`cache\` `` to show `cache`. `${` also needs escaping, as `\${`.
 
 ```js
 body: md`
