@@ -68,8 +68,7 @@ async function show(viewId, fromInteraction) {
     }
     enterView(app.cams[viewId]);
     app.shownViewId = viewId;
-    bindNodeInteractions(svgEl);
-    bindEdgeInteractions(svgEl);
+    reportDrawn(viewId, [...bindNodeInteractions(svgEl), ...bindEdgeInteractions(svgEl)]);
     relaxLabels(svgEl);
     applySearch();
   } catch (error) {

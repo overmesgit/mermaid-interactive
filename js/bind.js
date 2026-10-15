@@ -39,15 +39,20 @@ function relaxLabels(svg) {
   });
 }
 
+// Returns the node interactions that found no shape, for the checks.
 function bindNodeInteractions(svg) {
   const wired = new Set();
+  const missed = [];
   nodeInteractions().forEach((interaction) => {
-    findMermaidShapes(svg, interaction.chartId).forEach((shape) => {
+    const shapes = findMermaidShapes(svg, interaction.chartId);
+    if (!shapes.length) missed.push(interaction);
+    shapes.forEach((shape) => {
       if (wired.has(shape)) return;
       wired.add(shape);
       wireShape(shape, interaction);
     });
   });
+  return missed;
 }
 
 // The visible stroke is too thin to hover. Clone it into a transparent, wider stroke and listen on that.
@@ -104,6 +109,7 @@ function makeInteractive(el, interaction, keyboardButton) {
 }
 
 // Each edge interaction is claimed once. Flowchart ids, then sequence text, then C4 text, then state geometry.
+// Returns the edge interactions that found no arrow, for the checks.
 function bindEdgeInteractions(svg) {
   const edges = edgeInteractions();
   const wired = new Set();
@@ -146,4 +152,5 @@ function bindEdgeInteractions(svg) {
   matchStateArrows(paths, edges.filter((edge) => !wired.has(edge)), svg).forEach(({ path, edge }) => {
     claimEdge(edge, [path]);
   });
+  return edges.filter((edge) => !wired.has(edge));
 }

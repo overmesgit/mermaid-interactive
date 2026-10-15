@@ -19,6 +19,11 @@
           <nav id="tabs" aria-label="Diagrams"></nav>
         </div>
         <div class="island tools">
+          <!-- Shown only when the content has a mistake. It opens the list of problems. -->
+          <button id="checks-open" type="button" popovertarget="checks" hidden title="Problems in this explanation">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2Z" /><path d="M8 6.5v3M8 11.25v.1" /></svg>
+            <span id="checks-count"></span>
+          </button>
           <label class="search">
             <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
             <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off" />
@@ -115,6 +120,12 @@
     </button>
   </div>
 
+  <div id="checks" class="menu" popover aria-label="Problems in this explanation">
+    <h2>Problems in this explanation</h2>
+    <p>Until they are fixed, these shapes and arrows do nothing on click. The console lists them too.</p>
+    <ul></ul>
+  </div>
+
   <div id="tooltip" role="tooltip" hidden></div>
 
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
@@ -124,7 +135,7 @@
     // The content file comes from ?src=, so one page can show any explanation. The engine starts after it, because js/state.js reads DIAGRAMS at once.
     // Export inlines these scripts in this order, so this list is the only one.
     (() => {
-      const engine = ["state", "camera", "highlight", "panel", "mermaid-svg", "bind", "nav", "export", "boot"].map((name) => `js/${name}.js`);
+      const engine = ["state", "camera", "highlight", "panel", "mermaid-svg", "bind", "check", "nav", "export", "boot"].map((name) => `js/${name}.js`);
       const src = new URLSearchParams(location.search).get("src") || "diagrams.js";
       const fail = (text) => {
         document.getElementById("camera").textContent = text;

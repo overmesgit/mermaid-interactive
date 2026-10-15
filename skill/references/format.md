@@ -9,7 +9,7 @@ Each explanation is its own file, and the page shows the one named in the link (
 ## Start here
 
 1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
-2. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. Skip this if you cannot open a browser.
+2. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. An amber ⚠ chip by Find means the page found mistakes. Skip this if you cannot open a browser.
 3. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
 4. **Put it into the page.** The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes. The command below copies the page with your content file in place of that line. Run it from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
 
@@ -274,7 +274,7 @@ window.DIAGRAMS = {
 
 ## Check before handing it over
 
-Today a miss is silent. The shape draws, and nothing happens on click.
+A mistake does not stop the page. It leaves a shape or an arrow that does nothing on click. So the page checks the content, and an amber ⚠ chip by Find counts the problems. Click it for the list. The console lists them too.
 
 1. Every `nodeInteractions` key appears as a chartId in that view's chart.
 2. Every flowchart edge interaction matches an arrow drawn from `from` to `to`.
@@ -285,4 +285,4 @@ Today a miss is silent. The shape draws, and nothing happens on click.
 7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it.
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 
-[ADR-029](../../docs/decisions/029-join-and-check-in-page.md) [ADR-030](../../docs/decisions/030-code-folder.md), and [ADR-035](../../docs/decisions/035-code-from-the-repo.md) make the page run checks 1 to 6 and 8 on load, and list every interaction it could not wire after each draw. A problem shows as a warning on the page. Until that is built, check by hand. An agent that cannot open a browser always checks by hand.
+On load the page runs checks 1 and 3 to 6 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. Check 8 is not built yet ([ADR-035](../../docs/decisions/035-code-from-the-repo.md)). An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).

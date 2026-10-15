@@ -43,6 +43,7 @@ mermaid.initialize({
 wireTabs();
 wireCamera();
 wirePanel();
+runChecks();
 
 document.getElementById("copy").addEventListener("click", async () => {
   try {
@@ -55,14 +56,17 @@ document.getElementById("copy").addEventListener("click", async () => {
 
 document.getElementById("export").addEventListener("click", exportHtml);
 
-// The menu opens under its island, right edges aligned, and closes after a choice.
-const moreMenu = document.getElementById("more-menu");
-moreMenu.addEventListener("beforetoggle", (event) => {
-  if (event.newState !== "open") return;
-  const box = document.getElementById("more-open").closest(".island").getBoundingClientRect();
-  moreMenu.style.top = `${box.bottom + 8}px`;
-  moreMenu.style.right = `${document.documentElement.clientWidth - box.right}px`;
+// The menu and the problem list open under their island, right edges aligned. The menu closes after a choice.
+["more-menu", "checks"].forEach((id) => {
+  const popover = document.getElementById(id);
+  popover.addEventListener("beforetoggle", (event) => {
+    if (event.newState !== "open") return;
+    const box = document.getElementById("more-open").closest(".island").getBoundingClientRect();
+    popover.style.top = `${box.bottom + 8}px`;
+    popover.style.right = `${document.documentElement.clientWidth - box.right}px`;
+  });
 });
+const moreMenu = document.getElementById("more-menu");
 moreMenu.addEventListener("click", (event) => {
   if (event.target.closest("button")) moreMenu.hidePopover();
 });
