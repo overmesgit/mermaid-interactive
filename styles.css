@@ -35,6 +35,9 @@ body {
 
 h1, h2, p { margin: 0; }
 
+/* Author display rules, such as the one on button, beat the browser's own [hidden] rule. */
+[hidden] { display: none !important; }
+
 button,
 input {
   font: inherit;
@@ -277,8 +280,6 @@ button.icon:hover { color: var(--ink); }
   width: min(100%, 480px);
   cursor: default;
 }
-
-#lesson[hidden] { display: none; }
 
 #lesson-count {
   min-width: 48px;
