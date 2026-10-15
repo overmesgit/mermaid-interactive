@@ -135,7 +135,7 @@
     // The content file comes from ?src=, so one page can show any explanation. The engine starts after it, because js/state.js reads DIAGRAMS at once.
     // Export inlines these scripts in this order, so this list is the only one.
     (() => {
-      const engine = ["state", "camera", "highlight", "panel", "mermaid-svg", "bind", "check", "nav", "export", "boot"].map((name) => `js/${name}.js`);
+      const engine = ["state", "camera", "highlight", "panel", "code", "mermaid-svg", "bind", "check", "nav", "export", "boot"].map((name) => `js/${name}.js`);
       const src = new URLSearchParams(location.search).get("src") || "diagrams.js";
       const fail = (text) => {
         document.getElementById("camera").textContent = text;

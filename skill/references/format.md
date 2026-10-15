@@ -31,7 +31,7 @@ Each explanation is its own file, and the page shows the one named in the link (
    It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files.
 5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
 
-Code files are packed, but the page does not show them yet, so a `file=` fence shows as an empty block ([ADR-035](../../docs/decisions/035-code-from-the-repo.md)). The template is described in [ADR-037](../../docs/decisions/037-fill-a-template.md).
+The template is described in [ADR-037](../../docs/decisions/037-fill-a-template.md).
 
 ## Shape
 
@@ -166,7 +166,9 @@ To show an older version, put a git revision and `:` before the path, as `git sh
 
 The lines are read when the page is joined. If the file may change before then, name the commit, as in `file=4f2c1e9:api/session.go`, so the lines stay where you wrote them.
 
-The panel shows the snippet under a header with the path and the lines. Clicking the header opens the whole file, with that range highlighted. Several notes can point at the same file, and it is packed once.
+The panel shows the lines under a header with the path and the range. Clicking the header switches to the whole file, with the range highlighted, and back. Several notes can point at the same file, and it is packed once.
+
+While you preview with `?src=`, nothing is packed yet, so the page reads each file from the server. That works for files in the served repo. A revision path shows as missing until the join ([ADR-038](../../docs/decisions/038-code-files-in-preview-and-export.md)). The Export button packs the files too.
 
 Do not paste the files into `diagrams.js`.
 
@@ -285,4 +287,4 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it.
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 
-On load the page runs checks 1 and 3 to 6 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. Check 8 is not built yet ([ADR-035](../../docs/decisions/035-code-from-the-repo.md)). An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 6, and 8 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).

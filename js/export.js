@@ -14,10 +14,31 @@ async function readFile(path) {
   return response.text();
 }
 
+// Export packs every file a note names, the same way the join does, so the saved file shows them without the repo.
+async function packedCodeFiles() {
+  const tags = [];
+  for (const path of new Set(fileFences().map((fence) => fence.path))) {
+    let text;
+    try {
+      text = await codeFile(path);
+    } catch {
+      continue;
+    }
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
+    const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    let binary = "";
+    bytes.forEach((byte) => (binary += String.fromCharCode(byte)));
+    tags.push(`<script type="application/gzip" data-file="${path.replace(/"/g, "&quot;")}">\n${btoa(binary).replace(/.{76}/g, "$&\n")}\n</script>`);
+  }
+  return tags;
+}
+
 async function exportHtml() {
   const template = new URLSearchParams(location.search).has("template");
   const scripts = localScripts();
   let css, sources, markup;
+  // The template holds no content, so it packs no files. The join adds them.
+  const packed = template ? [] : await packedCodeFiles();
   try {
     [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
     if (template) markup = await readFile("index.html");
@@ -51,7 +72,7 @@ ${TEMPLATE_MARKER}
 ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
-${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");</script>\n`}${inlined.join("\n")}
+${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");</script>\n`}${[...inlined, ...packed].join("\n")}
 </body>
 </html>
 `;

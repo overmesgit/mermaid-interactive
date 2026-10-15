@@ -593,6 +593,52 @@ html.is-resizing * {
   color: inherit;
 }
 
+.code-file { margin: 16px 0 0; }
+
+#panel-body .code-file + * { margin-top: 16px; }
+
+.code-file-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 8px 8px 0 0;
+  background: #334155;
+  color: #e2e8f0;
+  font: 12px var(--mono);
+  text-align: left;
+}
+button.code-file-head:hover { background: #475569; }
+
+.code-file-path { overflow: hidden; text-overflow: ellipsis; }
+
+.code-file-range { flex: none; color: #94a3b8; font-family: var(--sans); }
+
+#panel-body .code-file pre {
+  position: relative;
+  margin: 0;
+  padding: 8px 0;
+  border-radius: 0 0 8px 8px;
+}
+
+.code-line { display: block; min-height: 1.5em; padding: 0 12px 0 0; }
+
+.code-line::before {
+  content: attr(data-n);
+  display: inline-block;
+  width: 4ch;
+  margin-right: 12px;
+  color: #64748b;
+  text-align: right;
+  user-select: none;
+}
+.code-line.is-picked { background: rgba(96, 165, 250, 0.18); }
+
+.code-file.is-missing pre { color: #fbbf24; white-space: pre-wrap; padding: 8px 12px; }
+
 #panel-body :not(pre) > code {
   font-family: var(--mono);
   font-size: 12px;

@@ -1,6 +1,6 @@
 # ADR-030 Show code from a code/ folder, packed into the page
 
-- Status: accepted, not built yet, `code/` folder superseded by [ADR-035](035-code-from-the-repo.md)
+- Status: accepted, `code/` folder superseded by [ADR-035](035-code-from-the-repo.md)
 - Date: 2026-10-11
 
 ## Context

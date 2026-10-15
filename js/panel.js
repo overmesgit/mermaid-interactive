@@ -77,6 +77,11 @@ function codeText(token) {
 function appendBlock(parent, token) {
   if (token.type === "space" || token.type === "html" || token.type === "def" || token.type === "image") return;
   if (token.type === "code") {
+    const fence = fileFence(token.lang);
+    if (fence) {
+      parent.append(codeFileView(fence));
+      return;
+    }
     const pre = document.createElement("pre");
     const code = document.createElement("code");
     code.textContent = codeText(token);

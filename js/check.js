@@ -86,10 +86,35 @@ async function checkCharts() {
   return found;
 }
 
+// Each file= must name a file the page holds, and its lines must fit inside it. A wrong path or revision packs an empty file.
+async function checkCodeFiles() {
+  const found = [];
+  for (const fence of fileFences()) {
+    const say = (text) => found.push({ viewId: fence.viewId, text: `${fence.where}: ${text}` });
+    let text;
+    try {
+      text = await codeFile(fence.path);
+    } catch (error) {
+      say(error.message);
+      continue;
+    }
+    if (!text) {
+      say(`${fence.path} is empty. A wrong path or revision packs an empty file.`);
+      continue;
+    }
+    const count = splitLines(text).length;
+    if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
+      say(`${fence.path} has ${count} lines, so ${rangeText(fence)} cannot be shown.`);
+    }
+  }
+  return found;
+}
+
 async function runChecks() {
   checks.content = checkContent();
   renderChecks();
-  checks.content.push(...(await checkCharts()));
+  const [charts, files] = await Promise.all([checkCharts(), checkCodeFiles()]);
+  checks.content.push(...charts, ...files);
   renderChecks();
 }
 

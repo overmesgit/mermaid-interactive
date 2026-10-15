@@ -1,6 +1,6 @@
 # ADR-035 Read code files from the repo, not a code/ folder
 
-- Status: accepted, not built yet
+- Status: accepted
 - Date: 2026-10-14
 - Supersedes: the `code/` folder in [ADR-030](030-code-folder.md). Packing the files as gzip, the empty fence, and the whole-file view stay.
 
@@ -56,4 +56,4 @@ A path cannot contain a space, because the fence ends the path there. A path wit
 
 The page's check also reports a `file=` whose packed file is empty, which is what a missing path or a wrong revision leaves.
 
-Reading files while previewing with `?src=` ([ADR-034](034-pick-the-content-file.md)) is decided when this is built.
+Reading files while previewing with `?src=` ([ADR-034](034-pick-the-content-file.md)) is settled in [ADR-038](038-code-files-in-preview-and-export.md).
