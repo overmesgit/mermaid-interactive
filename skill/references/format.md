@@ -52,7 +52,7 @@ window.DIAGRAMS = {
 | `label` | The tab button text. |
 | `lesson` | Optional. View ids in teaching order. Prev, Next, and the arrow keys walk them. |
 
-A PR explanation is usually one tab with a lesson. A second tab is for a second subject, not for the next step.
+An explanation is usually one tab with a lesson, whether it covers a concept, a subsystem, or a change. A second tab is for a second subject, not for the next step.
 
 ## View
 
@@ -147,7 +147,7 @@ body: md`
 
 Code that exists as a file is named with `file=`, as in [Code files](#code-files). Write it in the note only when it is a short sketch that is in no file.
 
-A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from a PR is not loaded, so it would print `// name is not loaded`.
+A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from the repo you explain is not loaded, so it would print `// name is not loaded`.
 
 ## Code files
 
