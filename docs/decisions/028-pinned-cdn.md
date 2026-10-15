@@ -1,6 +1,6 @@
 # ADR-028 Pin exact versions of Mermaid and marked
 
-- Status: accepted, not built yet
+- Status: accepted
 - Date: 2026-10-11
 
 ## Context

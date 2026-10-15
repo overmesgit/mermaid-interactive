@@ -18,7 +18,7 @@ How an agent writes an explanation and hands it over.
 | [025](025-explainer-skill.md) | The tool explains hard things, and agents use it through a skill | Current, partly replaced by 029 |
 | [026](026-content-file.md) | Each explanation is one file, separate from the engine | Current |
 | [027](027-one-file-from-a-template.md) | An agent delivers one HTML file | Planned, partly replaced by 029 |
-| [028](028-pinned-cdn.md) | Pin exact versions of Mermaid and marked | Planned |
+| [028](028-pinned-cdn.md) | Pin exact versions of Mermaid and marked | Current |
 | [029](029-join-and-check-in-page.md) | No Python: join the files with a shell command, and let the page check them | Planned, partly replaced by 037 |
 | [034](034-pick-the-content-file.md) | Pick the content file with ?src= in the link | Current |
 | [037](037-fill-a-template.md) | Fill one template by replacing a marker line | Current |

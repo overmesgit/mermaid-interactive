@@ -49,8 +49,8 @@ ${TEMPLATE_MARKER}
 </head>
 <body>
 ${body.innerHTML}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
 ${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");</script>\n`}${inlined.join("\n")}
 </body>
 </html>
