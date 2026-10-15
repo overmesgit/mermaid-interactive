@@ -11,11 +11,11 @@ Each explanation is its own file, and the page shows the one named in the link (
 1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
 2. **Look at it.** Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the file's path from the repo folder, like `?src=examples/starter.js`. Reload after each edit. Skip this if you cannot open a browser.
 3. **Check it** against [the checklist](#check-before-handing-it-over). A mistake does not stop the page. It only leaves a shape that does nothing on click.
-4. **Join it into one HTML file.** Run this from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
+4. **Put it into the page.** The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes. The command below copies the page with your content file in place of that line. Run it from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
 
    ```bash
    {
-     cat "$skill/assets/head.html" "$content" "$skill/assets/tail.html"
+     sed -e '/^\/\* DIAGRAMS \*\/$/r '"$content" -e '/^\/\* DIAGRAMS \*\/$/d' "$skill/assets/explainer.html"
      sed -n 's/^[[:space:]]*~~~.*[[:space:]]file=\([^[:space:]]*\).*/\1/p' "$content" | sort -u |
      while read -r f; do
        printf '<script type="application/gzip" data-file="%s">\n' "$f"
@@ -31,7 +31,7 @@ Each explanation is its own file, and the page shows the one named in the link (
    It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files.
 5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
 
-Step 4 does not work yet. Until it does, the page's Export HTML button saves the file you are looking at as one HTML file. `head.html` and `tail.html` are not built ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+Code files are packed, but the page does not show them yet, so a `file=` fence shows as an empty block ([ADR-035](../../docs/decisions/035-code-from-the-repo.md)). The template is described in [ADR-037](../../docs/decisions/037-fill-a-template.md).
 
 ## Shape
 
@@ -282,7 +282,7 @@ Today a miss is silent. The shape draws, and nothing happens on click.
 4. Both ends of every state edge interaction have a node interaction, or are `"*"`.
 5. Every `opensView`, `parent`, tab `id`, and `lesson` entry is a viewId in `views`.
 6. Every view's `viewId` equals its key.
-7. `diagrams.js` does not contain `</script`. It is joined into the page as the body of a script tag. Code files named with `file=` may contain it.
+7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it.
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 
 [ADR-029](../../docs/decisions/029-join-and-check-in-page.md) [ADR-030](../../docs/decisions/030-code-folder.md), and [ADR-035](../../docs/decisions/035-code-from-the-repo.md) make the page run checks 1 to 6 and 8 on load, and list every interaction it could not wire after each draw. A problem shows as a warning on the page. Until that is built, check by hand. An agent that cannot open a browser always checks by hand.

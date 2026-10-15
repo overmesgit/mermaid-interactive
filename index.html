@@ -143,11 +143,13 @@
         if (onload) script.onload = onload;
         script.onerror = () => fail(`Could not load ${path}.`);
         document.body.append(script);
+        return script;
       };
+      // Export with ?template leaves this one script out and puts a marker in its place.
       add(src, () => {
         if (!window.DIAGRAMS) fail(`${src} loaded but did not set window.DIAGRAMS. The console shows why.`);
         else engine.forEach((path) => add(path));
-      });
+      }).dataset.content = "";
     })();
   </script>
 </body>

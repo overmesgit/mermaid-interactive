@@ -1,0 +1,4362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Mermaid</title>
+  <style>:root {
+
+  --ink: #1e293b;
+
+  --muted: #64748b;
+
+  --line: #e2e8f0;
+
+  --tint: #f1f5f9;
+
+  --paper: #ffffff;
+
+  --canvas: #f8fafc;
+
+  --dot: #cbd5e1;
+
+  --accent: #2563eb;
+
+  --accent-soft: #e6eefd;
+
+  --accent-ink: #ffffff;
+
+  --shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
+
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --mono: ui-monospace, Consolas, monospace;
+
+  /* One control height and one gutter, so every island lines up. */
+
+  --control: 32px;
+
+  --gutter: 16px;
+
+}
+
+
+
+* { box-sizing: border-box; }
+
+
+
+html, body {
+
+  margin: 0;
+
+  height: 100%;
+
+  overflow: hidden;
+
+  background: var(--canvas);
+
+  color: var(--ink);
+
+  font: 14px/1.5 var(--sans);
+
+}
+
+
+
+body {
+
+  display: grid;
+
+  grid-template-rows: minmax(0, 1fr);
+
+}
+
+
+
+h1, h2, p { margin: 0; }
+
+
+
+/* Author display rules, such as the one on button, beat the browser's own [hidden] rule. */
+
+[hidden] { display: none !important; }
+
+
+
+button,
+
+input {
+
+  font: inherit;
+
+  color: inherit;
+
+}
+
+
+
+button {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  height: var(--control);
+
+  padding: 0 12px;
+
+  border: 0;
+
+  border-radius: 6px;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+}
+
+
+
+button:hover { background: var(--tint); }
+
+
+
+:focus-visible {
+
+  outline: 2px solid var(--accent);
+
+  outline-offset: 2px;
+
+}
+
+
+
+svg[viewBox="0 0 16 16"] {
+
+  width: 16px;
+
+  height: 16px;
+
+  flex: none;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.5;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+
+}
+
+
+
+/* An icon-only button: a square hit target with the icon centred. */
+
+button.icon {
+
+  justify-content: center;
+
+  width: var(--control);
+
+  padding: 0;
+
+  color: var(--muted);
+
+}
+
+
+
+button.icon:hover { color: var(--ink); }
+
+
+
+/* ---- Canvas ---- */
+
+
+
+.workspace {
+
+  --panel-width: 340px;
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) 0fr;
+
+  min-height: 0;
+
+}
+
+
+
+.workspace.panel-open {
+
+  grid-template-columns: minmax(0, 1fr) var(--panel-width);
+
+}
+
+
+
+.stage-wrap {
+
+  position: relative;
+
+  min-width: 0;
+
+  min-height: 0;
+
+  display: grid;
+
+  container: stage / inline-size;
+
+}
+
+
+
+#viewport {
+
+  position: relative;
+
+  overflow: hidden;
+
+  min-height: 0;
+
+  cursor: grab;
+
+  background-color: var(--canvas);
+
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
+
+  background-size: 24px 24px;
+
+  background-position: 12px 12px;
+
+}
+
+
+
+#viewport.is-dragging { cursor: grabbing; }
+
+
+
+/* ---- Islands: paper cards floating over the canvas ---- */
+
+
+
+.island {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 4px;
+
+  background: var(--paper);
+
+  border-radius: 8px;
+
+  box-shadow: var(--shadow);
+
+  pointer-events: auto;
+
+}
+
+
+
+.float-top,
+
+.float-bottom {
+
+  position: absolute;
+
+  left: var(--gutter);
+
+  right: var(--gutter);
+
+  z-index: 2;
+
+  display: grid;
+
+  gap: 8px 16px;
+
+  pointer-events: none;
+
+}
+
+
+
+.float-top {
+
+  top: var(--gutter);
+
+  grid-template-columns: auto minmax(0, 1fr) auto;
+
+  align-items: start;
+
+}
+
+
+
+.float-top > .tools { grid-column: 3; }
+
+
+
+.float-bottom {
+
+  bottom: var(--gutter);
+
+  /* The side columns are as wide as the camera island, so the lesson stays centred and never runs under it. */
+
+  --side: calc(4 * var(--control) + 3 * 4px + 8px + 8px);
+
+  grid-template-columns: var(--side) minmax(0, 1fr) var(--side);
+
+  align-items: end;
+
+}
+
+
+
+.float-bottom > #lesson { grid-column: 2; justify-self: center; }
+
+
+
+.float-bottom > .camera-controls { grid-column: 3; justify-self: end; }
+
+
+
+#tabs {
+
+  display: flex;
+
+  gap: 4px;
+
+}
+
+
+
+#tabs button {
+
+  color: var(--muted);
+
+  font-weight: 500;
+
+}
+
+
+
+#tabs button:hover { color: var(--ink); }
+
+
+
+#tabs button[aria-current="true"] {
+
+  background: var(--accent-soft);
+
+  color: var(--accent);
+
+}
+
+
+
+.search {
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  color: var(--muted);
+
+}
+
+
+
+.search svg {
+
+  position: absolute;
+
+  left: 8px;
+
+  pointer-events: none;
+
+}
+
+
+
+.search input {
+
+  width: 240px;
+
+  height: var(--control);
+
+  padding: 0 8px 0 32px;
+
+  border: 0;
+
+  border-radius: 6px;
+
+  background: var(--tint);
+
+  color: var(--ink);
+
+}
+
+
+
+.search input::placeholder { color: var(--muted); }
+
+
+
+.search input:focus-visible { outline-offset: 0; }
+
+
+
+.stage-meta {
+
+  grid-column: 1 / -1;
+
+  max-width: 64ch;
+
+  min-width: 0;
+
+}
+
+
+
+.stage-title {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap: 4px 8px;
+
+}
+
+
+
+/* A small labelled button on the canvas, so it reads as a button and not as part of the title. */
+
+.chip {
+
+  height: 24px;
+
+  gap: 4px;
+
+  padding: 0 8px 0 6px;
+
+  background: var(--paper);
+
+  box-shadow: var(--shadow);
+
+  color: var(--muted);
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  pointer-events: auto;
+
+}
+
+
+
+.chip:hover { background: var(--paper); color: var(--ink); }
+
+
+
+.chip[aria-pressed="true"] {
+
+  background: var(--accent-soft);
+
+  box-shadow: none;
+
+  color: var(--accent);
+
+}
+
+
+
+#crumbs {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  margin-left: -4px;
+
+}
+
+
+
+#crumbs button {
+
+  height: 24px;
+
+  padding: 0 4px;
+
+  border-radius: 4px;
+
+  color: var(--accent);
+
+  font-weight: 500;
+
+  pointer-events: auto;
+
+}
+
+
+
+#crumbs button[aria-current="true"] {
+
+  color: var(--ink);
+
+  cursor: default;
+
+  background: transparent;
+
+}
+
+
+
+#crumbs .sep { color: var(--dot); }
+
+
+
+#summary {
+
+  color: var(--muted);
+
+  font-size: 13px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+}
+
+
+
+.camera-controls .group { margin-left: 8px; }
+
+
+
+/* A fixed width, so Prev and Next stay put while the step names change length. */
+
+#lesson {
+
+  width: min(100%, 480px);
+
+  cursor: default;
+
+}
+
+
+
+#lesson-count {
+
+  min-width: 48px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+
+  font-variant-numeric: tabular-nums;
+
+  text-align: center;
+
+}
+
+
+
+#lesson-prev { color: var(--muted); font-weight: 500; }
+
+
+
+#lesson-prev:hover { color: var(--ink); }
+
+
+
+/* The one filled button on the page. */
+
+#lesson-next {
+
+  display: block;
+
+  flex: 1;
+
+  min-width: 0;
+
+  text-align: left;
+
+  background: var(--accent);
+
+  color: var(--accent-ink);
+
+  font-weight: 600;
+
+  line-height: var(--control);
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+}
+
+
+
+#lesson-next:hover { background: #1d4fd8; }
+
+
+
+#lesson button:disabled,
+
+#lesson button:disabled:hover {
+
+  background: transparent;
+
+  color: var(--dot);
+
+  cursor: default;
+
+}
+
+
+
+#status {
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: calc(var(--gutter) + var(--control) + 8px + 16px);
+
+  z-index: 3;
+
+  max-width: calc(100% - 2 * var(--gutter));
+
+  padding: 4px 12px;
+
+  transform: translateX(-50%);
+
+  background: var(--ink);
+
+  color: var(--paper);
+
+  border-radius: 8px;
+
+  box-shadow: var(--shadow);
+
+  font-size: 13px;
+
+  line-height: 24px;
+
+}
+
+
+
+#status:empty { display: none; }
+
+
+
+/* ---- Menu and help popovers ---- */
+
+
+
+.menu {
+
+  position: fixed;
+
+  inset: auto;
+
+  margin: 0;
+
+  min-width: 176px;
+
+  padding: 4px;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background: var(--paper);
+
+  color: var(--ink);
+
+  box-shadow: var(--shadow);
+
+}
+
+
+
+.menu:popover-open {
+
+  display: grid;
+
+  gap: 4px;
+
+}
+
+
+
+.menu button { width: 100%; padding: 0 8px; }
+
+
+
+.menu svg { color: var(--muted); }
+
+
+
+#help {
+
+  max-width: 424px;
+
+  padding: 16px 24px 24px;
+
+  background: var(--paper);
+
+  color: var(--ink);
+
+  border: 0;
+
+  border-radius: 8px;
+
+  box-shadow: var(--shadow);
+
+}
+
+
+
+#help::backdrop { background: rgba(15, 23, 42, 0.16); }
+
+
+
+#help h2 { font-size: 16px; font-weight: 600; }
+
+
+
+#help dl {
+
+  display: grid;
+
+  grid-template-columns: auto 1fr;
+
+  gap: 8px 16px;
+
+  margin: 16px 0 0;
+
+}
+
+
+
+#help dt { color: var(--muted); white-space: nowrap; }
+
+
+
+#help dd { margin: 0; }
+
+
+
+kbd {
+
+  padding: 0 4px;
+
+  border: 1px solid var(--line);
+
+  border-bottom-width: 2px;
+
+  border-radius: 4px;
+
+  background: var(--canvas);
+
+  font: 12px var(--mono);
+
+}
+
+
+
+/* ---- Diagram ---- */
+
+
+
+#camera {
+
+  position: absolute;
+
+  inset: 0 auto auto 0;
+
+  transform-origin: 0 0;
+
+  transition: opacity 180ms ease-out;
+
+}
+
+
+
+#camera.is-leaving {
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition: transform 200ms ease-in, opacity 200ms ease-in;
+
+}
+
+
+
+#camera svg { display: block; max-width: none; }
+
+
+
+#camera foreignObject {
+
+  overflow: visible;
+
+}
+
+
+
+#camera foreignObject * {
+
+  overflow: visible !important;
+
+}
+
+
+
+/* A caption under a box's name, written as <br><small>…</small> in the Mermaid label. Color only, so Mermaid's measured size still fits. */
+
+#camera .nodeLabel small {
+
+  color: var(--muted);
+
+}
+
+
+
+#camera :focus:not(:focus-visible) {
+
+  outline: none;
+
+}
+
+
+
+#camera,
+
+#camera * {
+
+  user-select: none;
+
+  -webkit-user-select: none;
+
+}
+
+
+
+/* ---- Side panel ---- */
+
+
+
+aside {
+
+  position: relative;
+
+  min-width: 0;
+
+  min-height: 0;
+
+  overflow: visible;
+
+  background: var(--paper);
+
+  border-left: 1px solid transparent;
+
+  padding: 0;
+
+}
+
+
+
+.panel-scroll {
+
+  height: 100%;
+
+  min-height: 0;
+
+  overflow: auto;
+
+}
+
+
+
+#panel-resize {
+
+  position: absolute;
+
+  top: 0;
+
+  bottom: 0;
+
+  left: -4px;
+
+  z-index: 2;
+
+  width: 8px;
+
+  cursor: col-resize;
+
+  touch-action: none;
+
+}
+
+
+
+#panel-resize:hover,
+
+#panel-resize.is-dragging {
+
+  background: var(--accent);
+
+}
+
+
+
+html.is-resizing,
+
+html.is-resizing * {
+
+  cursor: col-resize;
+
+  user-select: none;
+
+}
+
+
+
+.panel-open aside {
+
+  border-left-color: var(--line);
+
+}
+
+
+
+.panel-open .panel-scroll {
+
+  padding: 16px var(--gutter) 24px;
+
+}
+
+
+
+/* The panel's first line sits on the same 16px line as the islands. */
+
+.panel-top {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 16px;
+
+  align-items: center;
+
+  margin-top: 4px;
+
+}
+
+
+
+#panel-kicker {
+
+  color: var(--muted);
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.06em;
+
+  text-transform: uppercase;
+
+}
+
+
+
+#panel-close {
+
+  margin-right: -8px;
+
+  padding: 0 8px;
+
+  color: var(--muted);
+
+  font-weight: 500;
+
+}
+
+
+
+#panel-close:hover { color: var(--ink); }
+
+
+
+#panel-title {
+
+  margin: 8px 0;
+
+  font-size: 20px;
+
+  font-weight: 650;
+
+  line-height: 1.3;
+
+  letter-spacing: -0.01em;
+
+}
+
+
+
+#panel-lead { font-weight: 600; }
+
+
+
+#panel-body {
+
+  margin-top: 8px;
+
+  color: var(--muted);
+
+}
+
+
+
+#panel-body p { margin: 0; }
+
+
+
+#panel-body p + p,
+
+#panel-body ul,
+
+#panel-body ol,
+
+#panel-body blockquote,
+
+#panel-body h3,
+
+#panel-body h4,
+
+#panel-body h5,
+
+#panel-body h6 { margin-top: 8px; }
+
+
+
+#panel-body ul,
+
+#panel-body ol { padding-left: 1.2em; }
+
+
+
+#panel-body h3,
+
+#panel-body h4,
+
+#panel-body h5,
+
+#panel-body h6 {
+
+  margin-bottom: 0;
+
+  color: var(--ink);
+
+  font-size: 14px;
+
+}
+
+
+
+#panel-body pre {
+
+  display: block;
+
+  margin: 16px 0 0;
+
+  padding: 12px;
+
+  overflow: auto;
+
+  max-height: 46vh;
+
+  background: var(--ink);
+
+  color: #e2e8f0;
+
+  border-radius: 8px;
+
+  font: 12px/1.5 var(--mono);
+
+  white-space: pre;
+
+}
+
+
+
+#panel-body pre code {
+
+  font: inherit;
+
+  color: inherit;
+
+}
+
+
+
+#panel-body :not(pre) > code {
+
+  font-family: var(--mono);
+
+  font-size: 12px;
+
+}
+
+
+
+#panel-body a { color: var(--accent); }
+
+
+
+#panel-facts,
+
+#panel-links {
+
+  display: grid;
+
+  grid-template-columns: 96px 1fr;
+
+  gap: 8px 16px;
+
+  margin: 16px 0 0;
+
+}
+
+
+
+#panel-facts dt,
+
+#panel-links dt { color: var(--muted); }
+
+
+
+#panel-facts dd,
+
+#panel-links dd { margin: 0; }
+
+
+
+#panel-links:empty { display: none; }
+
+
+
+#panel-links button {
+
+  height: auto;
+
+  padding: 0;
+
+  color: var(--accent);
+
+  text-align: left;
+
+  white-space: normal;
+
+}
+
+
+
+#panel-links button:hover { background: transparent; text-decoration: underline; }
+
+
+
+#panel-parts { margin-top: 24px; }
+
+
+
+#panel-parts h3 {
+
+  margin: 0 0 8px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.06em;
+
+  text-transform: uppercase;
+
+}
+
+
+
+#panel-parts ol {
+
+  display: grid;
+
+  gap: 0;
+
+  margin: 0 -8px;
+
+  padding: 0;
+
+  list-style: none;
+
+}
+
+
+
+/* Each part's text lines up with the panel's gutter; the hover tint reaches 8px past it. */
+
+#panel-parts button {
+
+  display: grid;
+
+  gap: 0;
+
+  width: 100%;
+
+  height: auto;
+
+  padding: 8px;
+
+  color: var(--ink);
+
+  text-align: left;
+
+  white-space: normal;
+
+}
+
+
+
+#panel-parts strong { font-weight: 600; }
+
+
+
+#panel-parts span { color: var(--muted); font-size: 13px; }
+
+
+
+#panel-parts .is-new strong::after {
+
+  content: "New";
+
+  margin-left: 8px;
+
+  color: var(--accent);
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.06em;
+
+  text-transform: uppercase;
+
+}
+
+
+
+#panel-zoom {
+
+  margin-top: 24px;
+
+  background: var(--accent-soft);
+
+  color: var(--accent);
+
+  font-weight: 600;
+
+}
+
+
+
+#panel-zoom:hover { background: #d6e3fc; }
+
+
+
+#tooltip {
+
+  position: fixed;
+
+  z-index: 5;
+
+  max-width: 264px;
+
+  padding: 8px 12px;
+
+  background: var(--ink);
+
+  color: var(--paper);
+
+  border-radius: 8px;
+
+  font-size: 13px;
+
+  pointer-events: none;
+
+  box-shadow: var(--shadow);
+
+}
+
+
+
+/* ---- Selection and highlight on the SVG ---- */
+
+
+
+.is-node, .is-edge-label, .edge-hit { cursor: pointer; }
+
+
+
+.edge-hit {
+
+  fill: none;
+
+  stroke: transparent;
+
+  stroke-width: 18px;
+
+  pointer-events: stroke;
+
+}
+
+
+
+path.is-edge:not(.edge-hit).is-hot,
+
+line.is-edge:not(.edge-hit).is-hot {
+
+  stroke: var(--accent) !important;
+
+  stroke-width: 2.5px !important;
+
+}
+
+
+
+.is-dim { opacity: 0.72; }
+
+
+
+.is-hit > rect,
+
+.is-hit > polygon,
+
+.is-hit > circle,
+
+.is-hit > path,
+
+.is-hit > ellipse {
+
+  stroke: var(--accent) !important;
+
+  stroke-width: 2.5px !important;
+
+}
+
+
+
+.is-selected > rect,
+
+.is-selected > polygon,
+
+.is-selected > circle,
+
+.is-selected > path,
+
+.is-selected > ellipse {
+
+  fill: var(--accent-soft) !important;
+
+  stroke: var(--accent) !important;
+
+  stroke-width: 3px !important;
+
+}
+
+
+
+path.is-edge.is-selected:not(.edge-hit),
+
+line.is-edge.is-selected:not(.edge-hit) {
+
+  stroke: var(--accent) !important;
+
+  stroke-width: 3.5px !important;
+
+}
+
+
+
+.zoom-badge circle {
+
+  fill: var(--accent) !important;
+
+  stroke: none !important;
+
+}
+
+.zoom-badge path {
+
+  stroke: #fff !important;
+
+  stroke-width: 1.6 !important;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+
+  fill: none !important;
+
+}
+
+.zoom-badge { cursor: pointer; }
+
+
+
+/* ---- Narrow canvas: a phone, or a wide panel. Islands stack instead of sharing a row. ---- */
+
+
+
+/* On a mid-width canvas the lesson gives up the empty left column, so Next keeps more of its title. */
+
+@container stage (max-width: 760px) {
+
+  .search input { width: 160px; }
+
+  .float-bottom { grid-template-columns: minmax(0, 1fr) auto; }
+
+  .float-bottom > #lesson { grid-column: 1; }
+
+  .float-bottom > .camera-controls { grid-column: 2; }
+
+}
+
+
+
+@container stage (max-width: 640px) {
+
+  .float-top { grid-template-columns: minmax(0, 1fr); }
+
+  .float-top > .tools { grid-column: 1; }
+
+  /* Tighter tabs fit one row at phone width; a longer tab list wraps instead of hiding. */
+
+  #tabs { flex-wrap: wrap; gap: 0; }
+
+  #tabs button { padding: 0 8px; font-size: 13px; }
+
+  .search { flex: 1; }
+
+  .search input { width: 100%; }
+
+  .float-bottom { grid-template-columns: minmax(0, 1fr); }
+
+  .float-bottom > .camera-controls { grid-row: 1; grid-column: 1; }
+
+  .float-bottom > #lesson { grid-row: 2; grid-column: 1; width: auto; justify-self: stretch; }
+
+  #status { bottom: calc(var(--gutter) + 2 * (var(--control) + 8px) + 8px + 16px); }
+
+}
+
+
+
+@media (max-width: 800px) {
+
+  .workspace, .workspace.panel-open { grid-template-columns: 1fr; }
+
+  .workspace.panel-open { grid-template-rows: minmax(0, 1fr) auto; }
+
+  #panel-resize { display: none; }
+
+  .panel-open aside {
+
+    border-left: 0;
+
+    border-top: 1px solid var(--line);
+
+    max-height: 42vh;
+
+  }
+
+  .panel-open .panel-scroll { max-height: 42vh; }
+
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  * { scroll-behavior: auto; }
+
+  #camera { transition: none; }
+
+}
+
+</style>
+</head>
+<body>
+
+  <div class="workspace" id="workspace">
+    <section class="stage-wrap">
+      <div id="viewport">
+        <div id="camera"></div>
+      </div>
+
+      <!-- Floating controls over the canvas. The two rows are layout only and let pointer events through to the canvas. -->
+      <div class="float-top">
+        <div class="island">
+          <nav id="tabs" aria-label="Diagrams"></nav>
+        </div>
+        <div class="island tools">
+          <label class="search">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 14 14"></path></svg>
+            <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off">
+          </label>
+          <button id="more-open" class="icon" type="button" popovertarget="more-menu" aria-label="More actions" title="More actions">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="0.75"></circle><circle cx="8" cy="8" r="0.75"></circle><circle cx="12.5" cy="8" r="0.75"></circle></svg>
+          </button>
+        </div>
+        <div class="stage-meta">
+          <div class="stage-title">
+            <!-- The story is about this diagram, so its button sits before the diagram's name, where it stays put while names change length. It is lit while the panel shows the story. -->
+            <button id="story-open" class="chip" type="button" aria-pressed="false" title="What this diagram shows, and its parts">
+              <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 5 3 2.5 3v9.5c2.5 0 4.3.4 5.5 1.5 1.2-1.1 3-1.5 5.5-1.5V3C11 3 9.2 3.4 8 4.5ZM8 4.5V14"></path></svg>
+              Story
+            </button>
+            <nav id="crumbs" aria-label="Zoom path"></nav>
+          </div>
+          <p id="summary"></p>
+        </div>
+      </div>
+
+      <div class="float-bottom">
+        <div id="lesson" class="island" hidden="">
+          <button id="lesson-prev" type="button">Prev</button>
+          <span id="lesson-count"></span>
+          <button id="lesson-next" type="button">Next</button>
+        </div>
+        <div class="island camera-controls" aria-label="Camera">
+          <button id="zoom-out" class="icon" type="button" aria-label="Zoom out" title="Zoom out">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10"></path></svg>
+          </button>
+          <button id="fit" class="icon" type="button" aria-label="Fit diagram" title="Fit diagram">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"></path></svg>
+          </button>
+          <button id="zoom-in" class="icon" type="button" aria-label="Zoom in" title="Zoom in">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10M8 3v10"></path></svg>
+          </button>
+          <button id="help-open" class="icon group" type="button" popovertarget="help" aria-label="How to use this page" title="How to use this page (?)">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"></circle><path d="M6.25 6.4a1.8 1.8 0 0 1 3.5.6c0 1.2-1.75 1.5-1.75 2.6"></path><path d="M8 11.6v.1"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <aside id="panel" hidden="" aria-hidden="true" aria-label="Details">
+      <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
+      <div class="panel-scroll">
+        <div class="panel-top">
+          <p id="panel-kicker"></p>
+          <button id="panel-close" type="button">Close</button>
+        </div>
+        <h2 id="panel-title"></h2>
+        <p id="panel-lead"></p>
+        <div id="panel-body"></div>
+        <dl id="panel-facts"></dl>
+        <dl id="panel-links" aria-label="Connections"></dl>
+        <section id="panel-parts" hidden="">
+          <h3>In this picture</h3>
+          <ol></ol>
+        </section>
+        <button id="panel-zoom" type="button" hidden="">Open inner diagram</button>
+      </div>
+    </aside>
+  </div>
+
+  <div id="help" popover="" aria-label="How to use this page">
+    <h2>How to use this page</h2>
+    <dl>
+      <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
+      <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
+      <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
+      <dt>Drag</dt><dd>Pan empty space</dd>
+      <dt>Scroll</dt><dd>Zoom the camera</dd>
+      <dt><kbd>/</kbd></dt><dd>Find</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Back to the story, then step up</dd>
+      <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
+      <dt>Prev, Next</dt><dd>Move through the lesson</dd>
+      <dt><kbd>←</kbd>, <kbd>→</kbd></dt><dd>Previous or next lesson step</dd>
+      <dt><kbd>Tab</kbd>, <kbd>Enter</kbd></dt><dd>Move to a shape, open its details</dd>
+      <dt><kbd>?</kbd></dt><dd>Show this list</dd>
+    </dl>
+  </div>
+
+  <div id="more-menu" class="menu" popover="" aria-label="More actions">
+    <button id="copy" type="button">
+      <svg aria-hidden="true" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"></path></svg>
+      Copy source
+    </button>
+    <button id="export" type="button">
+      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"></path></svg>
+      Export HTML
+    </button>
+  </div>
+
+  <div id="tooltip" role="tooltip" hidden=""></div>
+
+  
+  
+  
+  
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script>// Helpers a content file may call. They load before the content file, so every explanation can use them.
+
+
+
+function arrow(from, to, tooltip, body, facts, more) {
+
+  return { from, to, kicker: "Arrow", tooltip, body, facts: facts || [], ...(more || {}) };
+
+}
+
+
+
+function md(strings, ...values) {
+
+  const text = strings.reduce((acc, part, i) => acc + part + (values[i] ?? ""), "");
+
+  const rows = text.replace(/^\n/, "").replace(/\n\s*$/, "").split("\n");
+
+  const widths = rows.filter((row) => row.trim()).map((row) => row.match(/^ */)[0].length);
+
+  const indent = widths.length ? Math.min(...widths) : 0;
+
+  return rows.map((row) => row.slice(indent)).join("\n").trim();
+
+}
+
+</script>
+<script>
+/* DIAGRAMS */
+</script>
+<script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the /* DIAGRAMS */ line was.";</script>
+<script>// Shared view, camera, and element refs. The other scripts read and write this object.
+
+
+
+const app = {
+
+  views: DIAGRAMS.views,
+
+  els: {
+
+    tabs: document.getElementById("tabs"),
+
+    crumbs: document.getElementById("crumbs"),
+
+    lesson: document.getElementById("lesson"),
+
+    lessonCount: document.getElementById("lesson-count"),
+
+    lessonPrev: document.getElementById("lesson-prev"),
+
+    lessonNext: document.getElementById("lesson-next"),
+
+    summary: document.getElementById("summary"),
+
+    camera: document.getElementById("camera"),
+
+    viewport: document.getElementById("viewport"),
+
+    workspace: document.getElementById("workspace"),
+
+    panel: document.getElementById("panel"),
+
+    tooltip: document.getElementById("tooltip"),
+
+    status: document.getElementById("status"),
+
+    search: document.getElementById("search"),
+
+    panelResize: document.getElementById("panel-resize"),
+
+    help: document.getElementById("help"),
+
+    storyOpen: document.getElementById("story-open"),
+
+  },
+
+  panel: {
+
+    kicker: document.getElementById("panel-kicker"),
+
+    title: document.getElementById("panel-title"),
+
+    lead: document.getElementById("panel-lead"),
+
+    body: document.getElementById("panel-body"),
+
+    facts: document.getElementById("panel-facts"),
+
+    links: document.getElementById("panel-links"),
+
+    parts: document.getElementById("panel-parts"),
+
+    zoom: document.getElementById("panel-zoom"),
+
+    close: document.getElementById("panel-close"),
+
+  },
+
+  stack: [],
+
+  view: null,
+
+  shownViewId: null,
+
+  selectedInteraction: null,
+
+  // The reader closed the story, so the next diagram does not open it again.
+
+  storyHidden: false,
+
+  renderToken: 0,
+
+  cam: { x: 40, y: 32, s: 1 },
+
+  cams: {},
+
+  drag: null,
+
+};
+
+
+
+// The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
+
+function nodeInteractions() {
+
+  const stored = (app.view && app.view.nodeInteractions) || {};
+
+  return Object.entries(stored).map(([chartId, interaction]) => ({
+
+    ...interaction,
+
+    chartId,
+
+    kind: "node",
+
+  }));
+
+}
+
+
+
+function nodeInteraction(chartId) {
+
+  const stored = app.view && app.view.nodeInteractions && app.view.nodeInteractions[chartId];
+
+  if (!stored) return null;
+
+  return { ...stored, chartId, kind: "node" };
+
+}
+
+
+
+// The edge interactions for the diagram on screen. edgeId is from-to-index, so two arrows between the same shapes stay distinct.
+
+function edgeInteractions() {
+
+  const view = app.view;
+
+  if (!view) return [];
+
+  const interactions = view.nodeInteractions || {};
+
+  return (view.edgeInteractions || []).map((edge, index) => {
+
+    const from = Array.isArray(edge) ? edge[0] : edge.from;
+
+    const to = Array.isArray(edge) ? edge[1] : edge.to;
+
+    const fromLabel = interactions[from]?.label || from;
+
+    const toLabel = interactions[to]?.label || to;
+
+    return {
+
+      kicker: "Arrow",
+
+      label: `${fromLabel} → ${toLabel}`,
+
+      tooltip: `${fromLabel} to ${toLabel}`,
+
+      ...(Array.isArray(edge) ? {} : edge),
+
+      from,
+
+      to,
+
+      edgeId: `${from}-${to}-${index}`,
+
+      kind: "edge",
+
+    };
+
+  });
+
+}
+
+</script>
+<script>// Pan and zoom of #camera. This does not change which diagram is shown.
+
+
+
+function applyCam() {
+
+  const { cam, els } = app;
+
+  els.camera.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.s})`;
+
+}
+
+
+
+function fit() {
+
+  const { cam, els } = app;
+
+  const svg = els.camera.querySelector("svg");
+
+  if (!svg) return;
+
+  const box = svg.viewBox && svg.viewBox.baseVal.width
+
+    ? svg.viewBox.baseVal
+
+    : { width: svg.getBoundingClientRect().width, height: svg.getBoundingClientRect().height };
+
+  const pad = 48;
+
+  // The floating controls cover the top and the bottom of the canvas. Fit keeps the diagram between them.
+
+  const view = els.viewport.getBoundingClientRect();
+
+  const top = document.querySelector(".float-top").getBoundingClientRect().bottom - view.top + pad / 2;
+
+  const bottom = view.bottom - document.querySelector(".float-bottom").getBoundingClientRect().top + pad / 2;
+
+  const height = els.viewport.clientHeight - top - bottom;
+
+  const s = Math.min(
+
+    (els.viewport.clientWidth - pad) / box.width,
+
+    height / box.height,
+
+    1.35
+
+  );
+
+  cam.s = Number.isFinite(s) && s > 0 ? s : 1;
+
+  cam.x = (els.viewport.clientWidth - box.width * cam.s) / 2;
+
+  cam.y = top + Math.max(0, (height - box.height * cam.s) / 2);
+
+  applyCam();
+
+}
+
+
+
+// The screen rectangle around these elements, or null when none of them has a size.
+
+function unionRect(elements) {
+
+  const boxes = elements.map((el) => el.getBoundingClientRect()).filter((box) => box.width || box.height);
+
+  if (!boxes.length) return null;
+
+  return {
+
+    left: Math.min(...boxes.map((box) => box.left)),
+
+    right: Math.max(...boxes.map((box) => box.right)),
+
+    top: Math.min(...boxes.map((box) => box.top)),
+
+    bottom: Math.max(...boxes.map((box) => box.bottom)),
+
+  };
+
+}
+
+
+
+// Scale the camera by k around a viewport point, so that point stays where it is.
+
+function scaleAbout(px, py, k) {
+
+  const { cam } = app;
+
+  cam.x = px - (px - cam.x) * k;
+
+  cam.y = py - (py - cam.y) * k;
+
+  cam.s *= k;
+
+}
+
+
+
+// Pan the least distance that brings these elements inside the viewport. The scale stays.
+
+function reveal(elements) {
+
+  const box = unionRect(elements);
+
+  if (!box) return;
+
+  const viewportBox = app.els.viewport.getBoundingClientRect();
+
+  const pad = 24;
+
+  const { left, right, top, bottom } = box;
+
+  let dx = 0;
+
+  let dy = 0;
+
+  if (right > viewportBox.right - pad) dx = viewportBox.right - pad - right;
+
+  if (left + dx < viewportBox.left + pad) dx = viewportBox.left + pad - left;
+
+  if (bottom > viewportBox.bottom - pad) dy = viewportBox.bottom - pad - bottom;
+
+  if (top + dy < viewportBox.top + pad) dy = viewportBox.top + pad - top;
+
+  if (!dx && !dy) return;
+
+  app.cam.x += dx;
+
+  app.cam.y += dy;
+
+  applyCam();
+
+}
+
+
+
+const LEAVE_MS = 200;
+
+
+
+// Fade the old SVG out before show() swaps it. With origin elements, also zoom toward them.
+
+function leaveView(elements) {
+
+  const ui = app.els;
+
+  if (!ui.camera.querySelector("svg") || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+
+    return Promise.resolve();
+
+  }
+
+  ui.camera.classList.add("is-leaving");
+
+  const box = unionRect(elements);
+
+  if (box) {
+
+    const viewportBox = ui.viewport.getBoundingClientRect();
+
+    scaleAbout((box.left + box.right) / 2 - viewportBox.left, (box.top + box.bottom) / 2 - viewportBox.top, 1.8);
+
+  }
+
+  applyCam();
+
+  return new Promise((resolve) => setTimeout(resolve, LEAVE_MS));
+
+}
+
+
+
+// The new SVG fades in through the base opacity transition on #camera.
+
+function enterView(saved) {
+
+  app.els.camera.classList.remove("is-leaving");
+
+  if (saved) {
+
+    Object.assign(app.cam, saved);
+
+    applyCam();
+
+  } else fit();
+
+}
+
+
+
+const ZOOM_MIN = 0.35;
+
+const ZOOM_MAX = 2.6;
+
+
+
+// The buttons and the wheel zoom here. The scale stays between ZOOM_MIN and ZOOM_MAX.
+
+// Fit can go below ZOOM_MIN for a large diagram. From there a zoom out stops instead of jumping up to ZOOM_MIN.
+
+function zoomAt(px, py, factor) {
+
+  const low = Math.min(ZOOM_MIN, app.cam.s);
+
+  const high = Math.max(ZOOM_MAX, app.cam.s);
+
+  const next = Math.min(high, Math.max(low, app.cam.s * factor));
+
+  if (next === app.cam.s) return;
+
+  scaleAbout(px, py, next / app.cam.s);
+
+  applyCam();
+
+}
+
+
+
+function zoomBy(factor) {
+
+  const rect = app.els.viewport.getBoundingClientRect();
+
+  zoomAt(rect.width / 2, rect.height / 2, factor);
+
+}
+
+
+
+function wireCamera() {
+
+  const { els } = app;
+
+  els.viewport.addEventListener("selectstart", (event) => event.preventDefault());
+
+
+
+  els.viewport.addEventListener("pointerdown", (event) => {
+
+    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit, #lesson") || event.button !== 0) return;
+
+    app.drag = { x: event.clientX, y: event.clientY, cx: app.cam.x, cy: app.cam.y };
+
+    els.viewport.classList.add("is-dragging");
+
+    els.viewport.setPointerCapture(event.pointerId);
+
+  });
+
+
+
+  els.viewport.addEventListener("pointermove", (event) => {
+
+    if (!app.drag) return;
+
+    app.cam.x = app.drag.cx + (event.clientX - app.drag.x);
+
+    app.cam.y = app.drag.cy + (event.clientY - app.drag.y);
+
+    applyCam();
+
+  });
+
+
+
+  function endDrag() {
+
+    app.drag = null;
+
+    els.viewport.classList.remove("is-dragging");
+
+  }
+
+
+
+  els.viewport.addEventListener("pointerup", endDrag);
+
+  els.viewport.addEventListener("pointercancel", endDrag);
+
+
+
+  els.viewport.addEventListener(
+
+    "wheel",
+
+    (event) => {
+
+      event.preventDefault();
+
+      const rect = els.viewport.getBoundingClientRect();
+
+      zoomAt(event.clientX - rect.left, event.clientY - rect.top, event.deltaY < 0 ? 1.08 : 1 / 1.08);
+
+    },
+
+    { passive: false }
+
+  );
+
+}
+
+</script>
+<script>// Hover dimming and the search filter. Both write is-dim on the wired SVG.
+
+
+
+// The visible stroke and the label of a wired arrow. The wide hit stroke has only the edge-hit class.
+
+const EDGE_PIECES = ".is-edge, .is-edge-label";
+
+
+
+function setStatus(text) {
+
+  app.els.status.textContent = text;
+
+  clearTimeout(setStatus.timer);
+
+  setStatus.timer = setTimeout(() => {
+
+    app.els.status.textContent = "";
+
+  }, 2400);
+
+}
+
+
+
+function tooltipText(interaction) {
+
+  return interaction.opensView ? `${interaction.tooltip} Double-click to open the inner diagram.` : interaction.tooltip;
+
+}
+
+
+
+function placeTooltip(event) {
+
+  const tooltip = app.els.tooltip;
+
+  tooltip.hidden = false;
+
+  const rect = tooltip.getBoundingClientRect();
+
+  let x = event.clientX + 14;
+
+  let y = event.clientY + 18;
+
+  if (x + rect.width > window.innerWidth - 8) x = event.clientX - rect.width - 12;
+
+  if (y + rect.height > window.innerHeight - 8) y = event.clientY - rect.height - 12;
+
+  tooltip.style.left = `${x}px`;
+
+  tooltip.style.top = `${y}px`;
+
+}
+
+
+
+function showTooltip(event, interaction) {
+
+  app.els.tooltip.textContent = tooltipText(interaction);
+
+  placeTooltip(event);
+
+  highlightAround(interaction);
+
+}
+
+
+
+function hideTooltip() {
+
+  app.els.tooltip.hidden = true;
+
+  applySearch();
+
+}
+
+
+
+function highlightAround(interaction) {
+
+  const edges = edgeInteractions();
+
+  const litEdgeIds = new Set();
+
+  const litChartIds = new Set();
+
+  if (interaction.kind === "edge") {
+
+    litEdgeIds.add(interaction.edgeId);
+
+    litChartIds.add(interaction.from);
+
+    litChartIds.add(interaction.to);
+
+  } else {
+
+    litChartIds.add(interaction.chartId);
+
+    edges.forEach((edge) => {
+
+      if (edge.from === interaction.chartId || edge.to === interaction.chartId) {
+
+        litEdgeIds.add(edge.edgeId);
+
+        litChartIds.add(edge.from);
+
+        litChartIds.add(edge.to);
+
+      }
+
+    });
+
+  }
+
+  app.els.camera.querySelectorAll(".is-node").forEach((el) => {
+
+    const on = litChartIds.has(el.dataset.chartId);
+
+    el.classList.toggle("is-dim", !on);
+
+    el.classList.remove("is-hit");
+
+  });
+
+  app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
+
+    const on = litEdgeIds.has(el.dataset.edgeId);
+
+    el.classList.toggle("is-dim", !on);
+
+    el.classList.toggle("is-hot", on);
+
+  });
+
+}
+
+
+
+// The wired SVG pieces for a node or edge interaction.
+
+function wiredElements(interaction) {
+
+  if (!interaction) return [];
+
+  if (interaction.kind === "edge") {
+
+    return [...app.els.camera.querySelectorAll(EDGE_PIECES)].filter(
+
+      (el) => el.dataset.edgeId === interaction.edgeId
+
+    );
+
+  }
+
+  return [...app.els.camera.querySelectorAll(".is-node")].filter(
+
+    (el) => el.dataset.chartId === interaction.chartId
+
+  );
+
+}
+
+
+
+// The shape or arrow the panel describes. Hover and search do not touch is-selected.
+
+function markSelected(interaction) {
+
+  app.els.camera.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
+
+  const elements = wiredElements(interaction);
+
+  elements.forEach((el) => el.classList.add("is-selected"));
+
+  return elements;
+
+}
+
+
+
+function applySearch() {
+
+  const query = app.els.search.value.trim().toLowerCase();
+
+  const haystack = (interaction) =>
+
+    [interaction.label, interaction.tooltip, interaction.body, interaction.kicker, interaction.mermaidText, ...(interaction.facts || []).flat()]
+
+      .join(" ")
+
+      .toLowerCase();
+
+  app.els.camera.querySelectorAll(".is-node").forEach((el) => {
+
+    const interaction = nodeInteraction(el.dataset.chartId);
+
+    if (!interaction) return;
+
+    const hit = !query || haystack(interaction).includes(query);
+
+    el.classList.toggle("is-dim", Boolean(query) && !hit);
+
+    el.classList.toggle("is-hit", Boolean(query) && hit);
+
+  });
+
+  const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
+
+  app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
+
+    const interaction = edges.get(el.dataset.edgeId);
+
+    if (!interaction) return;
+
+    const hit = !query || haystack(interaction).includes(query);
+
+    el.classList.toggle("is-dim", Boolean(query) && !hit);
+
+    el.classList.toggle("is-hot", Boolean(query) && hit);
+
+  });
+
+}
+
+</script>
+<script>// The details aside. A click on a shape or an arrow fills it.
+
+
+
+const PANEL_MIN = 240;
+
+const PANEL_GAP = 280;
+
+let panelWidth = 340;
+
+
+
+function safeHref(href) {
+
+  try {
+
+    const url = new URL(href);
+
+    if (url.protocol === "http:" || url.protocol === "https:") return url.href;
+
+  } catch {
+
+    return "";
+
+  }
+
+  return "";
+
+}
+
+
+
+function appendInline(parent, tokens) {
+
+  (tokens || []).forEach((token) => {
+
+    if (token.type === "html" || token.type === "image") return;
+
+    if (token.type === "escape" || (token.type === "text" && !token.tokens)) {
+
+      parent.append(token.text);
+
+      return;
+
+    }
+
+    if (token.type === "text") {
+
+      appendInline(parent, token.tokens);
+
+      return;
+
+    }
+
+    if (token.type === "codespan") {
+
+      const code = document.createElement("code");
+
+      code.textContent = token.text;
+
+      parent.append(code);
+
+      return;
+
+    }
+
+    if (token.type === "strong" || token.type === "em") {
+
+      const el = document.createElement(token.type === "strong" ? "strong" : "em");
+
+      appendInline(el, token.tokens);
+
+      parent.append(el);
+
+      return;
+
+    }
+
+    if (token.type === "br") {
+
+      parent.append(document.createElement("br"));
+
+      return;
+
+    }
+
+    if (token.type === "link") {
+
+      const href = safeHref(token.href);
+
+      if (!href) {
+
+        appendInline(parent, token.tokens);
+
+        return;
+
+      }
+
+      const link = document.createElement("a");
+
+      link.href = href;
+
+      link.rel = "noreferrer";
+
+      link.target = "_blank";
+
+      appendInline(link, token.tokens);
+
+      parent.append(link);
+
+      return;
+
+    }
+
+    if (token.type === "paragraph" || token.type === "list" || token.type === "code" || token.type === "heading" || token.type === "blockquote" || token.type === "space") {
+
+      appendBlock(parent, token);
+
+      return;
+
+    }
+
+    if (token.tokens) appendInline(parent, token.tokens);
+
+    else if (typeof token.text === "string") parent.append(token.text);
+
+  });
+
+}
+
+
+
+// A fence written as ~~~js source=show,openPanel shows those functions as the page loaded them, so a note cannot drift from the code.
+
+function codeText(token) {
+
+  const names = /^\w+ source=([\w,]+)$/.exec(token.lang || "");
+
+  if (!names) return token.text;
+
+  return names[1]
+
+    .split(",")
+
+    .map((name) => (typeof globalThis[name] === "function" ? globalThis[name].toString().replace(/\r/g, "") : `// ${name} is not loaded`))
+
+    .join("\n\n");
+
+}
+
+
+
+function appendBlock(parent, token) {
+
+  if (token.type === "space" || token.type === "html" || token.type === "def" || token.type === "image") return;
+
+  if (token.type === "code") {
+
+    const pre = document.createElement("pre");
+
+    const code = document.createElement("code");
+
+    code.textContent = codeText(token);
+
+    pre.append(code);
+
+    parent.append(pre);
+
+    return;
+
+  }
+
+  if (token.type === "heading") {
+
+    const heading = document.createElement(`h${Math.min(6, token.depth + 2)}`);
+
+    appendInline(heading, token.tokens);
+
+    parent.append(heading);
+
+    return;
+
+  }
+
+  if (token.type === "paragraph") {
+
+    const p = document.createElement("p");
+
+    appendInline(p, token.tokens);
+
+    parent.append(p);
+
+    return;
+
+  }
+
+  if (token.type === "text") {
+
+    if (token.tokens) appendInline(parent, token.tokens);
+
+    else parent.append(token.text);
+
+    return;
+
+  }
+
+  if (token.type === "list") {
+
+    const list = document.createElement(token.ordered ? "ol" : "ul");
+
+    token.items.forEach((item) => {
+
+      const li = document.createElement("li");
+
+      (item.tokens || []).forEach((child) => appendBlock(li, child));
+
+      list.append(li);
+
+    });
+
+    parent.append(list);
+
+    return;
+
+  }
+
+  if (token.type === "blockquote") {
+
+    const quote = document.createElement("blockquote");
+
+    (token.tokens || []).forEach((child) => appendBlock(quote, child));
+
+    parent.append(quote);
+
+  }
+
+}
+
+
+
+function renderNote(el, source) {
+
+  el.replaceChildren();
+
+  if (!source) return;
+
+  marked.lexer(source).forEach((token) => appendBlock(el, token));
+
+}
+
+
+
+// An edge interaction links to its two ends. A node interaction links to every arrow that touches it.
+
+function renderLinks(interaction) {
+
+  const rows = [];
+
+  if (interaction.kind === "edge") {
+
+    const from = nodeInteraction(interaction.from);
+
+    const to = nodeInteraction(interaction.to);
+
+    if (from) rows.push({ term: "From", target: from, text: from.label });
+
+    if (to) rows.push({ term: "To", target: to, text: to.label });
+
+  } else {
+
+    edgeInteractions().forEach((edge) => {
+
+      const suffix = edge.label.includes("→") ? "" : ` (${edge.label})`;
+
+      if (edge.from === interaction.chartId) {
+
+        rows.push({ term: "Out", target: edge, text: `→ ${nodeInteraction(edge.to)?.label || "end"}${suffix}` });
+
+      }
+
+      if (edge.to === interaction.chartId) {
+
+        rows.push({ term: "In", target: edge, text: `← ${nodeInteraction(edge.from)?.label || "start"}${suffix}` });
+
+      }
+
+    });
+
+  }
+
+  app.panel.links.replaceChildren();
+
+  rows.forEach(({ term, target, text }) => {
+
+    const dt = document.createElement("dt");
+
+    const dd = document.createElement("dd");
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+
+    button.textContent = text;
+
+    button.addEventListener("click", () => openPanel(target));
+
+    dt.textContent = term;
+
+    dd.append(button);
+
+    app.panel.links.append(dt, dd);
+
+  });
+
+}
+
+
+
+function showPanel() {
+
+  app.els.panel.hidden = false;
+
+  app.els.panel.setAttribute("aria-hidden", "false");
+
+  app.els.workspace.classList.add("panel-open");
+
+}
+
+
+
+function hidePanel() {
+
+  app.els.panel.hidden = true;
+
+  app.els.panel.setAttribute("aria-hidden", "true");
+
+  app.els.workspace.classList.remove("panel-open");
+
+  app.panel.zoom.hidden = true;
+
+}
+
+
+
+// A part is a shape or an arrow. Two arrows between the same shapes count as one part.
+
+function partKey(interaction) {
+
+  return interaction.kind === "edge" ? `edge:${interaction.from}>${interaction.to}` : `node:${interaction.chartId}`;
+
+}
+
+
+
+// What a lesson step adds to the step before it, as part keys. Null outside a lesson step, and on the first step.
+
+function addedInStep() {
+
+  const step = lessonStep();
+
+  if (!step || !step.index || step.lesson[step.index] !== app.view.viewId) return null;
+
+  const before = app.views[step.lesson[step.index - 1]];
+
+  const seen = new Set([
+
+    ...Object.keys(before.nodeInteractions || {}).map((chartId) => `node:${chartId}`),
+
+    ...(before.edgeInteractions || []).map((edge) => (Array.isArray(edge) ? `edge:${edge[0]}>${edge[1]}` : `edge:${edge.from}>${edge.to}`)),
+
+  ]);
+
+  return new Set([...nodeInteractions(), ...edgeInteractions()].map(partKey).filter((key) => !seen.has(key)));
+
+}
+
+
+
+// The shapes, then the arrows, in the order the content file lists them. Each opens its note, and hover lights it in the picture.
+
+function renderParts() {
+
+  const list = app.panel.parts.querySelector("ol");
+
+  list.replaceChildren();
+
+  const added = addedInStep();
+
+  [...nodeInteractions(), ...edgeInteractions()].forEach((interaction) => {
+
+    const li = document.createElement("li");
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+
+    const name = document.createElement("strong");
+
+    name.textContent = interaction.label;
+
+    const line = document.createElement("span");
+
+    line.textContent = interaction.tooltip;
+
+    button.append(name, line);
+
+    if (added && added.has(partKey(interaction))) li.classList.add("is-new");
+
+    button.addEventListener("click", () => openPanel(interaction));
+
+    button.addEventListener("pointerenter", () => highlightAround(interaction));
+
+    button.addEventListener("pointerleave", applySearch);
+
+    li.append(button);
+
+    list.append(li);
+
+  });
+
+  app.panel.parts.hidden = !list.children.length;
+
+}
+
+
+
+// With nothing selected, the panel tells the story of the whole diagram and lists its parts.
+
+function openStory() {
+
+  app.selectedInteraction = null;
+
+  markSelected(null);
+
+  app.els.storyOpen.setAttribute("aria-pressed", String(!app.storyHidden));
+
+  if (app.storyHidden) {
+
+    hidePanel();
+
+    return;
+
+  }
+
+  const { panel, view } = app;
+
+  const step = lessonStep();
+
+  const onStep = step && step.lesson[step.index] === view.viewId;
+
+  panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
+
+  panel.title.textContent = view.title;
+
+  // The summary is already in the bar above the diagram.
+
+  panel.lead.textContent = "";
+
+  renderNote(panel.body, view.story || "");
+
+  panel.facts.replaceChildren();
+
+  panel.links.replaceChildren();
+
+  renderParts();
+
+  panel.zoom.hidden = true;
+
+  panel.close.textContent = "Close";
+
+  showPanel();
+
+}
+
+
+
+function openPanel(interaction) {
+
+  app.selectedInteraction = interaction;
+
+  app.els.storyOpen.setAttribute("aria-pressed", "false");
+
+  const panel = app.panel;
+
+  panel.kicker.textContent = interaction.kicker || "";
+
+  panel.title.textContent = interaction.label;
+
+  panel.lead.textContent = interaction.tooltip;
+
+  renderNote(panel.body, interaction.body || "");
+
+  panel.facts.replaceChildren();
+
+  (interaction.facts || []).forEach(([term, detail]) => {
+
+    const dt = document.createElement("dt");
+
+    const dd = document.createElement("dd");
+
+    dt.textContent = term;
+
+    dd.textContent = detail;
+
+    panel.facts.append(dt, dd);
+
+  });
+
+  renderLinks(interaction);
+
+  panel.parts.hidden = true;
+
+  panel.zoom.hidden = !interaction.opensView;
+
+  panel.close.textContent = app.storyHidden ? "Close" : "Back";
+
+  showPanel();
+
+  panel.close.focus();
+
+  const selected = markSelected(interaction);
+
+  requestAnimationFrame(() => reveal(selected));
+
+}
+
+
+
+// From a note, Close goes back to the story. From the story, it hides the panel until the Story button.
+
+function closePanel() {
+
+  if (!app.selectedInteraction) app.storyHidden = true;
+
+  openStory();
+
+}
+
+
+
+// Shapes and arrows share this. `interaction` is the node or edge interaction.
+
+// The panel opens at once. A double-click that drills in closes it again through show().
+
+function onInteractionClick(event, interaction) {
+
+  event.stopPropagation();
+
+  hideTooltip();
+
+  if (event.target.closest(".zoom-badge")) {
+
+    if (interaction.opensView) show(interaction.opensView, interaction);
+
+    return;
+
+  }
+
+  openPanel(interaction);
+
+}
+
+
+
+function onInteractionDblClick(event, interaction) {
+
+  event.preventDefault();
+
+  event.stopPropagation();
+
+  window.getSelection()?.removeAllRanges();
+
+  if (interaction.opensView) show(interaction.opensView, interaction);
+
+  else openPanel(interaction);
+
+}
+
+
+
+function setPanelWidth(width) {
+
+  const bounds = app.els.workspace.getBoundingClientRect();
+
+  const max = Math.max(PANEL_MIN, bounds.width - PANEL_GAP);
+
+  panelWidth = Math.round(Math.min(max, Math.max(PANEL_MIN, width)));
+
+  app.els.workspace.style.setProperty("--panel-width", `${panelWidth}px`);
+
+}
+
+
+
+function wirePanel() {
+
+  const handle = app.els.panelResize;
+
+  handle.addEventListener("pointerdown", (event) => {
+
+    if (event.button !== 0) return;
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    handle.setPointerCapture(event.pointerId);
+
+    handle.classList.add("is-dragging");
+
+    document.documentElement.classList.add("is-resizing");
+
+    const startX = event.clientX;
+
+    const startWidth = panelWidth;
+
+
+
+    function move(ev) {
+
+      setPanelWidth(startWidth + (startX - ev.clientX));
+
+    }
+
+    function end() {
+
+      handle.removeEventListener("pointermove", move);
+
+      handle.removeEventListener("pointerup", end);
+
+      handle.removeEventListener("pointercancel", end);
+
+      handle.classList.remove("is-dragging");
+
+      document.documentElement.classList.remove("is-resizing");
+
+      requestAnimationFrame(() => reveal(markSelected(app.selectedInteraction)));
+
+    }
+
+    handle.addEventListener("pointermove", move);
+
+    handle.addEventListener("pointerup", end);
+
+    handle.addEventListener("pointercancel", end);
+
+  });
+
+
+
+  app.panel.close.addEventListener("click", closePanel);
+
+  app.panel.zoom.addEventListener("click", () => {
+
+    if (app.selectedInteraction && app.selectedInteraction.opensView) {
+
+      show(app.selectedInteraction.opensView, app.selectedInteraction);
+
+    }
+
+  });
+
+}
+
+</script>
+<script>// Mermaid has already drawn the SVG. These functions find shapes and arrows. They do not attach listeners.
+
+
+
+function norm(value) {
+
+  return (value || "").replace(/\s+/g, " ").trim();
+
+}
+
+
+
+function escapeRegExp(value) {
+
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+}
+
+
+
+function chartKind(chart) {
+
+  const line = (chart || "").trim().split("\n")[0].trim();
+
+  if (line.startsWith("flowchart")) return "flowchart";
+
+  if (line.startsWith("C4")) return "c4";
+
+  if (line.startsWith("sequenceDiagram")) return "sequence";
+
+  if (line.startsWith("stateDiagram")) return "state";
+
+  return "";
+
+}
+
+
+
+function shapeGroup(el) {
+
+  return (
+
+    el.closest(
+
+      "g.node, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
+
+    ) ||
+
+    el.closest("g") ||
+
+    el
+
+  );
+
+}
+
+
+
+// One pattern per chart. Every hit is the shape group Mermaid drew for that chartId.
+
+function findMermaidShapes(svg, chartId) {
+
+  const kind = chartKind(app.view.chart);
+
+  const id = escapeRegExp(chartId);
+
+  const groups = new Set();
+
+  if (kind === "flowchart") {
+
+    // diagram-<n>-flowchart-<chartId>-<number>
+
+    const pattern = new RegExp(`(?:^|-)flowchart-${id}-\\d+$`);
+
+    svg.querySelectorAll("g.node").forEach((el) => {
+
+      if (pattern.test(el.id)) groups.add(el);
+
+    });
+
+  } else if (kind === "c4") {
+
+    // diagram-<n>-<alias> on the C4 shape, not on a marker.
+
+    const pattern = new RegExp(`(?:^|-)${id}$`);
+
+    svg.querySelectorAll("g.node.c4-shape").forEach((el) => {
+
+      if (pattern.test(el.id)) groups.add(el);
+
+    });
+
+  } else if (kind === "sequence") {
+
+    // Top and bottom actor boxes share the name. Lifelines have it too, and are not boxes.
+
+    svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
+
+      if (el.getAttribute("name") === chartId) groups.add(shapeGroup(el));
+
+    });
+
+  } else if (kind === "state") {
+
+    // diagram-<n>-state-<name>-<number>
+
+    const pattern = new RegExp(`(?:^|-)state-${id}-\\d+$`);
+
+    svg.querySelectorAll("g.node").forEach((el) => {
+
+      if (pattern.test(el.id)) groups.add(el);
+
+    });
+
+  }
+
+  return [...groups].filter(visibleShape);
+
+}
+
+
+
+// Sequence lifelines are tall groups with almost no width. They must not become buttons.
+
+function visibleShape(el) {
+
+  try {
+
+    const box = el.getBBox();
+
+    return box.width >= 8 && box.height >= 8;
+
+  } catch {
+
+    return false;
+
+  }
+
+}
+
+
+
+// Path coordinates ignore the camera's CSS transform. getScreenCTM includes it, so the point lines up with getBoundingClientRect.
+
+function screenPoint(path, distance) {
+
+  const point = path.getPointAtLength(distance);
+
+  const matrix = path.getScreenCTM();
+
+  if (!matrix) return { x: point.x, y: point.y };
+
+  const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+
+  return { x: screen.x, y: screen.y };
+
+}
+
+
+
+function nearestPoint(points, point) {
+
+  let best = { chartId: "", distance: Infinity };
+
+  points.forEach((item) => {
+
+    const distance = Math.hypot(item.x - point.x, item.y - point.y);
+
+    if (distance < best.distance) best = { chartId: item.chartId, distance };
+
+  });
+
+  return best;
+
+}
+
+
+
+// Flowchart arrows are path.flowchart-link. Mermaid puts the endpoints in the id: …L_<from>_<to>_<n>.
+
+// Two arrows between the same shapes differ only in n, so a path the binder already wired is skipped.
+
+function findFlowchartArrow(svg, edge) {
+
+  const from = escapeRegExp(edge.from);
+
+  const to = escapeRegExp(edge.to);
+
+  const pattern = new RegExp(`(?:^|-)L_${from}_${to}_\\d+$`);
+
+  return [...svg.querySelectorAll("path.flowchart-link")].find((path) => !path.dataset.wired && pattern.test(path.id));
+
+}
+
+
+
+// Screen distances shrink and grow with the camera. Multiply a limit in diagram units by the scale before comparing.
+
+function onScreen(units) {
+
+  return units * app.cam.s;
+
+}
+
+
+
+// A label farther than 160 diagram units from the path midpoint belongs to another arrow.
+
+// data-wired is set by the binder, so a label already given to an arrow is skipped.
+
+function nearestFlowchartLabel(path, labels) {
+
+  const mid = screenPoint(path, path.getTotalLength() / 2);
+
+  let best = null;
+
+  let bestDistance = onScreen(160);
+
+  labels.forEach((label) => {
+
+    if (label.dataset.wired) return;
+
+    const box = label.getBoundingClientRect();
+
+    const distance = Math.hypot(box.left + box.width / 2 - mid.x, box.top + box.height / 2 - mid.y);
+
+    if (distance < bestDistance) {
+
+      bestDistance = distance;
+
+      best = label;
+
+    }
+
+  });
+
+  return best;
+
+}
+
+
+
+// Sequence diagrams emit messageText, then messageLine, as siblings. The text is how arrows are told apart.
+
+function sequenceMessages(svg) {
+
+  const messages = [];
+
+  let text = null;
+
+  [...svg.children].forEach((el) => {
+
+    const cls = el.getAttribute("class") || "";
+
+    if (cls.includes("messageText")) text = el;
+
+    else if (cls.includes("messageLine")) {
+
+      messages.push({ line: el, text, label: norm(text ? text.textContent : ""), wired: false });
+
+      text = null;
+
+    }
+
+  });
+
+  return messages;
+
+}
+
+
+
+// C4 draws every relationship in one group: a line or path, then the text nodes that belong to it.
+
+function c4Relations(svg) {
+
+  const relationshipGroup = [...svg.querySelectorAll("g")].find((group) => {
+
+    const kids = [...group.children];
+
+    return kids.some((el) => el.tagName === "line") && kids.some((el) => el.tagName === "text");
+
+  });
+
+  if (!relationshipGroup) return [];
+
+  const relations = [];
+
+  let relation = null;
+
+  [...relationshipGroup.children].forEach((el) => {
+
+    if (el.tagName === "line" || el.tagName === "path") {
+
+      relation = { strokes: [el], texts: [], wired: false };
+
+      relations.push(relation);
+
+    } else if (el.tagName === "text" && relation) relation.texts.push(el);
+
+  });
+
+  return relations.map((item) => ({
+
+    ...item,
+
+    label: norm(item.texts.map((text) => text.textContent).join(" ")),
+
+  }));
+
+}
+
+
+
+// The binder tries exact matches first. A prefix match is the fallback, so "Pay" does not take "Pay refund" from its own arrow.
+
+function textMatches(rendered, wanted, exact) {
+
+  const left = norm(rendered).toLowerCase();
+
+  const right = norm(wanted).toLowerCase();
+
+  if (!right) return false;
+
+  return exact ? left === right : left.startsWith(right);
+
+}
+
+
+
+// State start and end dots are not node interactions. Mermaid draws them as root_start and root_end, and edge interactions call them *.
+
+function shapeCentersOnScreen(svg) {
+
+  const centers = [];
+
+  svg.querySelectorAll(".is-node").forEach((el) => {
+
+    const box = el.getBoundingClientRect();
+
+    if (box.width < 2) return;
+
+    centers.push({ chartId: el.dataset.chartId, x: box.left + box.width / 2, y: box.top + box.height / 2 });
+
+  });
+
+  svg.querySelectorAll("g.node").forEach((el) => {
+
+    if (!/root_start|root_end/.test(el.id)) return;
+
+    const box = el.getBoundingClientRect();
+
+    centers.push({ chartId: "*", x: box.left + box.width / 2, y: box.top + box.height / 2 });
+
+  });
+
+  return centers;
+
+}
+
+
+
+// State arrows are path.transition. Their ids do not name the endpoints, so match by which shape centers the line meets.
+
+function matchStateArrows(paths, edges, svg) {
+
+  const centers = shapeCentersOnScreen(svg);
+
+  const candidates = [];
+
+  paths.forEach((path) => {
+
+    const length = path.getTotalLength();
+
+    if (!length) return;
+
+    const start = nearestPoint(centers, screenPoint(path, 1));
+
+    const end = nearestPoint(centers, screenPoint(path, Math.max(1, length - 1)));
+
+    edges.forEach((edge) => {
+
+      const forward = endpointDistance(start, end, edge);
+
+      const backward = endpointDistance(end, start, edge);
+
+      const score = Math.min(forward, backward);
+
+      if (score < onScreen(360)) candidates.push({ path, edge, score });
+
+    });
+
+  });
+
+  candidates.sort((a, b) => a.score - b.score);
+
+  const usedPaths = new Set();
+
+  const usedEdges = new Set();
+
+  const pairs = [];
+
+  candidates.forEach((candidate) => {
+
+    if (usedPaths.has(candidate.path) || usedEdges.has(candidate.edge)) return;
+
+    usedPaths.add(candidate.path);
+
+    usedEdges.add(candidate.edge);
+
+    pairs.push({ path: candidate.path, edge: candidate.edge });
+
+  });
+
+  return pairs;
+
+}
+
+
+
+function endpointDistance(start, end, edge) {
+
+  if (edge.from !== "*" && start.chartId !== edge.from) return Infinity;
+
+  if (edge.to !== "*" && end.chartId !== edge.to) return Infinity;
+
+  if (edge.from === "*" && start.chartId !== "*") return Infinity;
+
+  if (edge.to === "*" && end.chartId !== "*") return Infinity;
+
+  return (edge.from === "*" ? 0 : start.distance) + (edge.to === "*" ? 0 : end.distance);
+
+}
+
+</script>
+<script>// Join node and edge interactions to the Mermaid shapes and arrows already found.
+
+
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+
+
+function addBadge(shape) {
+
+  let box;
+
+  try {
+
+    box = shape.getBBox();
+
+  } catch {
+
+    return;
+
+  }
+
+  const badge = document.createElementNS(SVG_NS, "g");
+
+  badge.setAttribute("class", "zoom-badge");
+
+  badge.setAttribute("transform", `translate(${box.x + box.width - 2}, ${box.y + 2})`);
+
+  const circle = document.createElementNS(SVG_NS, "circle");
+
+  circle.setAttribute("r", "9");
+
+  const path = document.createElementNS(SVG_NS, "path");
+
+  path.setAttribute("d", "M-3.5-3.5L3.5 3.5M3.5-1V3.5H-1");
+
+  badge.append(circle, path);
+
+  shape.appendChild(badge);
+
+}
+
+
+
+function wireShape(shape, interaction) {
+
+  shape.classList.add("is-node");
+
+  shape.dataset.chartId = interaction.chartId;
+
+  makeInteractive(shape, interaction, true);
+
+  if (interaction.opensView) addBadge(shape);
+
+}
+
+
+
+// Mermaid's HTML labels sit in a foreignObject that clips the text. Grow it to the label's scroll height.
+
+function relaxLabels(svg) {
+
+  svg.querySelectorAll("foreignObject").forEach((fo) => {
+
+    fo.setAttribute("overflow", "visible");
+
+    const label = fo.firstElementChild;
+
+    if (!label) return;
+
+    const needed = Math.ceil(label.scrollHeight);
+
+    const height = Number(fo.getAttribute("height")) || 0;
+
+    if (needed > height) fo.setAttribute("height", String(needed));
+
+  });
+
+}
+
+
+
+function bindNodeInteractions(svg) {
+
+  const wired = new Set();
+
+  nodeInteractions().forEach((interaction) => {
+
+    findMermaidShapes(svg, interaction.chartId).forEach((shape) => {
+
+      if (wired.has(shape)) return;
+
+      wired.add(shape);
+
+      wireShape(shape, interaction);
+
+    });
+
+  });
+
+}
+
+
+
+// The visible stroke is too thin to hover. Clone it into a transparent, wider stroke and listen on that.
+
+function addWideHitStroke(el) {
+
+  const hit = el.cloneNode(false);
+
+  hit.removeAttribute("id");
+
+  hit.removeAttribute("marker-end");
+
+  hit.removeAttribute("marker-start");
+
+  hit.setAttribute("class", "edge-hit");
+
+  el.parentNode.insertBefore(hit, el.nextSibling);
+
+  return hit;
+
+}
+
+
+
+// `arrowElements` are the SVG pieces Mermaid drew for one arrow: the stroke, and its label when there is one.
+
+// Only the first stroke is a keyboard button, so the label is not a second tab stop.
+
+function wireArrow(interaction, arrowElements) {
+
+  let keyboardButton = true;
+
+  arrowElements.filter(Boolean).forEach((element) => {
+
+    element.dataset.wired = "1";
+
+    element.dataset.edgeId = interaction.edgeId;
+
+    if (element.tagName === "path" || element.tagName === "line") {
+
+      element.classList.add("is-edge");
+
+      const hit = addWideHitStroke(element);
+
+      hit.dataset.edgeId = interaction.edgeId;
+
+      makeInteractive(hit, interaction, keyboardButton);
+
+      keyboardButton = false;
+
+    } else {
+
+      element.classList.add("is-edge-label");
+
+      makeInteractive(element, interaction, false);
+
+    }
+
+  });
+
+}
+
+
+
+// Shapes and arrows get the same listeners. A keyboard button is also a tab stop with an aria-label.
+
+function makeInteractive(el, interaction, keyboardButton) {
+
+  if (keyboardButton) {
+
+    el.setAttribute("role", "button");
+
+    el.setAttribute("tabindex", "0");
+
+    el.setAttribute(
+
+      "aria-label",
+
+      interaction.opensView ? `${interaction.label}, has an inner diagram` : interaction.label
+
+    );
+
+    el.addEventListener("keydown", (event) => {
+
+      if (event.key !== "Enter" && event.key !== " ") return;
+
+      event.preventDefault();
+
+      onInteractionClick(event, interaction);
+
+    });
+
+  }
+
+  el.addEventListener("pointerenter", (event) => showTooltip(event, interaction));
+
+  el.addEventListener("pointermove", placeTooltip);
+
+  el.addEventListener("pointerleave", hideTooltip);
+
+  el.addEventListener("click", (event) => onInteractionClick(event, interaction));
+
+  el.addEventListener("dblclick", (event) => onInteractionDblClick(event, interaction));
+
+}
+
+
+
+// Each edge interaction is claimed once. Flowchart ids, then sequence text, then C4 text, then state geometry.
+
+function bindEdgeInteractions(svg) {
+
+  const edges = edgeInteractions();
+
+  const wired = new Set();
+
+  const labels = [...svg.querySelectorAll("g.edgeLabel")].filter(
+
+    (label) => !label.querySelector("g.edgeLabel")
+
+  );
+
+
+
+  function claimEdge(edge, arrowElements) {
+
+    if (wired.has(edge)) return;
+
+    wired.add(edge);
+
+    wireArrow(edge, arrowElements);
+
+  }
+
+
+
+  edges.forEach((edge) => {
+
+    const path = findFlowchartArrow(svg, edge);
+
+    if (!path || path.dataset.wired) return;
+
+    const label = nearestFlowchartLabel(path, labels);
+
+    if (label) label.dataset.wired = "1";
+
+    claimEdge(edge, [path, label]);
+
+  });
+
+
+
+  // Sequence and C4 arrows are told apart by their text. `items` carry a label; `pieces` gives the SVG for one.
+
+  // Every edge tries an exact match before any edge falls back to a prefix.
+
+  function claimByText(items, pieces) {
+
+    [true, false].forEach((exact) => {
+
+      edges.forEach((edge) => {
+
+        if (wired.has(edge) || !edge.mermaidText) return;
+
+        const item = items.find((candidate) => !candidate.wired && textMatches(candidate.label, edge.mermaidText, exact));
+
+        if (!item) return;
+
+        item.wired = true;
+
+        claimEdge(edge, pieces(item));
+
+      });
+
+    });
+
+  }
+
+
+
+  claimByText(sequenceMessages(svg), (message) => [message.line, message.text]);
+
+  claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
+
+
+
+  const paths = [...svg.querySelectorAll("path.transition")].filter((path) => !path.dataset.wired);
+
+  matchStateArrows(paths, edges.filter((edge) => !wired.has(edge)), svg).forEach(({ path, edge }) => {
+
+    claimEdge(edge, [path]);
+
+  });
+
+}
+
+</script>
+<script>// show() is the only way to change the diagram.
+
+
+
+function pathTo(view) {
+
+  const path = [view];
+
+  let guard = 0;
+
+  while (path[0].parent && app.views[path[0].parent] && guard++ < 8) {
+
+    path.unshift(app.views[path[0].parent]);
+
+  }
+
+  return path;
+
+}
+
+
+
+function renderChrome() {
+
+  const { els, stack } = app;
+
+  const root = stack[0];
+
+  els.tabs.querySelectorAll("button").forEach((button) => {
+
+    if (button.dataset.id === root.tab) button.setAttribute("aria-current", "true");
+
+    else button.removeAttribute("aria-current");
+
+  });
+
+  els.crumbs.replaceChildren();
+
+  stack.forEach((view, index) => {
+
+    if (index) {
+
+      const sep = document.createElement("span");
+
+      sep.className = "sep";
+
+      sep.textContent = "/";
+
+      els.crumbs.appendChild(sep);
+
+    }
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+
+    button.textContent = view.title;
+
+    const last = index === stack.length - 1;
+
+    if (last) button.setAttribute("aria-current", "true");
+
+    if (!last) button.addEventListener("click", () => show(view.viewId));
+
+    els.crumbs.appendChild(button);
+
+  });
+
+  els.summary.textContent = app.view.summary;
+
+  renderLesson();
+
+  const next = "#" + stack.map((view) => view.viewId).join("/");
+
+  if (location.hash !== next) history.replaceState(null, "", next);
+
+}
+
+
+
+// `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
+
+async function show(viewId, fromInteraction) {
+
+  const view = app.views[viewId];
+
+  if (!view) return;
+
+  // Only a view that finished drawing owns app.cam. During a swap the camera holds the leave zoom, so it is not saved.
+
+  const shown = app.shownViewId;
+
+  if (shown) app.cams[shown] = { ...app.cam };
+
+  app.shownViewId = null;
+
+  const origin = wiredElements(fromInteraction);
+
+  app.view = view;
+
+  app.stack = pathTo(view);
+
+  openStory();
+
+  hideTooltip();
+
+  renderChrome();
+
+  // A slower mermaid.render must not overwrite a diagram the reader has already left.
+
+  const token = ++app.renderToken;
+
+  try {
+
+    const leaving = shown ? leaveView(origin) : Promise.resolve();
+
+    const [{ svg }] = await Promise.all([mermaid.render(`diagram-${token}`, view.chart), leaving]);
+
+    if (token !== app.renderToken) return;
+
+    app.els.camera.innerHTML = svg;
+
+    const svgEl = app.els.camera.querySelector("svg");
+
+    svgEl.style.maxWidth = "none";
+
+    const box = svgEl.viewBox.baseVal;
+
+    if (box && box.width) {
+
+      svgEl.setAttribute("width", String(box.width));
+
+      svgEl.setAttribute("height", String(box.height));
+
+    }
+
+    enterView(app.cams[viewId]);
+
+    app.shownViewId = viewId;
+
+    bindNodeInteractions(svgEl);
+
+    bindEdgeInteractions(svgEl);
+
+    relaxLabels(svgEl);
+
+    applySearch();
+
+  } catch (error) {
+
+    if (token !== app.renderToken) return;
+
+    app.els.camera.classList.remove("is-leaving");
+
+    app.els.camera.textContent = "Could not draw this diagram. " + (error.message || error);
+
+  }
+
+}
+
+
+
+function openFromHash() {
+
+  const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
+
+  const viewId = ids[ids.length - 1];
+
+  show(app.views[viewId] ? viewId : DIAGRAMS.tabs[0].id);
+
+}
+
+
+
+// Escape and Backspace go one level up. Returns false at a tab's root.
+
+function showParent() {
+
+  if (app.stack.length < 2) return false;
+
+  show(app.stack[app.stack.length - 2].viewId);
+
+  return true;
+
+}
+
+
+
+// The lesson is the ordered view ids on a tab. A drill keeps the step it was opened from.
+
+function lessonStep() {
+
+  if (!app.view) return null;
+
+  const tab = DIAGRAMS.tabs.find((item) => item.id === app.view.tab);
+
+  if (!tab || !tab.lesson) return null;
+
+  const step = [...app.stack].reverse().find((view) => tab.lesson.includes(view.viewId));
+
+  return step ? { lesson: tab.lesson, index: tab.lesson.indexOf(step.viewId) } : null;
+
+}
+
+
+
+function renderLesson() {
+
+  const { els } = app;
+
+  const step = lessonStep();
+
+  if (!step) {
+
+    els.lesson.hidden = true;
+
+    return;
+
+  }
+
+  els.lesson.hidden = false;
+
+  els.lessonCount.textContent = (step.index + 1) + " / " + step.lesson.length;
+
+  els.lessonPrev.disabled = step.index === 0;
+
+  const nextView = app.views[step.lesson[step.index + 1]];
+
+  els.lessonNext.disabled = !nextView;
+
+  els.lessonNext.textContent = nextView ? "Next: " + nextView.title : "Next";
+
+}
+
+
+
+function showLesson(delta) {
+
+  const step = lessonStep();
+
+  if (!step) return false;
+
+  const viewId = step.lesson[step.index + delta];
+
+  if (!viewId) return false;
+
+  show(viewId);
+
+  return true;
+
+}
+
+
+
+function wireTabs() {
+
+  // An exported file already holds the buttons drawn when it was saved, without their listeners.
+
+  app.els.tabs.replaceChildren();
+
+  DIAGRAMS.tabs.forEach((tab) => {
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+
+    button.textContent = tab.label;
+
+    button.dataset.id = tab.id;
+
+    button.addEventListener("click", () => show(tab.id));
+
+    app.els.tabs.appendChild(button);
+
+  });
+
+}
+
+</script>
+<script>// Export inlines the local script tags of index.html, in page order. The CDN scripts stay links.
+// With ?template in the link, Export saves the skill's template instead: the page with no content, and a marker line where the content file goes.
+
+const TEMPLATE_MARKER = "/* DIAGRAMS */";
+
+function localScripts() {
+  return [...document.querySelectorAll("script[src]")].filter((script) => !/^https?:/.test(script.getAttribute("src")));
+}
+
+// fetch resolves on a 404, so a missing file is an error here instead of an error page inlined as a script.
+async function readFile(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`Export could not read ${path} (${response.status}).`);
+  return response.text();
+}
+
+async function exportHtml() {
+  const template = new URLSearchParams(location.search).has("template");
+  const scripts = localScripts();
+  let css, sources, markup;
+  try {
+    [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
+    if (template) markup = await readFile("index.html");
+  } catch (error) {
+    // On file:// fetch itself rejects with a TypeError.
+    setStatus(error instanceof TypeError ? "Export needs a local server. Open the folder with a static server, then export." : error.message);
+    return;
+  }
+  const hash = app.stack.map((view) => view.viewId).join("/");
+  const safe = (source) => source.replace(/<\/script/gi, "<\\/script");
+  // The template starts from the markup in index.html, because the live page holds this content's tabs and diagram.
+  const body = template ? new DOMParser().parseFromString(markup, "text/html").body : document.body.cloneNode(true);
+  body.querySelectorAll("script").forEach((script) => script.remove());
+  // The marker sits alone on its line, so one sed command can swap it for the content file.
+  const slot = `<script>
+${TEMPLATE_MARKER}
+<\/script>
+<script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the ${TEMPLATE_MARKER} line was.";<\/script>`;
+  const inlined = scripts.map((script, index) =>
+    template && script.hasAttribute("data-content") ? slot : `<script>${safe(sources[index])}<\/script>`,
+  );
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Mermaid</title>
+  <style>${css}</style>
+</head>
+<body>
+${body.innerHTML}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"><\/script>
+${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");<\/script>\n`}${inlined.join("\n")}
+</body>
+</html>
+`;
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = template ? "explainer.html" : "interactive-diagrams.html";
+  link.click();
+  // Firefox can cancel the download if the URL is revoked in the same task as the click.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setStatus(template ? "Downloaded the skill's template. Save it as skill/assets/explainer.html." : "Downloaded a standalone HTML file.");
+}
+</script>
+<script>// Mermaid setup, and the listeners that are not owned by the camera or the panel.
+
+
+
+mermaid.initialize({
+
+  startOnLoad: false,
+
+  securityLevel: "strict",
+
+  // On a bad chart, show() writes the error where the diagram goes. Without this, Mermaid also leaves its own error picture at the bottom of the page.
+
+  suppressErrorRendering: true,
+
+  theme: "base",
+
+  fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
+
+  flowchart: { htmlLabels: true, useMaxWidth: false, curve: "basis" },
+
+  sequence: { useMaxWidth: false },
+
+  c4: { useMaxWidth: false },
+
+  themeVariables: {
+
+    fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
+
+    fontSize: "15px",
+
+    background: "transparent",
+
+    primaryColor: "#ffffff",
+
+    primaryTextColor: "#1e293b",
+
+    primaryBorderColor: "#475569",
+
+    secondaryColor: "#eef2f7",
+
+    secondaryTextColor: "#1e293b",
+
+    secondaryBorderColor: "#475569",
+
+    tertiaryColor: "#f1f5f9",
+
+    tertiaryTextColor: "#1e293b",
+
+    tertiaryBorderColor: "#475569",
+
+    lineColor: "#64748b",
+
+    textColor: "#1e293b",
+
+    mainBkg: "#ffffff",
+
+    nodeBorder: "#475569",
+
+    actorBkg: "#ffffff",
+
+    actorBorder: "#475569",
+
+    actorTextColor: "#1e293b",
+
+    signalColor: "#475569",
+
+    signalTextColor: "#1e293b",
+
+    noteBkgColor: "#fef9e7",
+
+    noteTextColor: "#1e293b",
+
+    noteBorderColor: "#cbd5e1",
+
+    activationBkgColor: "#e6eefd",
+
+    activationBorderColor: "#475569",
+
+  },
+
+});
+
+
+
+wireTabs();
+
+wireCamera();
+
+wirePanel();
+
+
+
+document.getElementById("copy").addEventListener("click", async () => {
+
+  try {
+
+    await navigator.clipboard.writeText(app.view.chart.trim() + "\n");
+
+    setStatus("Copied the Mermaid source.");
+
+  } catch {
+
+    setStatus("Could not copy. Select the diagram source from the file instead.");
+
+  }
+
+});
+
+
+
+document.getElementById("export").addEventListener("click", exportHtml);
+
+
+
+// The menu opens under its island, right edges aligned, and closes after a choice.
+
+const moreMenu = document.getElementById("more-menu");
+
+moreMenu.addEventListener("beforetoggle", (event) => {
+
+  if (event.newState !== "open") return;
+
+  const box = document.getElementById("more-open").closest(".island").getBoundingClientRect();
+
+  moreMenu.style.top = `${box.bottom + 8}px`;
+
+  moreMenu.style.right = `${document.documentElement.clientWidth - box.right}px`;
+
+});
+
+moreMenu.addEventListener("click", (event) => {
+
+  if (event.target.closest("button")) moreMenu.hidePopover();
+
+});
+
+document.getElementById("fit").addEventListener("click", fit);
+
+// Story is a switch: it shows the story, or hides it when the story is already showing.
+
+app.els.storyOpen.addEventListener("click", () => {
+
+  app.storyHidden = !app.storyHidden && !app.selectedInteraction && !app.els.panel.hidden;
+
+  openStory();
+
+});
+
+document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
+
+document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));
+
+document.getElementById("lesson-prev").addEventListener("click", () => showLesson(-1));
+
+document.getElementById("lesson-next").addEventListener("click", () => showLesson(1));
+
+
+
+app.els.search.addEventListener("input", applySearch);
+
+
+
+document.addEventListener("keydown", (event) => {
+
+  const typing = event.target.closest("input, textarea");
+
+  // Escape on the open help or menu closes only that, not the panel behind it.
+
+  const popup = document.querySelector("[popover]:popover-open");
+
+  if (popup) {
+
+    if (event.key === "Escape") popup.hidePopover();
+
+    return;
+
+  }
+
+  if (event.key === "/" && !typing) {
+
+    event.preventDefault();
+
+    app.els.search.focus();
+
+  }
+
+  if (event.key === "?" && !typing) {
+
+    event.preventDefault();
+
+    app.els.help.showPopover();
+
+  }
+
+  if (event.key === "Escape") {
+
+    hideTooltip();
+
+    // A note goes back to the story first. The story itself stays open while stepping up.
+
+    if (app.selectedInteraction) closePanel();
+
+    else showParent();
+
+  }
+
+  if (event.key === "Backspace" && !typing && showParent()) {
+
+    event.preventDefault();
+
+  }
+
+  const lessonKey = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+
+  if (lessonKey && !typing && !app.selectedInteraction && showLesson(lessonKey)) {
+
+    event.preventDefault();
+
+  }
+
+});
+
+
+
+window.addEventListener("hashchange", openFromHash);
+
+
+
+openFromHash();
+
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # ADR-029 No Python: join the files with a shell command, and let the page check them
 
-- Status: accepted, not built yet
+- Status: accepted, not built yet, partly superseded by [ADR-037](037-fill-a-template.md): one template with a marker line replaces the two halves and the `cat` join
 - Date: 2026-10-11
 - Supersedes: the template slot and `build.py` in [ADR-027](027-one-file-from-a-template.md), and the skill layout in [ADR-025](025-explainer-skill.md)
 

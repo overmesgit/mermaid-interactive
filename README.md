@@ -19,6 +19,8 @@ To open another content file, name it in the link: `http://127.0.0.1:8765/?src=e
 
 The sample tabs are a bookshop. The How tab explains the tool itself, step by step. Export needs that server. The downloaded file still loads Mermaid from the network.
 
+After changing the engine, rebuild the skill's template: open `http://127.0.0.1:8765/?template`, press Export HTML, and save the file as `skill/assets/explainer.html`. See [ADR-037](docs/decisions/037-fill-a-template.md).
+
 ## Docs
 
 - [Context](CONTEXT.md) before changing the product

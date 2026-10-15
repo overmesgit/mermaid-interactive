@@ -135,3 +135,15 @@ Five versions were built side by side. The floating one was picked: no header, t
 > I really like floating. the only thing is the story of diagram will be hard to find. and make prev / next to jump less between steps, different step name make buttons jump too far
 
 The Story button has a label and sits before the diagram's name. The lesson card has a fixed width, so Prev and Next stay put. [ADR-036](decisions/036-floating-controls.md).
+
+## 2026-10-15
+
+> why would we need [the two template halves and the join command]
+
+An agent has no browser, so it cannot press Export. The skill has to carry the page ready-made.
+
+> hmmm.. I don't like cat files like this, any alternatives?
+
+> how about replacing some tag inside html to inject diagrams? maaa maybe not the final solution but should be good for now
+
+One template with a marker line replaces the two halves. The page's Export makes it when the link has `?template`. Loading the engine from a CDN stays open for later. [ADR-037](decisions/037-fill-a-template.md).

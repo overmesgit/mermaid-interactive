@@ -27,7 +27,7 @@ The join reads a path with `:` through `git show`, and any other path from the w
 
 ```bash
 {
-  cat "$skill/assets/head.html" "$content" "$skill/assets/tail.html"
+  sed -e '/^\/\* DIAGRAMS \*\/$/r '"$content" -e '/^\/\* DIAGRAMS \*\/$/d' "$skill/assets/explainer.html"
   sed -n 's/^[[:space:]]*~~~.*[[:space:]]file=\([^[:space:]]*\).*/\1/p' "$content" | sort -u |
   while read -r f; do
     printf '<script type="application/gzip" data-file="%s">\n' "$f"

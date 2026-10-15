@@ -9,7 +9,7 @@ A tool for explaining hard things: a concept, a subsystem, a pull request. An ex
 The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
 
 - **The engine.** This page: `index.html`, `styles.css`, and `js/`.
-- **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and, later, the engine as two prebuilt halves. With it an agent writes one content file, like `diagrams.js`, joins it between the halves, and hands over one HTML file, for example as a link in a PR.
+- **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and the engine as one template page with a marker line where the content goes. With it an agent writes one content file, like `diagrams.js`, puts it in place of the marker, and hands over one HTML file, for example as a link in a PR.
 
 The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence, State, and How. How explains this page.
 
