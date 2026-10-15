@@ -110,9 +110,9 @@ const HOW_BOX = {
 
       The picture stays where it is, because jumping would lose your place. It only slides when the panel would cover the shape you clicked. The clicked shape is outlined, so you can see what the panel is about.
 
-      With nothing selected, the panel shows the story of the whole diagram and a list of its parts. From a note, Back returns to it.
+      With nothing selected, the panel shows the story of the whole diagram and a list of its parts. A line of the story that links only to parts, like \`[Panel](#tap)\`, shows their cards in its place. From a note, Back returns to it.
 
-      ~~~js source=onInteractionClick,openPanel,openStory
+      ~~~js source=onInteractionClick,openPanel,openStory,cardParts
       ~~~
     `,
     facts: [["Function", "openPanel"], ["File", "js/panel.js"]],
@@ -1249,7 +1249,9 @@ UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")`,
       story: md`
         One line is rarely enough, so a click opens the side panel with the shape's full note, its facts, and links to what it connects to.
 
-        With nothing selected, the panel shows the story of the whole diagram, as it does now, and a list of its parts. From a note, Back returns here.
+        [Panel](#tap)
+
+        With nothing selected, the panel shows the story of the whole diagram, as it does now. A line of the story can show a part's card, like the Panel card above, so you meet each part where the text talks about it. The other parts are listed under the story. From a note, Back returns here.
       `,
       chart: `flowchart LR
   ${howNode("writer")} --> ${howNode("content")}

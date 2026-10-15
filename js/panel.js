@@ -42,6 +42,13 @@ function appendInline(parent, tokens) {
       return;
     }
     if (token.type === "link") {
+      const part = linkedPart(token.href);
+      if (part) {
+        const button = partButton(part, "part-link");
+        appendInline(button, token.tokens);
+        parent.append(button);
+        return;
+      }
       const href = safeHref(token.href);
       if (!href) {
         appendInline(parent, token.tokens);
@@ -96,6 +103,11 @@ function appendBlock(parent, token) {
     return;
   }
   if (token.type === "paragraph") {
+    const parts = cardParts(token);
+    if (parts) {
+      parts.forEach((part) => appendPartCard(parent, part));
+      return;
+    }
     const p = document.createElement("p");
     appendInline(p, token.tokens);
     parent.append(p);
@@ -192,27 +204,76 @@ function addedInStep() {
   return new Set([...nodeInteractions(), ...edgeInteractions()].map(partKey).filter((key) => !seen.has(key)));
 }
 
-// The shapes, then the arrows, in the order the content file lists them. Each opens its note, and hover lights it in the picture.
+// A story or note points at a part of this diagram with a markdown link: [API](#api) for a shape, [](#web->api) for an arrow.
+// Two arrows between the same shapes are one part, so the link opens the first. A link to no part is plain text, and the checks list it.
+function linkedPart(href) {
+  if (!href || !href.startsWith("#")) return null;
+  let key;
+  try {
+    key = decodeURIComponent(href.slice(1));
+  } catch {
+    return null;
+  }
+  const [from, to] = key.split("->");
+  if (to === undefined) return nodeInteraction(key) || null;
+  return edgeInteractions().find((edge) => edge.from === from && edge.to === to) || null;
+}
+
+// A paragraph that is only links to parts becomes their cards, so the text can walk the reader through the picture.
+// Links on lines next to each other are one paragraph in markdown, so each still gets its own card.
+function cardParts(paragraph) {
+  const tokens = (paragraph.tokens || []).filter((token) => !((token.type === "text" && !token.text.trim()) || token.type === "br"));
+  const parts = tokens.map((token) => (token.type === "link" ? linkedPart(token.href) : null));
+  return parts.length && parts.every(Boolean) ? parts : null;
+}
+
+// Every way to a part opens its note on click and lights it in the picture on hover.
+function partButton(interaction, className) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.addEventListener("click", () => openPanel(interaction));
+  button.addEventListener("pointerenter", () => highlightAround(interaction));
+  button.addEventListener("pointerleave", applySearch);
+  return button;
+}
+
+// The part's name and tooltip. On a lesson step, a part the step adds is marked New.
+function partItem(interaction) {
+  const li = document.createElement("li");
+  li.dataset.part = partKey(interaction);
+  const button = partButton(interaction, "part-card");
+  const name = document.createElement("strong");
+  name.textContent = interaction.label;
+  const line = document.createElement("span");
+  line.textContent = interaction.tooltip;
+  button.append(name, line);
+  const added = app.selectedInteraction ? null : addedInStep();
+  if (added && added.has(partKey(interaction))) li.classList.add("is-new");
+  li.append(button);
+  return li;
+}
+
+// Cards on lines next to each other share one list, so they sit as close as they do in the parts list.
+function appendPartCard(parent, interaction) {
+  let list = parent.lastElementChild;
+  if (!list || !list.matches("ol.parts")) {
+    list = document.createElement("ol");
+    list.className = "parts";
+    parent.append(list);
+  }
+  list.append(partItem(interaction));
+}
+
+// The shapes, then the arrows, in the order the content file lists them. A part the story already showed as a card is not listed again.
 function renderParts() {
   const list = app.panel.parts.querySelector("ol");
+  const inStory = new Set([...app.panel.body.querySelectorAll("ol.parts li")].map((li) => li.dataset.part));
   list.replaceChildren();
-  const added = addedInStep();
   [...nodeInteractions(), ...edgeInteractions()].forEach((interaction) => {
-    const li = document.createElement("li");
-    const button = document.createElement("button");
-    button.type = "button";
-    const name = document.createElement("strong");
-    name.textContent = interaction.label;
-    const line = document.createElement("span");
-    line.textContent = interaction.tooltip;
-    button.append(name, line);
-    if (added && added.has(partKey(interaction))) li.classList.add("is-new");
-    button.addEventListener("click", () => openPanel(interaction));
-    button.addEventListener("pointerenter", () => highlightAround(interaction));
-    button.addEventListener("pointerleave", applySearch);
-    li.append(button);
-    list.append(li);
+    if (!inStory.has(partKey(interaction))) list.append(partItem(interaction));
   });
+  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Also in this picture" : "In this picture";
   app.panel.parts.hidden = !list.children.length;
 }
 

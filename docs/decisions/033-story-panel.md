@@ -1,6 +1,6 @@
 # ADR-033 The side panel tells the diagram's story by default
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-041](041-story-links-to-parts.md): parts the story shows as cards are not listed again
 - Date: 2026-10-12
 - Supersedes: `show()` closing the panel, from [ADR-014](014-selection-keeps-camera.md)
 

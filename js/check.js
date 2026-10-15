@@ -63,6 +63,23 @@ function checkContent() {
         });
       }
     });
+    // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
+    const texts = [
+      ["the story", view.story],
+      ...Object.entries(notes).map(([id, note]) => [`the note on ${id}`, note.body]),
+      ...edges.map((edge) => [`the note on ${edgeEnds(edge).join(" → ")}`, edge.body]),
+    ];
+    texts.forEach(([where, text]) => {
+      // Code can show the link syntax without being a link.
+      const prose = String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
+      for (const [, key] of prose.matchAll(/\]\(#([^)\s]+)\)/g)) {
+        const isArrow = key.includes("->");
+        const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
+        if (known) continue;
+        const missing = isArrow ? `arrow note from ${key.replace("->", " to ")}` : `shape note for ${key}`;
+        say(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
+      }
+    });
   });
   return found;
 }

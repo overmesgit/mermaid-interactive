@@ -646,6 +646,19 @@ button.code-file-head:hover { background: #475569; }
 
 #panel-body a { color: var(--accent); }
 
+/* A part named inside a sentence reads as a link, not as a button. */
+.part-link {
+  display: inline;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  color: var(--accent);
+  text-align: inherit;
+  white-space: normal;
+}
+
+.part-link:hover { background: transparent; text-decoration: underline; }
+
 #panel-facts,
 #panel-links {
   display: grid;
@@ -683,7 +696,9 @@ button.code-file-head:hover { background: #475569; }
   text-transform: uppercase;
 }
 
-#panel-parts ol {
+/* The parts list, and a card the story puts between its paragraphs, look the same. */
+#panel-parts ol,
+#panel-body ol.parts {
   display: grid;
   gap: 0;
   margin: 0 -8px;
@@ -691,8 +706,11 @@ button.code-file-head:hover { background: #475569; }
   list-style: none;
 }
 
+#panel-body * + ol.parts,
+#panel-body ol.parts + * { margin-top: 4px; }
+
 /* Each part's text lines up with the panel's gutter; the hover tint reaches 8px past it. */
-#panel-parts button {
+.part-card {
   display: grid;
   gap: 0;
   width: 100%;
@@ -703,11 +721,11 @@ button.code-file-head:hover { background: #475569; }
   white-space: normal;
 }
 
-#panel-parts strong { font-weight: 600; }
+.part-card strong { font-weight: 600; }
 
-#panel-parts span { color: var(--muted); font-size: 13px; }
+.part-card span { color: var(--muted); font-size: 13px; }
 
-#panel-parts .is-new strong::after {
+.is-new > .part-card strong::after {
   content: "New";
   margin-left: 8px;
   color: var(--accent);

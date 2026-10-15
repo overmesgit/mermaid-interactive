@@ -52,7 +52,8 @@ Zooming the picture versus opening another diagram.
 | --- | --- | --- |
 | [009](009-panel-resize.md) | Drag the panel's border to resize it | Current, partly replaced by 014 |
 | [016](016-panel-links.md) | The panel links to the connected shapes and arrows | Current |
-| [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current |
+| [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current, partly replaced by 041 |
+| [041](041-story-links-to-parts.md) | The story points at parts where it talks about them | Current |
 
 ## Notes and code in the panel
 

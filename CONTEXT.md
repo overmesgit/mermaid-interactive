@@ -24,6 +24,7 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 - It runs in the browser.
 - A click on a node or an arrow opens a side panel with the notes for that shape.
 - With nothing selected, the side panel shows the view's story and a list of its shapes and arrows. Close hides it until the Story button. Escape from a note goes back to the story ([ADR-033](docs/decisions/033-story-panel.md)).
+- The story can show a part's card between its paragraphs, where the text talks about that part. Those parts are not listed again under it ([ADR-041](docs/decisions/041-story-links-to-parts.md)).
 - Hover shows a tooltip.
 - If a shape has its own diagram, a double-click or the ↘ badge opens that diagram.
 - Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `opensView` is set.
@@ -99,7 +100,7 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **How note**. A panel note on the How tab, which explains this page's own code.
 - **code walk**. A How view that steps through one function, such as `how-show`. It is an inner diagram, not a lesson step.
 - **claim**. When an arrow matcher takes an edge interaction, so no later matcher can use it.
-- **story**. A view's own note, about the whole diagram. The side panel shows it when nothing is selected, with the parts list under it.
+- **story**. A view's own note, about the whole diagram. The side panel shows it when nothing is selected, with the parts list under it. A line in it that links only to parts, like `[API](#api)`, shows those parts' cards in its place.
 - **lesson**. The ordered view ids on a tab. The How tab's lesson is the eight teaching pictures. A drill view is not in the lesson. Each view in it is a lesson step. Prev and Next move between steps, and stay on the step an inner diagram was opened from.
 
 `js/mermaid-svg.js` finds Mermaid shapes and arrows. `js/bind.js` wires interactions onto them. Neither file decides which diagram is showing. That is `show(viewId)`.

@@ -63,7 +63,7 @@ An explanation is usually one tab with a lesson, whether it covers a concept, a 
 | `parent` | The viewId this view was drilled from, or `null`. It builds the breadcrumb. Escape and Backspace go up to it. A lesson step has `parent: null`. |
 | `title` | The breadcrumb text. The Next button shows the next step's title. |
 | `summary` | One sentence under the title. |
-| `story` | Optional. Markdown, like a note. The side panel shows it when nothing is selected, above a list of the view's shapes and arrows. Say what the diagram shows and why, so a reader can follow it without opening every shape. |
+| `story` | Optional. Markdown, like a note. The side panel shows it when nothing is selected, above a list of the view's shapes and arrows. Say what the diagram shows and why, so a reader can follow it without opening every shape. Put a part's card where the text talks about it, with a [link to the part](#links-to-parts). |
 | `chart` | The Mermaid source. Mermaid is the only reader. |
 | `nodeInteractions` | An object keyed by chartId. |
 | `edgeInteractions` | An array, one entry per arrow. |
@@ -131,7 +131,7 @@ An arrow with `opensView` has no ↘ badge. Its tooltip should say to double-cli
 
 ## Notes
 
-`body` is markdown. The panel renders paragraphs, headings, lists, blockquotes, code fences, inline code, bold, italic, and `http`/`https` links. HTML and images are dropped.
+`body` is markdown. The panel renders paragraphs, headings, lists, blockquotes, code fences, inline code, bold, italic, `http`/`https` links, and [links to parts](#links-to-parts) of the view. HTML and images are dropped.
 
 Write a note that holds code with the `md` tag and `~~~` fences. A backtick fence would end the JavaScript template. `md` strips the shared indent and does nothing else. For the same reason, inline code needs escaped backticks: write `` \`cache\` `` to show `cache`. `${` also needs escaping, as `\${`.
 
@@ -150,6 +150,28 @@ body: md`
 Code that exists as a file is named with `file=`, as in [Code files](#code-files). Write it in the note only when it is a short sketch that is in no file.
 
 A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from the repo you explain is not loaded, so it would print `// name is not loaded`.
+
+### Links to parts
+
+A story or a note can point at a part of the same view with a link to `#` and its chartId. An arrow is `#from->to`.
+
+```md
+Every request starts in the browser.
+
+[Web app](#web)
+
+The [API](#api) loads the session, which costs one query per call.
+
+[](#api->db)
+```
+
+- A line that holds only such links shows each part as a card in that place: the part's name and tooltip. The link text is not shown, so it can be empty, but the name keeps the source readable. Links on lines next to each other each get a card.
+- A link inside a sentence shows as a link.
+- Both open the part's note on click, and light the part in the picture on hover.
+- A part shown as a card in the story is left out of the list under it.
+- The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first.
+
+So a story can walk the picture: a sentence, the part it is about, the next sentence.
 
 ## Code files
 
@@ -290,5 +312,6 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 6. Every view's `viewId` equals its key.
 7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it.
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
+9. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
 
-On load the page runs checks 1, 3 to 6, and 8 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 6, and 8 and 9 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
