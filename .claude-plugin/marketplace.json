@@ -1,0 +1,18 @@
+{
+  "name": "mermaid-interactive",
+  "description": "A skill that turns an explanation into one HTML page of clickable Mermaid diagrams.",
+  "owner": {
+    "name": "overmesgit",
+    "url": "https://github.com/overmesgit"
+  },
+  "plugins": [
+    {
+      "name": "mermaid-interactive",
+      "source": "./",
+      "description": "Build an interactive explanation as one HTML file: Mermaid diagrams walked step by step, with a note on every shape and arrow.",
+      "homepage": "https://overmesgit.github.io/mermaid-interactive/",
+      "repository": "https://github.com/overmesgit/mermaid-interactive",
+      "skills": ["./skill"]
+    }
+  ]
+}

@@ -7,6 +7,24 @@ There are two ways to make one.
 - **By hand.** Edit the content, run the page, and export.
 - **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
 
+## Install the skill
+
+The repo is a Claude Code plugin marketplace, so Claude Code can install the skill straight from GitHub. Run both commands in a shell:
+
+```bash
+claude plugin marketplace add overmesgit/mermaid-interactive
+claude plugin install mermaid-interactive@mermaid-interactive
+```
+
+The skill then runs as `/mermaid-interactive:interactive-explainer`, because a plugin's skills carry the plugin's name in front. Claude also picks it up without the command when asked for an explanation. To get a newer version after a push, refresh the marketplace, then update the plugin:
+
+```bash
+claude plugin marketplace update mermaid-interactive
+claude plugin update mermaid-interactive@mermaid-interactive
+```
+
+The plugin is listed in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and it loads only the `skill/` folder.
+
 ## Run it
 
 Serve the folder over HTTP, then open `http://127.0.0.1:8765/`:

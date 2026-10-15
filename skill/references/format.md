@@ -4,7 +4,7 @@ One explanation is one content file. It is a classic script that sets `window.DI
 
 This is the only description of the format. The repo docs link here.
 
-Each explanation is its own file, and the page shows the one named in the link ([ADR-034](../../docs/decisions/034-pick-the-content-file.md)). [`examples/starter.js`](../../examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](../../examples/pr-checks.js) explains a real commit in four steps, with code from that commit.
+Each explanation is its own file, and the page shows the one named in the link ([ADR-034](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/034-pick-the-content-file.md)). [`examples/starter.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/pr-checks.js) explains a real commit in four steps, with code from that commit.
 
 ## Start here
 
@@ -31,7 +31,7 @@ Each explanation is its own file, and the page shows the one named in the link (
 4. **Check it** against [the checklist](#check-before-handing-it-over). If you could not open a browser, this is the only check. A mistake does not stop the page. It only leaves a shape that does nothing on click.
 5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
 
-The template is described in [ADR-037](../../docs/decisions/037-fill-a-template.md).
+The template is described in [ADR-037](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/037-fill-a-template.md).
 
 Inside this repo there is a quicker loop for step 3. Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the content file's path, like `?src=examples/starter.js`. Reload after each edit. No join is needed, and files named with `file=` are read from the server.
 
@@ -175,7 +175,7 @@ So a story can walk the picture: a sentence, the part it is about, the next sent
 
 ## Code files
 
-The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and the join in step 4 finds every name, reads each file, and packs it into the page whole ([ADR-030](../../docs/decisions/030-code-folder.md), [ADR-035](../../docs/decisions/035-code-from-the-repo.md)).
+The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and the join in step 4 finds every name, reads each file, and packs it into the page whole ([ADR-030](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/030-code-folder.md), [ADR-035](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/035-code-from-the-repo.md)).
 
 A note shows a file with an empty fence:
 
@@ -194,7 +194,7 @@ The lines are read when the page is joined. If the file may change before then, 
 
 The panel shows the lines under a header with the path and the range. Clicking the header switches to the whole file, with the range highlighted, and back. Several notes can point at the same file, and it is packed once.
 
-While you preview with `?src=`, nothing is packed yet, so the page reads each file from the server. That works for files in the served repo. A revision path shows as missing until the join ([ADR-038](../../docs/decisions/038-code-files-in-preview-and-export.md)). The Export button packs the files too.
+While you preview with `?src=`, nothing is packed yet, so the page reads each file from the server. That works for files in the served repo. A revision path shows as missing until the join ([ADR-038](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/038-code-files-in-preview-and-export.md)). The Export button packs the files too.
 
 Do not paste the files into `diagrams.js`.
 
@@ -315,4 +315,4 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 9. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
 10. No flowchart arrow has an id, like `e1@-->`.
 
-On load the page runs checks 1, 3 to 6, and 8 to 10 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](../../docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 6, and 8 to 10 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).
