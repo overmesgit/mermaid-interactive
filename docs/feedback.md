@@ -151,3 +151,13 @@ One template with a marker line replaces the two halves. The page's Export makes
 > i opened file://wsl.localhost/Ubuntu/home/overmes/mermaid-interactive/index.html?src=examples/pr-checks.js#problem [and the ⚠ list showed seven lines, one per note, all saying a 4c92d28: file is not in this page]
 
 A preview cannot read files from git history, or any file when opened from disk. That is a limit of previewing, not a mistake, so the checks no longer list it, and the panel says why in place of the code. A missing file is one problem however many notes name it, and the list's heading no longer says every line is a dead shape. [ADR-038](decisions/038-code-files-in-preview-and-export.md).
+
+> [Where a PR link points] yeah, we don't need it yet. i suppose consumer will need to find way to host it. it is not a final decision, for now it is ok
+
+Hosting stays open in the TODO. For now whoever uses the file hosts it. No ADR, because nothing is decided.
+
+> helping understanding PRs is only one for the use cases
+
+> [Warn when the template is out of date] this we can fix
+
+The template carries a fingerprint of the files it was made from, and the page served from this repo warns when they differ. [ADR-039](decisions/039-stale-template-warning.md).

@@ -21,7 +21,8 @@ How an agent writes an explanation and hands it over.
 | [028](028-pinned-cdn.md) | Pin exact versions of Mermaid and marked | Current |
 | [029](029-join-and-check-in-page.md) | No Python: join the files with a shell command, and let the page check them | Current, partly replaced by 037 |
 | [034](034-pick-the-content-file.md) | Pick the content file with ?src= in the link | Current |
-| [037](037-fill-a-template.md) | Fill one template by replacing a marker line | Current |
+| [037](037-fill-a-template.md) | Fill one template by replacing a marker line | Current, partly replaced by 039 |
+| [039](039-stale-template-warning.md) | Warn when the skill's template is older than the engine | Current |
 
 ## Finding and wiring shapes
 

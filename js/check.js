@@ -118,8 +118,8 @@ async function checkCodeFiles() {
 async function runChecks() {
   checks.content = checkContent();
   renderChecks();
-  const [charts, files] = await Promise.all([checkCharts(), checkCodeFiles()]);
-  checks.content.push(...charts, ...files);
+  const [charts, files, template] = await Promise.all([checkCharts(), checkCodeFiles(), checkTemplate()]);
+  checks.content.push(...charts, ...files, ...template);
   renderChecks();
 }
 
