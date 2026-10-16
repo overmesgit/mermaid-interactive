@@ -9,16 +9,28 @@ const pageParsed = new Promise((resolve) => {
   else resolve();
 });
 
-// The fence's info string, such as "go file=api/session.go lines=40-58". `first` and `last` are null without lines=.
+// The fence's info string, such as "go file=api/session.go lines=40-58 mark=44-47". `first` and `last` are null without lines=.
+// `mark` lists the [first, last] ranges to highlight inside the shown lines, so a long range still says where to look.
 function fileFence(info) {
   const path = /(?:^|\s)file=(\S+)/.exec(info || "");
   if (!path) return null;
   const lines = /(?:^|\s)lines=(\d+)(?:-(\d+))?(?:\s|$)/.exec(info);
+  const mark = /(?:^|\s)mark=([\d,-]+)(?:\s|$)/.exec(info);
   return {
     path: path[1],
     first: lines ? Number(lines[1]) : null,
     last: lines ? Number(lines[2] || lines[1]) : null,
+    mark: mark
+      ? mark[1].split(",").filter(Boolean).map((part) => {
+          const [from, to] = part.split("-").map(Number);
+          return [from, to || from];
+        })
+      : [],
   };
+}
+
+function isMarked(fence, number) {
+  return fence.mark.some(([from, to]) => number >= from && number <= to);
 }
 
 // Every file= fence in every note and story, with where it was written, for the checks and for Export.
@@ -119,12 +131,13 @@ function codeFileView(fence) {
         const number = from + index;
         line.dataset.n = String(number);
         if (whole && fence.first && number >= fence.first && number <= fence.last) line.classList.add("is-picked");
+        if (isMarked(fence, number)) line.classList.add("is-marked");
         line.textContent = row;
         return line;
       }),
     );
-    const picked = code.querySelector(".is-picked");
-    pre.scrollTop = picked ? picked.offsetTop - pre.clientHeight / 4 : 0;
+    const target = code.querySelector(".is-marked") || code.querySelector(".is-picked");
+    pre.scrollTop = target ? target.offsetTop - pre.clientHeight / 4 : 0;
   }
   if (fence.first) {
     head.type = "button";

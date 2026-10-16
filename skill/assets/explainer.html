@@ -3,21 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="ebd21a15" />
+  <meta name="engine-fingerprint" content="4942285f" />
   <title>Interactive Mermaid</title>
   <style>:root {
-  --ink: #1e293b;
-  --muted: #64748b;
+  --ink: #0f172a;
+  /* Reading text: notes and stories. */
+  --text: #1e293b;
+  /* Labels and captions. 7.5:1 on white, so small text stays readable. */
+  --muted: #475569;
   --line: #e2e8f0;
   --tint: #f1f5f9;
   --paper: #ffffff;
   --canvas: #f8fafc;
   --dot: #cbd5e1;
-  --accent: #2563eb;
+  --accent: #1d4ed8;
   --accent-soft: #e6eefd;
   --accent-ink: #ffffff;
   --warn: #b45309;
   --warn-soft: #fef3c7;
+  /* Status colors. Each ink passes 4.5:1 on its soft fill, so the status word stays readable on a chip. */
+  --new: #15803d;
+  --new-soft: #dcfce7;
+  --changed: #b45309;
+  --changed-soft: #fef3c7;
+  --removed: #475569;
+  --removed-soft: #f1f5f9;
+  --problem: #b91c1c;
+  --problem-soft: #fee2e2;
   --shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -272,7 +284,7 @@ button.icon:hover { color: var(--ink); }
   background: transparent;
 }
 
-#crumbs .sep { color: var(--dot); }
+#crumbs .sep { color: var(--muted); }
 
 #summary {
   color: var(--muted);
@@ -281,6 +293,34 @@ button.icon:hover { color: var(--ink); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+#legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+/* A status written as a word on its own color, so the color is never the only signal. */
+.status-chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 18px;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.status-chip.status-new { background: var(--new-soft); color: var(--new); }
+.status-chip.status-changed { background: var(--changed-soft); color: var(--changed); }
+.status-chip.status-removed { background: var(--removed-soft); color: var(--removed); }
+.status-chip.status-problem { background: var(--problem-soft); color: var(--problem); }
+
+#panel-kicker .status-chip { margin-right: 8px; letter-spacing: 0.04em; }
+.part-card .status-chip { margin-left: 8px; }
 
 .camera-controls .group { margin-left: 8px; }
 
@@ -316,7 +356,7 @@ button.icon:hover { color: var(--ink); }
   text-overflow: ellipsis;
 }
 
-#lesson-next:hover { background: #1d4fd8; }
+#lesson-next:hover { background: #1e40af; }
 
 #lesson button:disabled,
 #lesson button:disabled:hover {
@@ -528,7 +568,7 @@ html.is-resizing * {
 }
 
 #panel-kicker {
-  color: var(--muted);
+  color: var(--accent);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -554,9 +594,40 @@ html.is-resizing * {
 
 #panel-lead { font-weight: 600; }
 
+/* On a story, the lead tells the reader how to read it. */
+#panel-lead.is-hint {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* The panel names the part outlined in the picture, with the outline's color. */
+#panel-selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#panel-selected::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 2.5px solid var(--accent);
+  border-radius: 3px;
+  background: var(--accent-soft);
+}
+
+#panel-selected + #panel-title { margin-top: 4px; }
+
 #panel-body {
   margin-top: 8px;
-  color: var(--muted);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 #panel-body p { margin: 0; }
@@ -593,6 +664,8 @@ html.is-resizing * {
   border-radius: 8px;
   font: 12px/1.5 var(--mono);
   white-space: pre;
+  /* Go and Makefiles indent with tabs. Eight columns pushed the code out of the panel. */
+  tab-size: 4;
 }
 
 #panel-body pre code {
@@ -622,7 +695,7 @@ button.code-file-head:hover { background: #475569; }
 
 .code-file-path { overflow: hidden; text-overflow: ellipsis; }
 
-.code-file-range { flex: none; color: #94a3b8; font-family: var(--sans); }
+.code-file-range { flex: none; color: #cbd5e1; font-family: var(--sans); }
 
 #panel-body .code-file pre {
   position: relative;
@@ -638,11 +711,17 @@ button.code-file-head:hover { background: #475569; }
   display: inline-block;
   width: 4ch;
   margin-right: 12px;
-  color: #64748b;
+  color: #94a3b8;
   text-align: right;
   user-select: none;
 }
 .code-line.is-picked { background: rgba(96, 165, 250, 0.18); }
+
+/* The lines a note marks with mark=: where to look inside a longer range. */
+.code-line.is-marked {
+  background: rgba(250, 204, 21, 0.22);
+  box-shadow: inset 3px 0 #facc15;
+}
 
 .code-file.is-missing pre { color: #fbbf24; white-space: pre-wrap; padding: 8px 12px; }
 
@@ -732,15 +811,42 @@ button.code-file-head:hover { background: #475569; }
 
 .part-card span { color: var(--muted); font-size: 13px; }
 
-.is-new > .part-card strong::after {
-  content: "New";
-  margin-left: 8px;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+/* The same dot as on the shape: this part has more to read. */
+.part-card.has-more strong::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 2px;
 }
+
+/* In a story, a card is an aside to open if you want, not the next thing to read. A rule and a chevron set it apart from the text. */
+#panel-body ol.parts { margin: 0; }
+
+#panel-body .part-card {
+  position: relative;
+  padding: 4px 24px 4px 12px;
+  border-left: 2px solid var(--line);
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+}
+
+#panel-body .part-card span { font-size: 12.5px; }
+
+#panel-body .part-card::after {
+  content: "›";
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: var(--muted);
+  font-size: 18px;
+  transform: translateY(-55%);
+}
+
+#panel-body .part-card:hover { border-left-color: var(--accent); }
 
 #panel-zoom {
   margin-top: 24px;
@@ -798,13 +904,47 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
   to { stroke-dashoffset: -13; }
 }
 
+/* ---- Status and weight on the SVG. Before selection, so a selected part still shows as selected. ---- */
+
+:is(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke-width: 2px !important; }
+.status-new > :is(rect, polygon, circle, path, ellipse) { fill: var(--new-soft) !important; stroke: var(--new) !important; }
+.status-changed > :is(rect, polygon, circle, path, ellipse) { fill: var(--changed-soft) !important; stroke: var(--changed) !important; }
+.status-problem > :is(rect, polygon, circle, path, ellipse) { fill: var(--problem-soft) !important; stroke: var(--problem) !important; }
+.status-removed > :is(rect, polygon, circle, path, ellipse) {
+  fill: var(--removed-soft) !important;
+  stroke: var(--removed) !important;
+  stroke-dasharray: 5 4;
+}
+.status-removed .nodeLabel { text-decoration: line-through; }
+
+:is(path, line).is-edge.status-new:not(.edge-hit) { stroke: var(--new) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-changed:not(.edge-hit) { stroke: var(--changed) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-problem:not(.edge-hit) { stroke: var(--problem) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-removed:not(.edge-hit) { stroke: var(--removed) !important; stroke-dasharray: 5 4; }
+
+/* A key part has a heavy outline. A background part steps back: a pale box and quieter text. */
+.weight-key > :is(rect, polygon, circle, path, ellipse) { stroke-width: 3px !important; }
+.weight-key:not(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke: var(--ink) !important; }
+.weight-background > :is(rect, polygon, circle, path, ellipse) { fill: var(--canvas) !important; stroke: #94a3b8 !important; }
+.weight-background .nodeLabel,
+.weight-background .nodeLabel small { color: var(--muted) !important; }
+:is(path, line).is-edge.weight-key:not(.edge-hit) { stroke-width: 2.5px !important; }
+
+.more-dot circle {
+  fill: var(--accent) !important;
+  stroke: var(--paper) !important;
+  stroke-width: 1.5px !important;
+  pointer-events: none;
+}
+
 .is-dim { opacity: 0.72; }
 
-.is-hit > rect,
-.is-hit > polygon,
-.is-hit > circle,
-.is-hit > path,
-.is-hit > ellipse {
+/* A search hit, and the shape under the pointer, or under a hovered part card. */
+:is(.is-hit, .is-hover) > rect,
+:is(.is-hit, .is-hover) > polygon,
+:is(.is-hit, .is-hover) > circle,
+:is(.is-hit, .is-hover) > path,
+:is(.is-hit, .is-hover) > ellipse {
   stroke: var(--accent) !important;
   stroke-width: 2.5px !important;
 }
@@ -820,7 +960,7 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 }
 
 /* An icon shape keeps its background one group deeper, behind the icon. The last group is a transparent hit area in front of it, so only the first is styled. */
-.is-hit.icon-shape > g:first-child > path {
+:is(.is-hit, .is-hover).icon-shape > g:first-child > path {
   stroke: var(--accent) !important;
   stroke-width: 2.5px !important;
 }
@@ -832,7 +972,7 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 }
 
 /* An image shape's picture covers its whole box, so a stroke on the box would be hidden. A ring just outside the picture shows instead. */
-.is-hit.image-shape > image {
+:is(.is-hit, .is-hover).image-shape > image {
   outline: 2.5px solid var(--accent);
   outline-offset: 3px;
 }
@@ -940,6 +1080,8 @@ line.is-edge.is-selected:not(.edge-hit) {
             <nav id="crumbs" aria-label="Zoom path"></nav>
           </div>
           <p id="summary"></p>
+          <!-- What the colors in this picture mean. Only the statuses it uses are listed. -->
+          <p id="legend" hidden=""></p>
         </div>
       </div>
 
@@ -975,6 +1117,8 @@ line.is-edge.is-selected:not(.edge-hit) {
           <p id="panel-kicker"></p>
           <button id="panel-close" type="button">Close</button>
         </div>
+        <!-- The panel describes the part outlined in the picture, in the same color. -->
+        <p id="panel-selected" hidden="">Outlined in the diagram</p>
         <h2 id="panel-title"></h2>
         <p id="panel-lead"></p>
         <div id="panel-body"></div>
@@ -994,6 +1138,7 @@ line.is-edge.is-selected:not(.edge-hit) {
     <dl>
       <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
       <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
+      <dt>Dot</dt><dd>The part has more to read than its tooltip</dd>
       <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>
@@ -1075,6 +1220,7 @@ const app = {
     panelResize: document.getElementById("panel-resize"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
+    legend: document.getElementById("legend"),
   },
   panel: {
     kicker: document.getElementById("panel-kicker"),
@@ -1085,6 +1231,7 @@ const app = {
     links: document.getElementById("panel-links"),
     parts: document.getElementById("panel-parts"),
     zoom: document.getElementById("panel-zoom"),
+    selected: document.getElementById("panel-selected"),
     close: document.getElementById("panel-close"),
   },
   stack: [],
@@ -1094,10 +1241,23 @@ const app = {
   // The reader closed the story, so the next diagram does not open it again.
   storyHidden: false,
   renderToken: 0,
+  // True while the page follows Back or Forward, so it does not add a history entry of its own.
+  replaying: false,
   cam: { x: 40, y: 32, s: 1 },
   cams: {},
   drag: null,
 };
+
+// What a part's status means. The page colors the part and also writes the word, so color is never the only signal.
+const STATUSES = { new: "New", changed: "Changed", removed: "Removed", problem: "Problem" };
+
+// How much a part matters to the point: key parts stand out, background parts step back.
+const WEIGHTS = ["key", "background"];
+
+// A part whose note says more than its tooltip is worth opening, and the page marks it.
+function hasMore(interaction) {
+  return Boolean(interaction.body || (interaction.facts && interaction.facts.length) || interaction.opensView);
+}
 
 // The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
 function nodeInteractions() {
@@ -1353,6 +1513,8 @@ function highlightAround(interaction) {
     const on = litChartIds.has(el.dataset.chartId);
     el.classList.toggle("is-dim", !on);
     el.classList.remove("is-hit");
+    // The hovered shape gets an outline. The fade on the others is light, and colored fills hide it further.
+    el.classList.toggle("is-hover", interaction.kind === "node" && el.dataset.chartId === interaction.chartId);
   });
   app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
     const on = litEdgeIds.has(el.dataset.edgeId);
@@ -1393,6 +1555,34 @@ function markStepFlow() {
   });
 }
 
+// Each part's status colors it: the one the content gives, or New for a part this lesson step adds.
+// The legend under the summary lists only the statuses this picture uses.
+function markStatuses() {
+  const used = new Set();
+  const byChartId = new Map(nodeInteractions().map((interaction) => [interaction.chartId, interaction]));
+  const byEdgeId = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
+  app.els.camera.querySelectorAll(`.is-node, ${EDGE_PIECES}`).forEach((el) => {
+    const interaction = el.dataset.edgeId ? byEdgeId.get(el.dataset.edgeId) : byChartId.get(el.dataset.chartId);
+    const status = interaction && partStatus(interaction);
+    Object.keys(STATUSES).forEach((name) => el.classList.toggle(`status-${name}`, name === status));
+    if (status) used.add(status);
+  });
+  const legend = app.els.legend;
+  legend.replaceChildren(
+    ...Object.keys(STATUSES)
+      .filter((name) => used.has(name))
+      .map((name) => statusChip(name)),
+  );
+  legend.hidden = !used.size;
+}
+
+function statusChip(name) {
+  const chip = document.createElement("span");
+  chip.className = `status-chip status-${name}`;
+  chip.textContent = STATUSES[name];
+  return chip;
+}
+
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
   const haystack = (interaction) =>
@@ -1405,6 +1595,7 @@ function applySearch() {
     const hit = !query || haystack(interaction).includes(query);
     el.classList.toggle("is-dim", Boolean(query) && !hit);
     el.classList.toggle("is-hit", Boolean(query) && hit);
+    el.classList.remove("is-hover");
   });
   const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
   app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
@@ -1619,7 +1810,17 @@ function addedInStep() {
     ...Object.keys(before.nodeInteractions || {}).map((chartId) => `node:${chartId}`),
     ...(before.edgeInteractions || []).map((edge) => (Array.isArray(edge) ? `edge:${edge[0]}>${edge[1]}` : `edge:${edge.from}>${edge.to}`)),
   ]);
-  return new Set([...nodeInteractions(), ...edgeInteractions()].map(partKey).filter((key) => !seen.has(key)));
+  const keys = [...nodeInteractions(), ...edgeInteractions()].map(partKey);
+  // A step with a new picture shares nothing with the step before. Marking all of it New would say nothing.
+  if (!keys.some((key) => seen.has(key))) return null;
+  return new Set(keys.filter((key) => !seen.has(key)));
+}
+
+// The status the content gives a part, or New when this lesson step adds it.
+function partStatus(interaction) {
+  if (STATUSES[interaction.status]) return interaction.status;
+  const added = addedInStep();
+  return added && added.has(partKey(interaction)) ? "new" : null;
 }
 
 // A story or note points at a part of this diagram with a markdown link: [API](#api) for a shape, [](#web->api) for an arrow.
@@ -1656,18 +1857,19 @@ function partButton(interaction, className) {
   return button;
 }
 
-// The part's name and tooltip. On a lesson step, a part the step adds is marked New.
+// The part's name, its status, and its tooltip. A part with more to read has the same dot as in the picture.
 function partItem(interaction) {
   const li = document.createElement("li");
   li.dataset.part = partKey(interaction);
   const button = partButton(interaction, "part-card");
+  if (hasMore(interaction)) button.classList.add("has-more");
   const name = document.createElement("strong");
   name.textContent = interaction.label;
+  const status = partStatus(interaction);
+  if (status) name.append(statusChip(status));
   const line = document.createElement("span");
   line.textContent = interaction.tooltip;
   button.append(name, line);
-  const added = app.selectedInteraction ? null : addedInStep();
-  if (added && added.has(partKey(interaction))) li.classList.add("is-new");
   li.append(button);
   return li;
 }
@@ -1688,10 +1890,12 @@ function renderParts() {
   const list = app.panel.parts.querySelector("ol");
   const inStory = new Set([...app.panel.body.querySelectorAll("ol.parts li")].map((li) => li.dataset.part));
   list.replaceChildren();
-  [...nodeInteractions(), ...edgeInteractions()].forEach((interaction) => {
+  // An arrow with nothing more than its tooltip says it in its label on the picture, so the list leaves it out.
+  const listed = [...nodeInteractions(), ...edgeInteractions().filter((edge) => hasMore(edge) || edge.status)];
+  listed.forEach((interaction) => {
     if (!inStory.has(partKey(interaction))) list.append(partItem(interaction));
   });
-  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Also in this picture" : "In this picture";
+  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Other parts, to open for detail" : "Parts, to open for detail";
   app.panel.parts.hidden = !list.children.length;
 }
 
@@ -1710,8 +1914,10 @@ function openStory() {
   const onStep = step && step.lesson[step.index] === view.viewId;
   panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
   panel.title.textContent = view.title;
-  // The summary is already in the bar above the diagram.
-  panel.lead.textContent = "";
+  panel.selected.hidden = true;
+  // The summary is already in the bar above the diagram. The lead says how to read the story instead.
+  panel.lead.textContent = view.story ? "Read top to bottom. Click a part only when you want more detail." : "";
+  panel.lead.classList.add("is-hint");
   renderNote(panel.body, view.story || "");
   panel.facts.replaceChildren();
   panel.links.replaceChildren();
@@ -1726,8 +1932,12 @@ function openPanel(interaction) {
   app.els.storyOpen.setAttribute("aria-pressed", "false");
   const panel = app.panel;
   panel.kicker.textContent = interaction.kicker || "";
+  const status = partStatus(interaction);
+  if (status) panel.kicker.prepend(statusChip(status));
+  panel.selected.hidden = false;
   panel.title.textContent = interaction.label;
   panel.lead.textContent = interaction.tooltip;
+  panel.lead.classList.remove("is-hint");
   renderNote(panel.body, interaction.body || "");
   panel.facts.replaceChildren();
   (interaction.facts || []).forEach(([term, detail]) => {
@@ -1745,6 +1955,7 @@ function openPanel(interaction) {
   panel.close.focus();
   const selected = markSelected(interaction);
   markStepFlow();
+  recordHistory();
   requestAnimationFrame(() => reveal(selected));
 }
 
@@ -1752,6 +1963,7 @@ function openPanel(interaction) {
 function closePanel() {
   if (!app.selectedInteraction) app.storyHidden = true;
   openStory();
+  recordHistory();
 }
 
 // Shapes and arrows share this. `interaction` is the node or edge interaction.
@@ -1828,16 +2040,28 @@ const pageParsed = new Promise((resolve) => {
   else resolve();
 });
 
-// The fence's info string, such as "go file=api/session.go lines=40-58". `first` and `last` are null without lines=.
+// The fence's info string, such as "go file=api/session.go lines=40-58 mark=44-47". `first` and `last` are null without lines=.
+// `mark` lists the [first, last] ranges to highlight inside the shown lines, so a long range still says where to look.
 function fileFence(info) {
   const path = /(?:^|\s)file=(\S+)/.exec(info || "");
   if (!path) return null;
   const lines = /(?:^|\s)lines=(\d+)(?:-(\d+))?(?:\s|$)/.exec(info);
+  const mark = /(?:^|\s)mark=([\d,-]+)(?:\s|$)/.exec(info);
   return {
     path: path[1],
     first: lines ? Number(lines[1]) : null,
     last: lines ? Number(lines[2] || lines[1]) : null,
+    mark: mark
+      ? mark[1].split(",").filter(Boolean).map((part) => {
+          const [from, to] = part.split("-").map(Number);
+          return [from, to || from];
+        })
+      : [],
   };
+}
+
+function isMarked(fence, number) {
+  return fence.mark.some(([from, to]) => number >= from && number <= to);
 }
 
 // Every file= fence in every note and story, with where it was written, for the checks and for Export.
@@ -1938,12 +2162,13 @@ function codeFileView(fence) {
         const number = from + index;
         line.dataset.n = String(number);
         if (whole && fence.first && number >= fence.first && number <= fence.last) line.classList.add("is-picked");
+        if (isMarked(fence, number)) line.classList.add("is-marked");
         line.textContent = row;
         return line;
       }),
     );
-    const picked = code.querySelector(".is-picked");
-    pre.scrollTop = picked ? picked.offsetTop - pre.clientHeight / 4 : 0;
+    const target = code.querySelector(".is-marked") || code.querySelector(".is-picked");
+    pre.scrollTop = target ? target.offsetTop - pre.clientHeight / 4 : 0;
   }
   if (fence.first) {
     head.type = "button";
@@ -2208,11 +2433,34 @@ function addBadge(shape) {
   shape.appendChild(badge);
 }
 
+// A small dot in the top left corner marks a shape with more to read than its tooltip. The ↘ badge already marks an inner diagram.
+function addMoreDot(shape) {
+  let box;
+  try {
+    box = shape.getBBox();
+  } catch {
+    return;
+  }
+  // In its own group, so the styles for a shape's outline do not reach it.
+  const group = document.createElementNS(SVG_NS, "g");
+  group.setAttribute("class", "more-dot");
+  const dot = document.createElementNS(SVG_NS, "circle");
+  // A diamond's top left corner is empty space, so a polygon gets the dot below its top point instead.
+  const polygon = shape.querySelector(":scope > polygon");
+  dot.setAttribute("cx", String(polygon ? box.x + box.width / 2 : box.x + 7));
+  dot.setAttribute("cy", String(polygon ? box.y + 14 : box.y + 7));
+  dot.setAttribute("r", "3.5");
+  group.append(dot);
+  shape.appendChild(group);
+}
+
 function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
+  if (WEIGHTS.includes(interaction.weight)) shape.classList.add(`weight-${interaction.weight}`);
   makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
+  else if (hasMore(interaction)) addMoreDot(shape);
 }
 
 // Mermaid's HTML labels sit in a foreignObject that clips the text. Grow it to the label's scroll height.
@@ -2261,6 +2509,7 @@ function wireArrow(interaction, arrowElements) {
   arrowElements.filter(Boolean).forEach((element) => {
     element.dataset.wired = "1";
     element.dataset.edgeId = interaction.edgeId;
+    if (WEIGHTS.includes(interaction.weight)) element.classList.add(`weight-${interaction.weight}`);
     if (element.tagName === "path" || element.tagName === "line") {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);
@@ -2387,6 +2636,15 @@ function checkContent() {
       say("the page wires only flowchart, C4, sequence, and state charts, so these notes do nothing.");
       return;
     }
+    // A misspelt status or weight changes nothing in the picture, so it would go unnoticed.
+    const checkMarks = (name, note) => {
+      if (note.status !== undefined && !STATUSES[note.status]) say(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
+      if (note.weight !== undefined && !WEIGHTS.includes(note.weight)) say(`${name} has weight "${note.weight}". It must be ${WEIGHTS.join(" or ")}.`);
+    };
+    Object.entries(notes).forEach(([chartId, note]) => checkMarks(`the shape ${chartId}`, note));
+    edges.forEach((edge) => {
+      if (!Array.isArray(edge)) checkMarks(`the arrow ${edge.from} → ${edge.to}`, edge);
+    });
     Object.entries(notes).forEach(([chartId, note]) => {
       if (!inChart(chartId)) say(`the shape ${chartId} has a note, but the chart has no ${chartId}.`, true);
       if (note.opensView && !isView(note.opensView)) say(`the shape ${chartId} opens ${note.opensView}, which is not a view.`);
@@ -2478,6 +2736,14 @@ async function checkCodeFiles() {
       if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
         found.push({ viewId: fence.viewId, text: `${fence.where}: ${path} has ${count} lines, so ${rangeText(fence)} cannot be shown.` });
       }
+      // A marked line outside the shown lines is never seen, so the note points at nothing.
+      const shownFirst = fence.first || 1;
+      const shownLast = fence.first ? fence.last : count;
+      fence.mark.forEach(([from, to]) => {
+        if (from < shownFirst || to > shownLast || to < from) {
+          found.push({ viewId: fence.viewId, text: `${fence.where}: mark=${from === to ? from : `${from}-${to}`} is outside the lines shown, ${shownFirst}–${shownLast}, so nothing is highlighted.` });
+        }
+      });
     });
   }
   return found;
@@ -2565,8 +2831,31 @@ function renderChrome() {
   });
   els.summary.textContent = app.view.summary;
   renderLesson();
-  const next = "#" + stack.map((view) => view.viewId).join("/");
-  if (location.hash !== next) history.replaceState(null, "", next);
+  recordHistory();
+}
+
+// Every move the reader makes is a history entry, so Back undoes it: a step, a drill, a tab, and opening a part.
+// The hash is the view path, then the open part: #tab/inner@api, or @web->api for an arrow.
+function historyHash() {
+  const part = app.selectedInteraction;
+  const key = !part ? "" : part.kind === "edge" ? `@${part.from}->${part.to}` : `@${part.chartId}`;
+  return "#" + app.stack.map((view) => view.viewId).join("/") + key;
+}
+
+function currentHash() {
+  try {
+    return decodeURIComponent(location.hash);
+  } catch {
+    return location.hash;
+  }
+}
+
+// While the page follows the history, or on first load, it replaces the entry instead of adding one.
+function recordHistory() {
+  const next = historyHash();
+  if (currentHash() === next) return;
+  if (app.replaying || !location.hash) history.replaceState(null, "", next);
+  else history.pushState(null, "", next);
 }
 
 // `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
@@ -2601,6 +2890,7 @@ async function show(viewId, fromInteraction) {
     app.shownViewId = viewId;
     reportDrawn(viewId, [...bindNodeInteractions(svgEl), ...bindEdgeInteractions(svgEl)]);
     relaxLabels(svgEl);
+    markStatuses();
     markStepFlow();
     applySearch();
   } catch (error) {
@@ -2610,10 +2900,21 @@ async function show(viewId, fromInteraction) {
   }
 }
 
-function openFromHash() {
-  const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-  const viewId = ids[ids.length - 1];
-  show(app.views[viewId] ? viewId : DIAGRAMS.tabs[0].id);
+// On load, and on Back and Forward. The view is drawn again only when it changed, so going back from a note to its story does not redraw.
+async function openFromHash() {
+  const [path, partId] = currentHash().replace(/^#/, "").split("@");
+  const ids = path.split("/").filter(Boolean);
+  const last = ids[ids.length - 1];
+  const viewId = app.views[last] ? last : DIAGRAMS.tabs[0].id;
+  app.replaying = true;
+  try {
+    if (!app.view || app.view.viewId !== viewId) await show(viewId);
+    const part = partId ? linkedPart("#" + partId) : null;
+    if (part) openPanel(part);
+    else if (app.selectedInteraction) openStory();
+  } finally {
+    app.replaying = false;
+  }
 }
 
 // Escape and Backspace go one level up. Returns false at a tab's root.
@@ -2873,6 +3174,7 @@ document.getElementById("fit").addEventListener("click", fit);
 app.els.storyOpen.addEventListener("click", () => {
   app.storyHidden = !app.storyHidden && !app.selectedInteraction && !app.els.panel.hidden;
   openStory();
+  recordHistory();
 });
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
 document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));

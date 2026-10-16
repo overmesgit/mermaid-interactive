@@ -20,11 +20,34 @@ function addBadge(shape) {
   shape.appendChild(badge);
 }
 
+// A small dot in the top left corner marks a shape with more to read than its tooltip. The ↘ badge already marks an inner diagram.
+function addMoreDot(shape) {
+  let box;
+  try {
+    box = shape.getBBox();
+  } catch {
+    return;
+  }
+  // In its own group, so the styles for a shape's outline do not reach it.
+  const group = document.createElementNS(SVG_NS, "g");
+  group.setAttribute("class", "more-dot");
+  const dot = document.createElementNS(SVG_NS, "circle");
+  // A diamond's top left corner is empty space, so a polygon gets the dot below its top point instead.
+  const polygon = shape.querySelector(":scope > polygon");
+  dot.setAttribute("cx", String(polygon ? box.x + box.width / 2 : box.x + 7));
+  dot.setAttribute("cy", String(polygon ? box.y + 14 : box.y + 7));
+  dot.setAttribute("r", "3.5");
+  group.append(dot);
+  shape.appendChild(group);
+}
+
 function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
+  if (WEIGHTS.includes(interaction.weight)) shape.classList.add(`weight-${interaction.weight}`);
   makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
+  else if (hasMore(interaction)) addMoreDot(shape);
 }
 
 // Mermaid's HTML labels sit in a foreignObject that clips the text. Grow it to the label's scroll height.
@@ -73,6 +96,7 @@ function wireArrow(interaction, arrowElements) {
   arrowElements.filter(Boolean).forEach((element) => {
     element.dataset.wired = "1";
     element.dataset.edgeId = interaction.edgeId;
+    if (WEIGHTS.includes(interaction.weight)) element.classList.add(`weight-${interaction.weight}`);
     if (element.tagName === "path" || element.tagName === "line") {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);

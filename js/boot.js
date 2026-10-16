@@ -75,6 +75,7 @@ document.getElementById("fit").addEventListener("click", fit);
 app.els.storyOpen.addEventListener("click", () => {
   app.storyHidden = !app.storyHidden && !app.selectedInteraction && !app.els.panel.hidden;
   openStory();
+  recordHistory();
 });
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
 document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));

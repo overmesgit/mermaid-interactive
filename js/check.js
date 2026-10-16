@@ -42,6 +42,15 @@ function checkContent() {
       say("the page wires only flowchart, C4, sequence, and state charts, so these notes do nothing.");
       return;
     }
+    // A misspelt status or weight changes nothing in the picture, so it would go unnoticed.
+    const checkMarks = (name, note) => {
+      if (note.status !== undefined && !STATUSES[note.status]) say(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
+      if (note.weight !== undefined && !WEIGHTS.includes(note.weight)) say(`${name} has weight "${note.weight}". It must be ${WEIGHTS.join(" or ")}.`);
+    };
+    Object.entries(notes).forEach(([chartId, note]) => checkMarks(`the shape ${chartId}`, note));
+    edges.forEach((edge) => {
+      if (!Array.isArray(edge)) checkMarks(`the arrow ${edge.from} → ${edge.to}`, edge);
+    });
     Object.entries(notes).forEach(([chartId, note]) => {
       if (!inChart(chartId)) say(`the shape ${chartId} has a note, but the chart has no ${chartId}.`, true);
       if (note.opensView && !isView(note.opensView)) say(`the shape ${chartId} opens ${note.opensView}, which is not a view.`);
@@ -133,6 +142,14 @@ async function checkCodeFiles() {
       if (fence.first && (fence.first < 1 || fence.last < fence.first || fence.last > count)) {
         found.push({ viewId: fence.viewId, text: `${fence.where}: ${path} has ${count} lines, so ${rangeText(fence)} cannot be shown.` });
       }
+      // A marked line outside the shown lines is never seen, so the note points at nothing.
+      const shownFirst = fence.first || 1;
+      const shownLast = fence.first ? fence.last : count;
+      fence.mark.forEach(([from, to]) => {
+        if (from < shownFirst || to > shownLast || to < from) {
+          found.push({ viewId: fence.viewId, text: `${fence.where}: mark=${from === to ? from : `${from}-${to}`} is outside the lines shown, ${shownFirst}–${shownLast}, so nothing is highlighted.` });
+        }
+      });
     });
   }
   return found;

@@ -60,6 +60,8 @@ function highlightAround(interaction) {
     const on = litChartIds.has(el.dataset.chartId);
     el.classList.toggle("is-dim", !on);
     el.classList.remove("is-hit");
+    // The hovered shape gets an outline. The fade on the others is light, and colored fills hide it further.
+    el.classList.toggle("is-hover", interaction.kind === "node" && el.dataset.chartId === interaction.chartId);
   });
   app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
     const on = litEdgeIds.has(el.dataset.edgeId);
@@ -100,6 +102,34 @@ function markStepFlow() {
   });
 }
 
+// Each part's status colors it: the one the content gives, or New for a part this lesson step adds.
+// The legend under the summary lists only the statuses this picture uses.
+function markStatuses() {
+  const used = new Set();
+  const byChartId = new Map(nodeInteractions().map((interaction) => [interaction.chartId, interaction]));
+  const byEdgeId = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
+  app.els.camera.querySelectorAll(`.is-node, ${EDGE_PIECES}`).forEach((el) => {
+    const interaction = el.dataset.edgeId ? byEdgeId.get(el.dataset.edgeId) : byChartId.get(el.dataset.chartId);
+    const status = interaction && partStatus(interaction);
+    Object.keys(STATUSES).forEach((name) => el.classList.toggle(`status-${name}`, name === status));
+    if (status) used.add(status);
+  });
+  const legend = app.els.legend;
+  legend.replaceChildren(
+    ...Object.keys(STATUSES)
+      .filter((name) => used.has(name))
+      .map((name) => statusChip(name)),
+  );
+  legend.hidden = !used.size;
+}
+
+function statusChip(name) {
+  const chip = document.createElement("span");
+  chip.className = `status-chip status-${name}`;
+  chip.textContent = STATUSES[name];
+  return chip;
+}
+
 function applySearch() {
   const query = app.els.search.value.trim().toLowerCase();
   const haystack = (interaction) =>
@@ -112,6 +142,7 @@ function applySearch() {
     const hit = !query || haystack(interaction).includes(query);
     el.classList.toggle("is-dim", Boolean(query) && !hit);
     el.classList.toggle("is-hit", Boolean(query) && hit);
+    el.classList.remove("is-hover");
   });
   const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
   app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {

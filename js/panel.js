@@ -201,7 +201,17 @@ function addedInStep() {
     ...Object.keys(before.nodeInteractions || {}).map((chartId) => `node:${chartId}`),
     ...(before.edgeInteractions || []).map((edge) => (Array.isArray(edge) ? `edge:${edge[0]}>${edge[1]}` : `edge:${edge.from}>${edge.to}`)),
   ]);
-  return new Set([...nodeInteractions(), ...edgeInteractions()].map(partKey).filter((key) => !seen.has(key)));
+  const keys = [...nodeInteractions(), ...edgeInteractions()].map(partKey);
+  // A step with a new picture shares nothing with the step before. Marking all of it New would say nothing.
+  if (!keys.some((key) => seen.has(key))) return null;
+  return new Set(keys.filter((key) => !seen.has(key)));
+}
+
+// The status the content gives a part, or New when this lesson step adds it.
+function partStatus(interaction) {
+  if (STATUSES[interaction.status]) return interaction.status;
+  const added = addedInStep();
+  return added && added.has(partKey(interaction)) ? "new" : null;
 }
 
 // A story or note points at a part of this diagram with a markdown link: [API](#api) for a shape, [](#web->api) for an arrow.
@@ -238,18 +248,19 @@ function partButton(interaction, className) {
   return button;
 }
 
-// The part's name and tooltip. On a lesson step, a part the step adds is marked New.
+// The part's name, its status, and its tooltip. A part with more to read has the same dot as in the picture.
 function partItem(interaction) {
   const li = document.createElement("li");
   li.dataset.part = partKey(interaction);
   const button = partButton(interaction, "part-card");
+  if (hasMore(interaction)) button.classList.add("has-more");
   const name = document.createElement("strong");
   name.textContent = interaction.label;
+  const status = partStatus(interaction);
+  if (status) name.append(statusChip(status));
   const line = document.createElement("span");
   line.textContent = interaction.tooltip;
   button.append(name, line);
-  const added = app.selectedInteraction ? null : addedInStep();
-  if (added && added.has(partKey(interaction))) li.classList.add("is-new");
   li.append(button);
   return li;
 }
@@ -270,10 +281,12 @@ function renderParts() {
   const list = app.panel.parts.querySelector("ol");
   const inStory = new Set([...app.panel.body.querySelectorAll("ol.parts li")].map((li) => li.dataset.part));
   list.replaceChildren();
-  [...nodeInteractions(), ...edgeInteractions()].forEach((interaction) => {
+  // An arrow with nothing more than its tooltip says it in its label on the picture, so the list leaves it out.
+  const listed = [...nodeInteractions(), ...edgeInteractions().filter((edge) => hasMore(edge) || edge.status)];
+  listed.forEach((interaction) => {
     if (!inStory.has(partKey(interaction))) list.append(partItem(interaction));
   });
-  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Also in this picture" : "In this picture";
+  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Other parts, to open for detail" : "Parts, to open for detail";
   app.panel.parts.hidden = !list.children.length;
 }
 
@@ -292,8 +305,10 @@ function openStory() {
   const onStep = step && step.lesson[step.index] === view.viewId;
   panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
   panel.title.textContent = view.title;
-  // The summary is already in the bar above the diagram.
-  panel.lead.textContent = "";
+  panel.selected.hidden = true;
+  // The summary is already in the bar above the diagram. The lead says how to read the story instead.
+  panel.lead.textContent = view.story ? "Read top to bottom. Click a part only when you want more detail." : "";
+  panel.lead.classList.add("is-hint");
   renderNote(panel.body, view.story || "");
   panel.facts.replaceChildren();
   panel.links.replaceChildren();
@@ -308,8 +323,12 @@ function openPanel(interaction) {
   app.els.storyOpen.setAttribute("aria-pressed", "false");
   const panel = app.panel;
   panel.kicker.textContent = interaction.kicker || "";
+  const status = partStatus(interaction);
+  if (status) panel.kicker.prepend(statusChip(status));
+  panel.selected.hidden = false;
   panel.title.textContent = interaction.label;
   panel.lead.textContent = interaction.tooltip;
+  panel.lead.classList.remove("is-hint");
   renderNote(panel.body, interaction.body || "");
   panel.facts.replaceChildren();
   (interaction.facts || []).forEach(([term, detail]) => {
@@ -327,6 +346,7 @@ function openPanel(interaction) {
   panel.close.focus();
   const selected = markSelected(interaction);
   markStepFlow();
+  recordHistory();
   requestAnimationFrame(() => reveal(selected));
 }
 
@@ -334,6 +354,7 @@ function openPanel(interaction) {
 function closePanel() {
   if (!app.selectedInteraction) app.storyHidden = true;
   openStory();
+  recordHistory();
 }
 
 // Shapes and arrows share this. `interaction` is the node or edge interaction.

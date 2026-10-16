@@ -20,6 +20,7 @@ const app = {
     panelResize: document.getElementById("panel-resize"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
+    legend: document.getElementById("legend"),
   },
   panel: {
     kicker: document.getElementById("panel-kicker"),
@@ -30,6 +31,7 @@ const app = {
     links: document.getElementById("panel-links"),
     parts: document.getElementById("panel-parts"),
     zoom: document.getElementById("panel-zoom"),
+    selected: document.getElementById("panel-selected"),
     close: document.getElementById("panel-close"),
   },
   stack: [],
@@ -39,10 +41,23 @@ const app = {
   // The reader closed the story, so the next diagram does not open it again.
   storyHidden: false,
   renderToken: 0,
+  // True while the page follows Back or Forward, so it does not add a history entry of its own.
+  replaying: false,
   cam: { x: 40, y: 32, s: 1 },
   cams: {},
   drag: null,
 };
+
+// What a part's status means. The page colors the part and also writes the word, so color is never the only signal.
+const STATUSES = { new: "New", changed: "Changed", removed: "Removed", problem: "Problem" };
+
+// How much a part matters to the point: key parts stand out, background parts step back.
+const WEIGHTS = ["key", "background"];
+
+// A part whose note says more than its tooltip is worth opening, and the page marks it.
+function hasMore(interaction) {
+  return Boolean(interaction.body || (interaction.facts && interaction.facts.length) || interaction.opensView);
+}
 
 // The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
 function nodeInteractions() {

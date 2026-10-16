@@ -34,8 +34,31 @@ function renderChrome() {
   });
   els.summary.textContent = app.view.summary;
   renderLesson();
-  const next = "#" + stack.map((view) => view.viewId).join("/");
-  if (location.hash !== next) history.replaceState(null, "", next);
+  recordHistory();
+}
+
+// Every move the reader makes is a history entry, so Back undoes it: a step, a drill, a tab, and opening a part.
+// The hash is the view path, then the open part: #tab/inner@api, or @web->api for an arrow.
+function historyHash() {
+  const part = app.selectedInteraction;
+  const key = !part ? "" : part.kind === "edge" ? `@${part.from}->${part.to}` : `@${part.chartId}`;
+  return "#" + app.stack.map((view) => view.viewId).join("/") + key;
+}
+
+function currentHash() {
+  try {
+    return decodeURIComponent(location.hash);
+  } catch {
+    return location.hash;
+  }
+}
+
+// While the page follows the history, or on first load, it replaces the entry instead of adding one.
+function recordHistory() {
+  const next = historyHash();
+  if (currentHash() === next) return;
+  if (app.replaying || !location.hash) history.replaceState(null, "", next);
+  else history.pushState(null, "", next);
 }
 
 // `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
@@ -70,6 +93,7 @@ async function show(viewId, fromInteraction) {
     app.shownViewId = viewId;
     reportDrawn(viewId, [...bindNodeInteractions(svgEl), ...bindEdgeInteractions(svgEl)]);
     relaxLabels(svgEl);
+    markStatuses();
     markStepFlow();
     applySearch();
   } catch (error) {
@@ -79,10 +103,21 @@ async function show(viewId, fromInteraction) {
   }
 }
 
-function openFromHash() {
-  const ids = location.hash.replace(/^#/, "").split("/").filter(Boolean);
-  const viewId = ids[ids.length - 1];
-  show(app.views[viewId] ? viewId : DIAGRAMS.tabs[0].id);
+// On load, and on Back and Forward. The view is drawn again only when it changed, so going back from a note to its story does not redraw.
+async function openFromHash() {
+  const [path, partId] = currentHash().replace(/^#/, "").split("@");
+  const ids = path.split("/").filter(Boolean);
+  const last = ids[ids.length - 1];
+  const viewId = app.views[last] ? last : DIAGRAMS.tabs[0].id;
+  app.replaying = true;
+  try {
+    if (!app.view || app.view.viewId !== viewId) await show(viewId);
+    const part = partId ? linkedPart("#" + partId) : null;
+    if (part) openPanel(part);
+    else if (app.selectedInteraction) openStory();
+  } finally {
+    app.replaying = false;
+  }
 }
 
 // Escape and Backspace go one level up. Returns false at a tab's root.

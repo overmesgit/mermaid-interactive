@@ -42,6 +42,8 @@
             <nav id="crumbs" aria-label="Zoom path"></nav>
           </div>
           <p id="summary"></p>
+          <!-- What the colors in this picture mean. Only the statuses it uses are listed. -->
+          <p id="legend" hidden></p>
         </div>
       </div>
 
@@ -77,6 +79,8 @@
           <p id="panel-kicker"></p>
           <button id="panel-close" type="button">Close</button>
         </div>
+        <!-- The panel describes the part outlined in the picture, in the same color. -->
+        <p id="panel-selected" hidden>Outlined in the diagram</p>
         <h2 id="panel-title"></h2>
         <p id="panel-lead"></p>
         <div id="panel-body"></div>
@@ -96,6 +100,7 @@
     <dl>
       <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
       <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
+      <dt>Dot</dt><dd>The part has more to read than its tooltip</dd>
       <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>

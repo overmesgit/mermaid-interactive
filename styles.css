@@ -1,16 +1,28 @@
 :root {
-  --ink: #1e293b;
-  --muted: #64748b;
+  --ink: #0f172a;
+  /* Reading text: notes and stories. */
+  --text: #1e293b;
+  /* Labels and captions. 7.5:1 on white, so small text stays readable. */
+  --muted: #475569;
   --line: #e2e8f0;
   --tint: #f1f5f9;
   --paper: #ffffff;
   --canvas: #f8fafc;
   --dot: #cbd5e1;
-  --accent: #2563eb;
+  --accent: #1d4ed8;
   --accent-soft: #e6eefd;
   --accent-ink: #ffffff;
   --warn: #b45309;
   --warn-soft: #fef3c7;
+  /* Status colors. Each ink passes 4.5:1 on its soft fill, so the status word stays readable on a chip. */
+  --new: #15803d;
+  --new-soft: #dcfce7;
+  --changed: #b45309;
+  --changed-soft: #fef3c7;
+  --removed: #475569;
+  --removed-soft: #f1f5f9;
+  --problem: #b91c1c;
+  --problem-soft: #fee2e2;
   --shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -265,7 +277,7 @@ button.icon:hover { color: var(--ink); }
   background: transparent;
 }
 
-#crumbs .sep { color: var(--dot); }
+#crumbs .sep { color: var(--muted); }
 
 #summary {
   color: var(--muted);
@@ -274,6 +286,34 @@ button.icon:hover { color: var(--ink); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+#legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+/* A status written as a word on its own color, so the color is never the only signal. */
+.status-chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 18px;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.status-chip.status-new { background: var(--new-soft); color: var(--new); }
+.status-chip.status-changed { background: var(--changed-soft); color: var(--changed); }
+.status-chip.status-removed { background: var(--removed-soft); color: var(--removed); }
+.status-chip.status-problem { background: var(--problem-soft); color: var(--problem); }
+
+#panel-kicker .status-chip { margin-right: 8px; letter-spacing: 0.04em; }
+.part-card .status-chip { margin-left: 8px; }
 
 .camera-controls .group { margin-left: 8px; }
 
@@ -309,7 +349,7 @@ button.icon:hover { color: var(--ink); }
   text-overflow: ellipsis;
 }
 
-#lesson-next:hover { background: #1d4fd8; }
+#lesson-next:hover { background: #1e40af; }
 
 #lesson button:disabled,
 #lesson button:disabled:hover {
@@ -521,7 +561,7 @@ html.is-resizing * {
 }
 
 #panel-kicker {
-  color: var(--muted);
+  color: var(--accent);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -547,9 +587,40 @@ html.is-resizing * {
 
 #panel-lead { font-weight: 600; }
 
+/* On a story, the lead tells the reader how to read it. */
+#panel-lead.is-hint {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* The panel names the part outlined in the picture, with the outline's color. */
+#panel-selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#panel-selected::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 2.5px solid var(--accent);
+  border-radius: 3px;
+  background: var(--accent-soft);
+}
+
+#panel-selected + #panel-title { margin-top: 4px; }
+
 #panel-body {
   margin-top: 8px;
-  color: var(--muted);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 #panel-body p { margin: 0; }
@@ -586,6 +657,8 @@ html.is-resizing * {
   border-radius: 8px;
   font: 12px/1.5 var(--mono);
   white-space: pre;
+  /* Go and Makefiles indent with tabs. Eight columns pushed the code out of the panel. */
+  tab-size: 4;
 }
 
 #panel-body pre code {
@@ -615,7 +688,7 @@ button.code-file-head:hover { background: #475569; }
 
 .code-file-path { overflow: hidden; text-overflow: ellipsis; }
 
-.code-file-range { flex: none; color: #94a3b8; font-family: var(--sans); }
+.code-file-range { flex: none; color: #cbd5e1; font-family: var(--sans); }
 
 #panel-body .code-file pre {
   position: relative;
@@ -631,11 +704,17 @@ button.code-file-head:hover { background: #475569; }
   display: inline-block;
   width: 4ch;
   margin-right: 12px;
-  color: #64748b;
+  color: #94a3b8;
   text-align: right;
   user-select: none;
 }
 .code-line.is-picked { background: rgba(96, 165, 250, 0.18); }
+
+/* The lines a note marks with mark=: where to look inside a longer range. */
+.code-line.is-marked {
+  background: rgba(250, 204, 21, 0.22);
+  box-shadow: inset 3px 0 #facc15;
+}
 
 .code-file.is-missing pre { color: #fbbf24; white-space: pre-wrap; padding: 8px 12px; }
 
@@ -725,15 +804,42 @@ button.code-file-head:hover { background: #475569; }
 
 .part-card span { color: var(--muted); font-size: 13px; }
 
-.is-new > .part-card strong::after {
-  content: "New";
-  margin-left: 8px;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+/* The same dot as on the shape: this part has more to read. */
+.part-card.has-more strong::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 2px;
 }
+
+/* In a story, a card is an aside to open if you want, not the next thing to read. A rule and a chevron set it apart from the text. */
+#panel-body ol.parts { margin: 0; }
+
+#panel-body .part-card {
+  position: relative;
+  padding: 4px 24px 4px 12px;
+  border-left: 2px solid var(--line);
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+}
+
+#panel-body .part-card span { font-size: 12.5px; }
+
+#panel-body .part-card::after {
+  content: "›";
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: var(--muted);
+  font-size: 18px;
+  transform: translateY(-55%);
+}
+
+#panel-body .part-card:hover { border-left-color: var(--accent); }
 
 #panel-zoom {
   margin-top: 24px;
@@ -791,13 +897,47 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
   to { stroke-dashoffset: -13; }
 }
 
+/* ---- Status and weight on the SVG. Before selection, so a selected part still shows as selected. ---- */
+
+:is(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke-width: 2px !important; }
+.status-new > :is(rect, polygon, circle, path, ellipse) { fill: var(--new-soft) !important; stroke: var(--new) !important; }
+.status-changed > :is(rect, polygon, circle, path, ellipse) { fill: var(--changed-soft) !important; stroke: var(--changed) !important; }
+.status-problem > :is(rect, polygon, circle, path, ellipse) { fill: var(--problem-soft) !important; stroke: var(--problem) !important; }
+.status-removed > :is(rect, polygon, circle, path, ellipse) {
+  fill: var(--removed-soft) !important;
+  stroke: var(--removed) !important;
+  stroke-dasharray: 5 4;
+}
+.status-removed .nodeLabel { text-decoration: line-through; }
+
+:is(path, line).is-edge.status-new:not(.edge-hit) { stroke: var(--new) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-changed:not(.edge-hit) { stroke: var(--changed) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-problem:not(.edge-hit) { stroke: var(--problem) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-removed:not(.edge-hit) { stroke: var(--removed) !important; stroke-dasharray: 5 4; }
+
+/* A key part has a heavy outline. A background part steps back: a pale box and quieter text. */
+.weight-key > :is(rect, polygon, circle, path, ellipse) { stroke-width: 3px !important; }
+.weight-key:not(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke: var(--ink) !important; }
+.weight-background > :is(rect, polygon, circle, path, ellipse) { fill: var(--canvas) !important; stroke: #94a3b8 !important; }
+.weight-background .nodeLabel,
+.weight-background .nodeLabel small { color: var(--muted) !important; }
+:is(path, line).is-edge.weight-key:not(.edge-hit) { stroke-width: 2.5px !important; }
+
+.more-dot circle {
+  fill: var(--accent) !important;
+  stroke: var(--paper) !important;
+  stroke-width: 1.5px !important;
+  pointer-events: none;
+}
+
 .is-dim { opacity: 0.72; }
 
-.is-hit > rect,
-.is-hit > polygon,
-.is-hit > circle,
-.is-hit > path,
-.is-hit > ellipse {
+/* A search hit, and the shape under the pointer, or under a hovered part card. */
+:is(.is-hit, .is-hover) > rect,
+:is(.is-hit, .is-hover) > polygon,
+:is(.is-hit, .is-hover) > circle,
+:is(.is-hit, .is-hover) > path,
+:is(.is-hit, .is-hover) > ellipse {
   stroke: var(--accent) !important;
   stroke-width: 2.5px !important;
 }
@@ -813,7 +953,7 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 }
 
 /* An icon shape keeps its background one group deeper, behind the icon. The last group is a transparent hit area in front of it, so only the first is styled. */
-.is-hit.icon-shape > g:first-child > path {
+:is(.is-hit, .is-hover).icon-shape > g:first-child > path {
   stroke: var(--accent) !important;
   stroke-width: 2.5px !important;
 }
@@ -825,7 +965,7 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 }
 
 /* An image shape's picture covers its whole box, so a stroke on the box would be hidden. A ring just outside the picture shows instead. */
-.is-hit.image-shape > image {
+:is(.is-hit, .is-hover).image-shape > image {
   outline: 2.5px solid var(--accent);
   outline-offset: 3px;
 }
