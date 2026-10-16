@@ -97,6 +97,28 @@ The caption is part of the picture, so Mermaid sizes the box to fit it and wraps
 
 This works in flowcharts. A label cannot contain `"`.
 
+## Side by side
+
+When a step compares two things, such as the code before a change and after it, draw both in one chart, next to each other. On two steps, the reader has to keep the first in mind to see the change ([ADR-046](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/046-side-by-side-in-one-chart.md)).
+
+Use a flowchart with one `subgraph` per side, and join the two subgraphs with an invisible link, `~~~`, so Mermaid puts them next to each other. One chart cannot have two shapes with the same id, so each side uses its own ids. Mark what changed with `status`.
+
+```
+flowchart LR
+  subgraph before["Before"]
+    direction TB
+    oldApi["API"] --> oldDb[("Postgres")]
+  end
+  subgraph after["After"]
+    direction TB
+    newApi["API"] --> redis[("Redis")]
+    newApi --> newDb[("Postgres")]
+  end
+  before ~~~ after
+```
+
+Here `redis` would get `status: "new"` and `newApi` `status: "changed"`.
+
 ## Node interaction
 
 The key is the chartId. Do not repeat it inside the object.
@@ -109,6 +131,12 @@ The key is the chartId. Do not repeat it inside the object.
 | `body` | The panel note, in markdown. |
 | `facts` | Rows of `[term, value]` under the note. |
 | `opensView` | Optional. The viewId that double-click or the ↘ badge opens. |
+| `status` | Optional. `new`, `changed`, `removed`, or `problem`. The shape is colored green, amber, gray and dashed, or red, and the word shows in the panel, on its card, and in a legend under the summary. |
+| `weight` | Optional. `key` for a part that carries the point, which gets a heavy outline. `background` for a part that is only context, which gets a pale box. |
+
+Every part looking the same tells the reader nothing, so say which parts matter ([ADR-043](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/043-status-and-weight.md)). Mark the change with `status` and the point with `weight`. Leave most parts with neither.
+
+The page adds two marks by itself. A shape whose note has a `body` or `facts` gets a small dot, so the reader can see what is worth opening. On a lesson step, a part the step adds gets `status: "new"` unless you gave it one, but only when the step shares a part with the step before.
 
 ## Edge interaction
 
@@ -118,7 +146,9 @@ An entry is `[from, to]`, or the object `arrow()` returns:
 arrow(from, to, tooltip, body, facts, more)
 ```
 
-`from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, and `opensView`. Without a `label`, the panel title is `From → To`, made from the two node labels.
+`from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, `opensView`, `status`, and `weight`. Without a `label`, the panel title is `From → To`, made from the two node labels.
+
+Say what an arrow means in its label on the picture, as in `api -- reads --> db`. Most arrows need nothing more. Write those as `[from, to]`, so hover still lights them. Give an arrow a `body` only when it has real detail, such as code. The list under the story leaves out arrows with no `body`, `facts`, `opensView`, or `status`.
 
 How an arrow is found depends on the chart type:
 
@@ -186,6 +216,7 @@ A note shows a file with an empty fence:
 
 - The path starts at the root of the repo, with `/` between folders. It cannot contain a space or `"`.
 - `lines` is 1-based and inclusive. Leave it out to show the whole file. `grep -n` gives the numbers.
+- `mark` highlights the lines that matter inside the ones shown: one line, a range, or a list, as in `mark=44-47,52`. Use it whenever the shown lines are more than the point, so the reader does not have to search ([ADR-045](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/045-mark-lines-in-code.md)).
 - The fence's language is used as written.
 
 To show an older version, put a git revision and `:` before the path, as `git show` takes it: `file=main:api/session.go`. A diff cannot be shown. Show the old and the new version in two notes instead.
@@ -314,5 +345,7 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 9. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
 10. No flowchart arrow has an id, like `e1@-->`.
+11. Every `status` and `weight` is one of the values above.
+12. Every `mark` is inside the lines its fence shows.
 
-On load the page runs checks 1, 3 to 6, and 8 to 10 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 6, and 8 to 12 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).

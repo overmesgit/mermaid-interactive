@@ -76,3 +76,20 @@ These rules come from research on teaching. The first four decide what to explai
 - A story that repeats the diagram's labels instead of saying why.
 - Code pasted into notes, when the file is in the repo.
 - Handing over without walking every step. A shape that does nothing on click looks broken.
+
+## Explaining a PR: first draft
+
+Written while making `examples/go-router.js`, which explains the Go 1.22 router. These are the steps that worked there. One example is not proof, so treat each step as a guess to test on the next PR.
+
+1. **Find the whole change.** A feature often lands as many commits, not one PR. The Go router was about 20 commits over a month. Find the proposal or issue, list the commits, and pick two fixed points to compare, such as two release tags. Name those points in every `file=`, so the lines never move.
+2. **Read the reasons before the code.** The proposal says what the authors cared about, and the code usually does not. For the router, one sentence explained half the design: which handler runs must never depend on the order routes were registered.
+3. **Pick the reader and the opening question.** Write both down before the first diagram. For the router: a Go developer who has used `net/http` but has not read the change, and the question "why did servers add a third-party router just to route `GET /posts/{id}`?"
+4. **Find the hard part by asking what would surprise the reader.** For the router it was "the more specific pattern wins, and two patterns where neither wins make the program panic at startup". The deepest point was in one code comment: the matcher can use a simple search order only because conflicting patterns were refused earlier. Each surprise gets its own step.
+5. **Use one running example in every step.** Four routes for a small blog API, so the reader learns the example once and then only follows what changes.
+6. **Run every claim you show.** Each example output in the router lesson came from running Go: the panic message, the 405 answer, the search that backs up. Some answers are easy to get wrong. For example, a `DELETE` gets a 405 only if no pattern matches at all, so registering `/` turns it into a normal response.
+7. **Open with an overview.** The first step says the change in one sentence, shows before and after side by side in one chart, links the original change, and lists the steps ahead. When there is no single PR, link the proposal and the main reviews. Put the basics a newcomer needs in a separate tab, and point to it from the overview, so an experienced reader never passes through them.
+8. **Order the rest as the hard part, how it works, what else changed.** End with a question the reader can answer from the lesson, and put the answer in a note. Five steps were enough for the router.
+9. **Name the specifics in every sentence.** Write "`GET /posts/new` matches `GET /posts/new` and `GET /posts/{id}`", not "matches two patterns". The reader should not have to remember them from an earlier step.
+10. **Draw what happens, not the rule.** "The more specific pattern wins" is a sentence. Its picture is the process: the request, the patterns that match, the comparison, the winner.
+11. **Keep the code short.** Show 10 to 25 lines per note, and use `mark=` for the lines that carry the point. Show the old code from the old fixed point, next to the new. When the "before" is user code that is in no file, such as a handler that parses its own URL, write a short sketch in the note.
+12. **Check it in a browser before handing over.** Walk every step and open each inner diagram. Look for labels that read the same but mean different things, such as a request and a pattern that are both `GET /posts/new`.

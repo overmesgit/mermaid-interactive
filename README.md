@@ -48,3 +48,4 @@ After changing the engine, rebuild the skill's template: open `http://127.0.0.1:
 - [Matcher](docs/matcher.md)
 - [Decisions](docs/decisions/README.md)
 - [Feedback](docs/feedback.md)
+- [Rules](docs/rules.md) learned from reading real explanations

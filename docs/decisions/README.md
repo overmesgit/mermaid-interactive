@@ -45,6 +45,7 @@ Zooming the picture versus opening another diagram.
 | [003](003-two-zooms.md) | Double-click opens an inner diagram. The wheel only zooms the camera | Current, partly replaced by 014 |
 | [014](014-selection-keeps-camera.md) | Clicking a shape keeps the zoom and the position | Current, partly replaced by 033 |
 | [015](015-drill-transition.md) | Animate opening an inner diagram, and remember each diagram's zoom | Current |
+| [044](044-back-undoes-every-move.md) | Back undoes every move | Current |
 
 ## Side panel
 
@@ -54,6 +55,7 @@ Zooming the picture versus opening another diagram.
 | [016](016-panel-links.md) | The panel links to the connected shapes and arrows | Current |
 | [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current, partly replaced by 041 |
 | [041](041-story-links-to-parts.md) | The story points at parts where it talks about them | Current |
+| [047](047-story-reading-cues.md) | The panel says how to read it, in readable text | Current |
 
 ## Notes and code in the panel
 
@@ -65,6 +67,7 @@ Zooming the picture versus opening another diagram.
 | [030](030-code-folder.md) | Show code from a code/ folder, packed into the page | Current, partly replaced by 035 |
 | [035](035-code-from-the-repo.md) | Read code files from the repo, not a code/ folder | Current |
 | [038](038-code-files-in-preview-and-export.md) | Preview reads code files from the server, and Export packs them | Current |
+| [045](045-mark-lines-in-code.md) | A code note can mark the lines that matter | Current |
 
 ## The How lesson
 
@@ -88,7 +91,9 @@ The tab that explains this page, step by step.
 | [010](010-label-frame.md) | Clicking a shape draws no box around its label | Current |
 | [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current, partly replaced by 036 |
 | [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
-| [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current |
+| [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current, partly replaced by 043 |
+| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current |
+| [046](046-side-by-side-in-one-chart.md) | Show a change side by side in one chart | Current |
 | [036](036-floating-controls.md) | Controls float over a full-window diagram | Current |
 
 ## Files and export

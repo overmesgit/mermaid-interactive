@@ -167,3 +167,33 @@ The template carries a fingerprint of the files it was made from, and the page s
 > I think we are not ready to provide skill on how to craete a good explanation it will come later now we should concentrate on explaining how to use our digram tool
 
 SKILL.md is now a manual for the tool: what the reader gets, a short working content file, how to build and check `explanation.html`, the mistakes that are easy to make, and code from the repo. The explanation guidance moved to `explain-difficult-things/skill-draft.md`. [ADR-040](decisions/040-skill-teaches-the-tool-first.md).
+
+> [On the Go router example] text is a little bit hard to read, we need more contrast also we can add a little bit of colors to our UI same goes for diagrams
+
+> when I read story, it is not clear If I suppose to click on the element in the text or read full doc first
+
+> we don't need to add side panel for each arrow, better to simply add a label
+
+> would be nice to tell reader which nodes worth checking
+
+> browser back button isn't working when I zoom in or click on the box in the side panel
+
+> as for changes for before after, would be great to find a way to show them side to side, I think steps here are not the best implementation
+
+> we need to mention which ones, we shouldn't expect reader to keep such details in mind
+
+> this diagram is strange, it is like sentance was projected into digram
+
+> for long functions it is not clear where to look
+
+> it wasn't clear that we have call flow on the left and source code on the right
+
+> We should give an overview of our explanaiton plan at the begining, so reader knows what to expect and what he will get
+
+> maybe examples with conflict, we can make conflict box red how do we store this index More detailed data
+
+> we should also provide initial high level explanation about what is going on like what requests consist of, for someone who are very new to the topic it should be easily skippable for more experience reviewers
+
+> where is original pr?
+
+Contrast and Back are one-time fixes, so they went to the [TODO](../TODO.md). Every other point became a rule in [rules.md](rules.md), with where it came from. The page support is [ADR-043](decisions/043-status-and-weight.md) to [ADR-047](decisions/047-story-reading-cues.md), and `examples/go-router.js` was rewritten to follow the rules.

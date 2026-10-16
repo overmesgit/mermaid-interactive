@@ -14,10 +14,12 @@ This skill covers how to use the tool: what the page does, what to write, how to
 - **Tabs** across the top. Each opens one diagram.
 - **A lesson**, if the tab has one. Prev, Next, and the arrow keys walk its steps, one diagram per step.
 - **A story** in the side panel, shown when nothing is selected. It says what the diagram shows, and can put a part's card between its sentences, where it talks about that part.
+- **Colors that mean something.** A part can be marked new, changed, removed, or a problem, and the word shows with the color. A key part has a heavy outline, a background part steps back, and a dot marks a part with more to read.
 - **A tooltip** on hover over any shape or arrow you wrote a note for. The arrows it lights flow from start to end, and so do the arrows a lesson step adds.
 - **A note** in the side panel on click. It can hold markdown, code from the repo, and facts, and it links to the connected shapes.
 - **An inner diagram** on double-click, or the ↘ badge, for a shape or arrow that has one. Backspace goes back up.
 - **Find** to filter shapes by name, and pan and zoom with the mouse.
+- **Back and Forward** in the browser undo and redo each step, drill-down, and opened note.
 - **An amber ⚠ chip** by Find when the content has a mistake. It lists each one.
 
 ## What you write
@@ -107,6 +109,8 @@ window.DIAGRAMS = {
 - **`nodeInteractions`** are the notes on shapes, keyed by the shape's id in the chart: `api` in `api["API"]`.
 - **`edgeInteractions`** are the notes on arrows. `arrow(from, to, tooltip, body, facts, more)` makes one, and `[from, to]` is the short form.
 - **`md`** strips the indent from a note, so notes can be indented with the code.
+- **`status`** and **`weight`** on a note say what changed and what matters: `status: "new"`, `"changed"`, `"removed"`, or `"problem"`, and `weight: "key"` or `"background"`.
+- **Arrow labels** carry what an arrow means, as in `api -- reads --> db`. Most arrows need only `[from, to]`. Give an arrow a note only when it has real detail.
 
 ## Build it
 
@@ -127,6 +131,7 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 - **A reserved id.** Mermaid fails on some ids, such as `end` in a flowchart or `Note` in a state chart. Use another id and keep the word as the label: `state "Note" as Selected`.
 - **`</script` in the content file.** It ends the page's script tag. Code files named with `file=` may contain it.
 - **A layout that jumps between steps.** Keep the same ids from one lesson step to the next, so Mermaid draws them in the same place and only the change moves.
+- **A comparison split across two steps.** To show before and after, draw both in one flowchart, as two `subgraph`s side by side. `references/format.md` shows how.
 
 ## Show code from the repo
 
@@ -137,4 +142,4 @@ Name a file and a line range in an empty fence, and the page shows those lines:
 ~~~
 ```
 
-The path starts at the repo root. Clicking the code's header switches to the whole file, with the range highlighted. To show an older version, put a git revision first, as in `file=main:api/session.go`. Step 2 packs each named file whole into `explanation.html`, so the file works without the repo. `references/format.md` has the details.
+The path starts at the repo root. Add `mark=44-47` to highlight the lines that matter inside a longer range. Clicking the code's header switches to the whole file, with the range highlighted. To show an older version, put a git revision first, as in `file=main:api/session.go`. Step 2 packs each named file whole into `explanation.html`, so the file works without the repo. `references/format.md` has the details.
