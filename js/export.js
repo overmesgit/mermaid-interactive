@@ -1,4 +1,6 @@
 // Export inlines the local script tags of index.html, in page order. The CDN scripts stay links.
+// A joined or exported page has no script files to read, because every script is inline, so Export copies those as they are.
+// That needs no server, so Export works from disk and inside the preview page's frame.
 // With ?template in the link, Export saves the skill's template instead: the page with no content, and a marker line where the content file goes.
 
 const TEMPLATE_MARKER = "/* DIAGRAMS */";
@@ -69,15 +71,20 @@ async function packedCodeFiles() {
 }
 
 async function exportHtml() {
-  const template = new URLSearchParams(location.search).has("template");
   const scripts = localScripts();
+  const joined = !scripts.length;
+  const template = !joined && new URLSearchParams(location.search).has("template");
   let css, sources, markup;
   // The template carries a fingerprint of the files it was made from, so the page can tell when it is out of date.
   let stamp = "";
   // The template holds no content, so it packs no files. The pack command adds them to the content file.
   const packed = template ? "" : await packedCodeFiles();
   try {
-    [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
+    if (joined) {
+      // The content script of a joined page is already packed. The script that opens the start view is written fresh below.
+      css = document.querySelector("head > style").textContent;
+      sources = [...document.querySelectorAll("script:not([src]):not([data-start-view])")].map((script) => script.textContent);
+    } else [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
     if (template) {
       markup = await readFile("index.html");
       stamp = `\n  <meta name="engine-fingerprint" content="${fingerprint(await templateInputs())}" />`;
@@ -97,7 +104,7 @@ async function exportHtml() {
 ${TEMPLATE_MARKER}
 </script>
 <script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the ${TEMPLATE_MARKER} line was.";</script>`;
-  const inlined = scripts.map((script, index) => {
+  const inlined = joined ? sources.map((source) => `<script>${safe(source)}</script>`) : scripts.map((script, index) => {
     if (!script.hasAttribute("data-content")) return `<script>${safe(sources[index])}</script>`;
     return template ? slot : `<script>${safe(`${sources[index]}\n${packed}`)}</script>`;
   });
@@ -113,7 +120,7 @@ ${TEMPLATE_MARKER}
 ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
-${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");</script>\n`}${inlined.join("\n")}
+${template ? "" : `<script data-start-view>if (!location.hash) location.replace("#${hash}");</script>\n`}${inlined.join("\n")}
 </body>
 </html>
 `;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="d88803e8" />
+  <meta name="engine-fingerprint" content="1d5c6d64" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #0f172a;
@@ -404,6 +404,18 @@ button.icon:hover { color: var(--ink); }
 }
 
 .menu button { width: 100%; padding: 0 8px; }
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--control);
+  padding: 0 8px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+.menu a:hover { background: var(--tint); }
 
 .menu svg { color: var(--muted); }
 
@@ -1161,6 +1173,11 @@ line.is-edge.is-selected:not(.edge-hit) {
       <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"></path></svg>
       Export HTML
     </button>
+    <!-- The editor lives next to this page on the site and in the repo. A joined page has no editor beside it, so boot.js hides this there. -->
+    <a id="edit-own" href="preview.html" hidden="">
+      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M10.5 2.5 13.5 5.5 5.5 13.5H2.5V10.5Z"></path><path d="M9 4l3 3"></path></svg>
+      Preview your own file
+    </a>
   </div>
 
   <div id="checks" class="menu" popover="" aria-label="Problems in this explanation">
@@ -2971,6 +2988,8 @@ function wireTabs() {
 }
 </script>
 <script>// Export inlines the local script tags of index.html, in page order. The CDN scripts stay links.
+// A joined or exported page has no script files to read, because every script is inline, so Export copies those as they are.
+// That needs no server, so Export works from disk and inside the preview page's frame.
 // With ?template in the link, Export saves the skill's template instead: the page with no content, and a marker line where the content file goes.
 
 const TEMPLATE_MARKER = "/* DIAGRAMS */";
@@ -3041,15 +3060,20 @@ async function packedCodeFiles() {
 }
 
 async function exportHtml() {
-  const template = new URLSearchParams(location.search).has("template");
   const scripts = localScripts();
+  const joined = !scripts.length;
+  const template = !joined && new URLSearchParams(location.search).has("template");
   let css, sources, markup;
   // The template carries a fingerprint of the files it was made from, so the page can tell when it is out of date.
   let stamp = "";
   // The template holds no content, so it packs no files. The pack command adds them to the content file.
   const packed = template ? "" : await packedCodeFiles();
   try {
-    [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
+    if (joined) {
+      // The content script of a joined page is already packed. The script that opens the start view is written fresh below.
+      css = document.querySelector("head > style").textContent;
+      sources = [...document.querySelectorAll("script:not([src]):not([data-start-view])")].map((script) => script.textContent);
+    } else [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
     if (template) {
       markup = await readFile("index.html");
       stamp = `\n  <meta name="engine-fingerprint" content="${fingerprint(await templateInputs())}" />`;
@@ -3069,7 +3093,7 @@ async function exportHtml() {
 ${TEMPLATE_MARKER}
 <\/script>
 <script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the ${TEMPLATE_MARKER} line was.";<\/script>`;
-  const inlined = scripts.map((script, index) => {
+  const inlined = joined ? sources.map((source) => `<script>${safe(source)}<\/script>`) : scripts.map((script, index) => {
     if (!script.hasAttribute("data-content")) return `<script>${safe(sources[index])}<\/script>`;
     return template ? slot : `<script>${safe(`${sources[index]}\n${packed}`)}<\/script>`;
   });
@@ -3085,7 +3109,7 @@ ${TEMPLATE_MARKER}
 ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"><\/script>
-${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");<\/script>\n`}${inlined.join("\n")}
+${template ? "" : `<script data-start-view>if (!location.hash) location.replace("#${hash}");<\/script>\n`}${inlined.join("\n")}
 </body>
 </html>
 `;
@@ -3157,6 +3181,8 @@ document.getElementById("copy").addEventListener("click", async () => {
 });
 
 document.getElementById("export").addEventListener("click", exportHtml);
+// Only a page that loads its content file through ?src= sits next to preview.html.
+document.getElementById("edit-own").hidden = !document.querySelector("script[data-content]");
 
 // The menu and the problem list open under their island, right edges aligned. The menu closes after a choice.
 ["more-menu", "checks"].forEach((id) => {
@@ -3170,7 +3196,7 @@ document.getElementById("export").addEventListener("click", exportHtml);
 });
 const moreMenu = document.getElementById("more-menu");
 moreMenu.addEventListener("click", (event) => {
-  if (event.target.closest("button")) moreMenu.hidePopover();
+  if (event.target.closest("button, a")) moreMenu.hidePopover();
 });
 document.getElementById("fit").addEventListener("click", fit);
 // Story is a switch: it shows the story, or hides it when the story is already showing.

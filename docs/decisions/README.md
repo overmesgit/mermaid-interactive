@@ -24,7 +24,8 @@ How an agent writes an explanation and hands it over.
 | [037](037-fill-a-template.md) | Fill one template by replacing a marker line | Current, partly replaced by 039 |
 | [039](039-stale-template-warning.md) | Warn when the skill's template is older than the engine | Current |
 | [040](040-skill-teaches-the-tool-first.md) | The skill teaches the tool first. How to explain comes later | Current |
-| [048](048-pack-files-into-the-content-file.md) | Pack code files into the content file, and preview it on the site | Current |
+| [048](048-pack-files-into-the-content-file.md) | Pack code files into the content file, and preview it on the site | Current, partly replaced by 049 |
+| [049](049-export-without-a-server.md) | Export works without a server, so the preview page has one export button | Current |
 
 ## Finding and wiring shapes
 
