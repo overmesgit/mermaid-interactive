@@ -5,7 +5,7 @@ A page for explaining hard things: a concept, a subsystem, a pull request. An ex
 There are two ways to make one.
 
 - **By hand.** Edit the content, run the page, and export.
-- **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
+- **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, packs the code it shows into it, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
 
 ## Install the skill
 
@@ -25,6 +25,10 @@ claude plugin update mermaid-interactive@mermaid-interactive
 
 The plugin is listed in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and it loads only the `skill/` folder.
 
+## Preview a content file
+
+To read a content file without this repo, open the [preview page](https://overmesgit.github.io/mermaid-interactive/preview.html) and paste the file, open it, or drop it on the page. Download HTML saves it as one file. Nothing is uploaded. Code notes work when the file was packed, as the skill does. See [ADR-048](docs/decisions/048-pack-files-into-the-content-file.md).
+
 ## Run it
 
 Serve the folder over HTTP, then open `http://127.0.0.1:8765/`:
@@ -35,7 +39,7 @@ python3 -m http.server 8765
 
 To open another content file, name it in the link: `http://127.0.0.1:8765/?src=examples/starter.js`. To start a new explanation, copy `examples/starter.js` and open the copy the same way.
 
-`examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, which only git has, so join it instead of opening it with `?src=`. Run step 2 of the [format](skill/references/format.md) from the repo root with `content=examples/pr-checks.js`, then open `explanation.html`.
+`examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, which only git has, so pack it instead of opening it with `?src=`. Run step 2 of the [format](skill/references/format.md) from the repo root with `content=examples/pr-checks.js`, then open `explanation.html`.
 
 The sample tabs are a bookshop. The How tab explains the tool itself, step by step. Export needs that server. The downloaded file still loads Mermaid from the network.
 

@@ -35,7 +35,8 @@ The sample subject is a bookshop. The tabs are Architecture, C4, Flow, Sequence,
 - The How tab explains the page as a series of diagrams. Prev and Next move along that series, and they stay when a shape's inner diagram is open. The panel note is markdown, and the code is part of that note.
 - An explanation is one content file, apart from the engine ([ADR-026](docs/decisions/026-content-file.md)).
 - An agent can produce the HTML file without a browser or a script runtime. The page checks the content and shows a warning instead of drawing a dead shape ([ADR-029](docs/decisions/029-join-and-check-in-page.md)).
-- A note shows a file from the repo the explanation is about, by path and line range, or an older version of it by git revision. The whole file is packed into the page as gzip, so the panel can open all of it ([ADR-030](docs/decisions/030-code-folder.md), [ADR-035](docs/decisions/035-code-from-the-repo.md)).
+- A note shows a file from the repo the explanation is about, by path and line range, or an older version of it by git revision. The whole file is packed into the content file as gzip, so the panel can open all of it, and the content file alone is the whole explanation ([ADR-030](docs/decisions/030-code-folder.md), [ADR-035](docs/decisions/035-code-from-the-repo.md), [ADR-048](docs/decisions/048-pack-files-into-the-content-file.md)).
+- Anyone can read a content file on the preview page on GitHub Pages, without the repo or a server. It runs in a sandboxed frame, so it cannot reach the site ([ADR-048](docs/decisions/048-pack-files-into-the-content-file.md)).
 - An explanation opened months later draws the same way. Mermaid and marked load at exact versions ([ADR-028](docs/decisions/028-pinned-cdn.md)).
 - Where a PR link points is not decided. The skill ends with the file, and publishing is a separate step.
 

@@ -1,6 +1,6 @@
 # ADR-038 Preview reads code files from the server, and Export packs them
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-048](048-pack-files-into-the-content-file.md): files are packed into the content file, not the page
 - Date: 2026-10-15
 - Settles: the open question in [ADR-035](035-code-from-the-repo.md) on reading files while previewing with `?src=`
 

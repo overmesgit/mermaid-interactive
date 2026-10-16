@@ -47,10 +47,12 @@ async function checkTemplate() {
   return [{ text: "skill/assets/explainer.html was made from older code than this page, so an agent would get an old page. Open this page with ?template, press Export HTML, and save the file there." }];
 }
 
-// Export packs every file a note names, the same way the join does, so the saved file shows them without the repo.
+// Export packs every file a note names into the content script, the same way the pack command does, so the saved file shows them without the repo.
 async function packedCodeFiles() {
-  const tags = [];
+  const calls = [];
   for (const path of new Set(fileFences().map((fence) => fence.path))) {
+    // A packed content file already carries this one in its source.
+    if (packedFiles.has(path)) continue;
     let text;
     try {
       text = await codeFile(path);
@@ -61,9 +63,9 @@ async function packedCodeFiles() {
     const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
     let binary = "";
     bytes.forEach((byte) => (binary += String.fromCharCode(byte)));
-    tags.push(`<script type="application/gzip" data-file="${path.replace(/"/g, "&quot;")}">\n${btoa(binary).replace(/.{76}/g, "$&\n")}\n</script>`);
+    calls.push(`packFile(${JSON.stringify(path)}, \`\n${btoa(binary).replace(/.{76}/g, "$&\n")}\n\`);`);
   }
-  return tags;
+  return calls.join("\n");
 }
 
 async function exportHtml() {
@@ -72,8 +74,8 @@ async function exportHtml() {
   let css, sources, markup;
   // The template carries a fingerprint of the files it was made from, so the page can tell when it is out of date.
   let stamp = "";
-  // The template holds no content, so it packs no files. The join adds them.
-  const packed = template ? [] : await packedCodeFiles();
+  // The template holds no content, so it packs no files. The pack command adds them to the content file.
+  const packed = template ? "" : await packedCodeFiles();
   try {
     [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
     if (template) {
@@ -95,9 +97,10 @@ async function exportHtml() {
 ${TEMPLATE_MARKER}
 </script>
 <script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the ${TEMPLATE_MARKER} line was.";</script>`;
-  const inlined = scripts.map((script, index) =>
-    template && script.hasAttribute("data-content") ? slot : `<script>${safe(sources[index])}</script>`,
-  );
+  const inlined = scripts.map((script, index) => {
+    if (!script.hasAttribute("data-content")) return `<script>${safe(sources[index])}</script>`;
+    return template ? slot : `<script>${safe(`${sources[index]}\n${packed}`)}</script>`;
+  });
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -110,7 +113,7 @@ ${TEMPLATE_MARKER}
 ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
-${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");</script>\n`}${[...inlined, ...packed].join("\n")}
+${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");</script>\n`}${inlined.join("\n")}
 </body>
 </html>
 `;

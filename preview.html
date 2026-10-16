@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview an explanation</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #e2e8f0;
+      --paper: #ffffff;
+      --canvas: #f8fafc;
+      --accent: #1d4ed8;
+      --accent-soft: #e6eefd;
+      --accent-ink: #ffffff;
+      --problem: #b91c1c;
+      --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      font: 14px/1.5 var(--sans);
+      color: var(--ink);
+      background: var(--canvas);
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      padding: 10px 16px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 8px 0 0; font-size: 16px; }
+    button, label.button {
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    button:disabled { opacity: 0.5; cursor: default; }
+    #status { color: var(--muted); }
+    #status.error { color: var(--problem); }
+    main {
+      display: grid;
+      grid-template-columns: minmax(280px, 2fr) 5fr;
+      min-height: 0;
+    }
+    textarea {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 12px 16px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      resize: none;
+      font: 13px/1.5 var(--mono);
+      color: var(--ink);
+      background: var(--paper);
+      white-space: pre;
+    }
+    iframe { width: 100%; height: 100%; border: 0; background: var(--paper); }
+    /* A drag over the frame would go to the frame's page, so the frame lets it through to this one. */
+    body.dragging iframe { pointer-events: none; }
+    body.dragging main { outline: 3px dashed var(--accent); outline-offset: -8px; background: var(--accent-soft); }
+    @media (max-width: 720px) {
+      main { grid-template-columns: 1fr; grid-template-rows: 40% 60%; }
+      textarea { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Preview an explanation</h1>
+    <label class="button">Open file… <input id="file" type="file" accept=".js,text/javascript" hidden /></label>
+    <button id="preview" class="primary">Preview</button>
+    <button id="download" disabled>Download HTML</button>
+    <span id="status">Paste a content file, open one, or drop it on the page. Nothing leaves your browser.</span>
+  </header>
+  <main>
+    <textarea id="content" spellcheck="false" aria-label="Content file"></textarea>
+    <!-- A content file is a script, so it runs in a sandbox: it can draw its page, but it cannot reach this site. -->
+    <iframe id="frame" title="The explanation" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe>
+  </main>
+  <script>
+    // The page fills the skill's template in the browser, the same way the skill's sed command does, and shows it.
+    // A packed content file carries its code files, so code notes work here too. An unpacked one shows them as not included.
+    const els = {
+      content: document.getElementById("content"),
+      file: document.getElementById("file"),
+      preview: document.getElementById("preview"),
+      download: document.getElementById("download"),
+      status: document.getElementById("status"),
+      frame: document.getElementById("frame"),
+    };
+    let template = null;
+    let html = null;
+    let frameUrl = null;
+    let name = "explanation";
+
+    function setStatus(text, error) {
+      els.status.textContent = text;
+      els.status.classList.toggle("error", Boolean(error));
+    }
+
+    async function readText(path) {
+      const response = await fetch(path, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`Could not read ${path} (${response.status}).`);
+      return response.text();
+    }
+
+    // The marker is alone on its line, as the sed command expects. A function as the replacement keeps $ in the content as written.
+    // The content becomes the body of a script tag, so a closing script tag inside it is escaped the way Export does.
+    function fill(content) {
+      const marker = /^\/\* DIAGRAMS \*\/\r?$/m;
+      if (!marker.test(template)) throw new Error("The template has no /* DIAGRAMS */ line.");
+      return template.replace(marker, () => content.replace(/<\/script/gi, "<\\/script"));
+    }
+
+    function preview() {
+      if (!template) return;
+      const content = els.content.value;
+      if (!content.trim()) {
+        setStatus("Paste a content file first.", true);
+        return;
+      }
+      html = fill(content);
+      // The page writes each move into the link's #, so Back undoes it. A srcdoc frame refuses that, and a blob URL allows it.
+      // Each preview gets a new frame, so the browser's Back does not step into the previous one.
+      const frame = els.frame.cloneNode(false);
+      if (frameUrl) URL.revokeObjectURL(frameUrl);
+      frameUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      frame.src = frameUrl;
+      els.frame.replaceWith(frame);
+      els.frame = frame;
+      els.download.disabled = false;
+      setStatus(`Showing ${name}. The ⚠ chip in the page lists any mistakes.`);
+    }
+
+    function download() {
+      const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${name}.html`;
+      link.click();
+      // Firefox can cancel the download if the URL is revoked in the same task as the click.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function openFile(file) {
+      if (!file) return;
+      els.content.value = await file.text();
+      name = file.name.replace(/\.[^.]*$/, "") || "explanation";
+      preview();
+    }
+
+    els.preview.addEventListener("click", preview);
+    els.download.addEventListener("click", download);
+    els.file.addEventListener("change", () => openFile(els.file.files[0]));
+    // Edited text is a new explanation, so Download waits for the next Preview instead of saving the old one, and drops the old file's name.
+    els.content.addEventListener("input", () => {
+      els.download.disabled = true;
+      name = "explanation";
+    });
+    els.content.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) preview();
+    });
+
+    // A drop anywhere on the page opens the file. dragover must be cancelled, or the browser opens the file itself.
+    let depth = 0;
+    document.addEventListener("dragenter", (event) => {
+      event.preventDefault();
+      depth++;
+      document.body.classList.add("dragging");
+    });
+    document.addEventListener("dragleave", () => {
+      if (--depth === 0) document.body.classList.remove("dragging");
+    });
+    document.addEventListener("dragover", (event) => event.preventDefault());
+    document.addEventListener("drop", (event) => {
+      event.preventDefault();
+      depth = 0;
+      document.body.classList.remove("dragging");
+      openFile(event.dataTransfer.files[0]);
+    });
+
+    // The page starts with the starter example, so it is never empty.
+    (async () => {
+      try {
+        [template, els.content.value] = await Promise.all([readText("skill/assets/explainer.html"), readText("examples/starter.js")]);
+        name = "starter";
+        preview();
+      } catch (error) {
+        setStatus(error instanceof TypeError ? "This page needs a server. Open it on GitHub Pages, or serve the repo folder." : error.message, true);
+      }
+    })();
+  </script>
+</body>
+</html>

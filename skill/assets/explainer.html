@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="4942285f" />
+  <meta name="engine-fingerprint" content="d88803e8" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #0f172a;
@@ -1193,6 +1193,14 @@ function md(strings, ...values) {
   const indent = widths.length ? Math.min(...widths) : 0;
   return rows.map((row) => row.slice(indent)).join("\n").trim();
 }
+
+// A packed content file ends with one packFile() call per file its notes name: the whole file, gzip and base64.
+// So the content file alone carries its code, wherever it is opened.
+const packedFiles = new Map();
+
+function packFile(path, base64) {
+  packedFiles.set(path, base64);
+}
 </script>
 <script>
 /* DIAGRAMS */
@@ -2030,15 +2038,9 @@ function wirePanel() {
 }
 </script>
 <script>// Code files a note names with ~~~go file=api/session.go lines=40-58. The panel shows those lines, and the header opens the whole file.
-// The join packs each whole file into the page as gzip and base64, in an inert script tag after the engine.
+// Packing adds each whole file to the content file as gzip and base64, with packFile() from js/helpers.js.
 
 const codeFiles = new Map();
-
-// The packed files come after the engine, so they are not parsed yet while the engine runs.
-const pageParsed = new Promise((resolve) => {
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", resolve, { once: true });
-  else resolve();
-});
 
 // The fence's info string, such as "go file=api/session.go lines=40-58 mark=44-47". `first` and `last` are null without lines=.
 // `mark` lists the [first, last] ranges to highlight inside the shown lines, so a long range still says where to look.
@@ -2108,12 +2110,10 @@ function codeFileError(message, preview) {
 }
 
 async function loadCodeFile(path) {
-  await pageParsed;
-  const packed = [...document.querySelectorAll('script[type="application/gzip"]')].find((script) => script.dataset.file === path);
-  if (packed) return unpack(packed.textContent);
-  // Only a joined page has packed files. A preview through index.html?src= marks its content script, and reads files from the server instead.
+  if (packedFiles.has(path)) return unpack(packedFiles.get(path));
+  // A content file opened through index.html?src= can read files from the server. Anywhere else, only packed files exist.
   if (!document.querySelector("script[data-content]")) {
-    throw codeFileError(`${path} is not packed in this page. Join the page from the repo root, so the file is packed.`, false);
+    throw codeFileError(`${path} is not packed in this explanation. Pack the content file from the repo root, so the file is included.`, false);
   }
   if (path.includes(":")) {
     throw codeFileError(`This preview cannot show ${path}, because it comes from git history. The joined page shows it.`, true);
@@ -3019,10 +3019,12 @@ async function checkTemplate() {
   return [{ text: "skill/assets/explainer.html was made from older code than this page, so an agent would get an old page. Open this page with ?template, press Export HTML, and save the file there." }];
 }
 
-// Export packs every file a note names, the same way the join does, so the saved file shows them without the repo.
+// Export packs every file a note names into the content script, the same way the pack command does, so the saved file shows them without the repo.
 async function packedCodeFiles() {
-  const tags = [];
+  const calls = [];
   for (const path of new Set(fileFences().map((fence) => fence.path))) {
+    // A packed content file already carries this one in its source.
+    if (packedFiles.has(path)) continue;
     let text;
     try {
       text = await codeFile(path);
@@ -3033,9 +3035,9 @@ async function packedCodeFiles() {
     const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
     let binary = "";
     bytes.forEach((byte) => (binary += String.fromCharCode(byte)));
-    tags.push(`<script type="application/gzip" data-file="${path.replace(/"/g, "&quot;")}">\n${btoa(binary).replace(/.{76}/g, "$&\n")}\n<\/script>`);
+    calls.push(`packFile(${JSON.stringify(path)}, \`\n${btoa(binary).replace(/.{76}/g, "$&\n")}\n\`);`);
   }
-  return tags;
+  return calls.join("\n");
 }
 
 async function exportHtml() {
@@ -3044,8 +3046,8 @@ async function exportHtml() {
   let css, sources, markup;
   // The template carries a fingerprint of the files it was made from, so the page can tell when it is out of date.
   let stamp = "";
-  // The template holds no content, so it packs no files. The join adds them.
-  const packed = template ? [] : await packedCodeFiles();
+  // The template holds no content, so it packs no files. The pack command adds them to the content file.
+  const packed = template ? "" : await packedCodeFiles();
   try {
     [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
     if (template) {
@@ -3067,9 +3069,10 @@ async function exportHtml() {
 ${TEMPLATE_MARKER}
 <\/script>
 <script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the ${TEMPLATE_MARKER} line was.";<\/script>`;
-  const inlined = scripts.map((script, index) =>
-    template && script.hasAttribute("data-content") ? slot : `<script>${safe(sources[index])}<\/script>`,
-  );
+  const inlined = scripts.map((script, index) => {
+    if (!script.hasAttribute("data-content")) return `<script>${safe(sources[index])}<\/script>`;
+    return template ? slot : `<script>${safe(`${sources[index]}\n${packed}`)}<\/script>`;
+  });
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3082,7 +3085,7 @@ ${TEMPLATE_MARKER}
 ${body.innerHTML}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"><\/script>
-${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");<\/script>\n`}${[...inlined, ...packed].join("\n")}
+${template ? "" : `<script>if (!location.hash) location.replace("#${hash}");<\/script>\n`}${inlined.join("\n")}
 </body>
 </html>
 `;

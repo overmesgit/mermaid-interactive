@@ -11,3 +11,11 @@ function md(strings, ...values) {
   const indent = widths.length ? Math.min(...widths) : 0;
   return rows.map((row) => row.slice(indent)).join("\n").trim();
 }
+
+// A packed content file ends with one packFile() call per file its notes name: the whole file, gzip and base64.
+// So the content file alone carries its code, wherever it is opened.
+const packedFiles = new Map();
+
+function packFile(path, base64) {
+  packedFiles.set(path, base64);
+}

@@ -1,13 +1,7 @@
 // Code files a note names with ~~~go file=api/session.go lines=40-58. The panel shows those lines, and the header opens the whole file.
-// The join packs each whole file into the page as gzip and base64, in an inert script tag after the engine.
+// Packing adds each whole file to the content file as gzip and base64, with packFile() from js/helpers.js.
 
 const codeFiles = new Map();
-
-// The packed files come after the engine, so they are not parsed yet while the engine runs.
-const pageParsed = new Promise((resolve) => {
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", resolve, { once: true });
-  else resolve();
-});
 
 // The fence's info string, such as "go file=api/session.go lines=40-58 mark=44-47". `first` and `last` are null without lines=.
 // `mark` lists the [first, last] ranges to highlight inside the shown lines, so a long range still says where to look.
@@ -77,12 +71,10 @@ function codeFileError(message, preview) {
 }
 
 async function loadCodeFile(path) {
-  await pageParsed;
-  const packed = [...document.querySelectorAll('script[type="application/gzip"]')].find((script) => script.dataset.file === path);
-  if (packed) return unpack(packed.textContent);
-  // Only a joined page has packed files. A preview through index.html?src= marks its content script, and reads files from the server instead.
+  if (packedFiles.has(path)) return unpack(packedFiles.get(path));
+  // A content file opened through index.html?src= can read files from the server. Anywhere else, only packed files exist.
   if (!document.querySelector("script[data-content]")) {
-    throw codeFileError(`${path} is not packed in this page. Join the page from the repo root, so the file is packed.`, false);
+    throw codeFileError(`${path} is not packed in this explanation. Pack the content file from the repo root, so the file is included.`, false);
   }
   if (path.includes(":")) {
     throw codeFileError(`This preview cannot show ${path}, because it comes from git history. The joined page shows it.`, true);

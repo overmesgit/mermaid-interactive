@@ -1,6 +1,6 @@
 # ADR-030 Show code from a code/ folder, packed into the page
 
-- Status: accepted, `code/` folder superseded by [ADR-035](035-code-from-the-repo.md)
+- Status: accepted, `code/` folder superseded by [ADR-035](035-code-from-the-repo.md), packing into the page superseded by [ADR-048](048-pack-files-into-the-content-file.md)
 - Date: 2026-10-11
 
 ## Context

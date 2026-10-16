@@ -9,31 +9,35 @@ Each explanation is its own file, and the page shows the one named in the link (
 ## Start here
 
 1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
-2. **Put it into the page.** The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes. The command below copies the page with your content file in place of that line. Run it from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file. Every file a note names is packed in whole, as gzip and base64. See [Code files](#code-files).
+2. **Pack it, then put it into the page.** Run the commands below from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file.
+
+   The first command packs: it copies the content file to `packed.js` and adds every file a note names to the end, whole, as gzip and base64. So `packed.js` is the complete explanation and needs no repo. See [Code files](#code-files). The second puts it into the page. The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes, and the command copies the page with `packed.js` in place of that line.
 
    ```bash
    {
-     sed -e '/^\/\* DIAGRAMS \*\/$/r '"$content" -e '/^\/\* DIAGRAMS \*\/$/d' "$skill/assets/explainer.html"
+     cat "$content"
+     echo
      sed -n 's/^[[:space:]]*~~~.*[[:space:]]file=\([^[:space:]]*\).*/\1/p' "$content" | sort -u |
      while read -r f; do
-       printf '<script type="application/gzip" data-file="%s">\n' "$f"
+       printf 'packFile("%s", `\n' "$f"
        case "$f" in
          *:*) git show "$f" ;;
          *)   cat "$f" ;;
        esac | gzip -cn | base64
-       printf '</script>\n'
+       printf '`);\n'
      done
-   } > explanation.html
+   } > packed.js
+   sed -e '/^\/\* DIAGRAMS \*\/$/r packed.js' -e '/^\/\* DIAGRAMS \*\/$/d' "$skill/assets/explainer.html" > explanation.html
    ```
 
-   It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files.
+   It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files. Pack from your own content file, not from `packed.js`, so the files are not added twice.
 3. **Look at it.** Open `explanation.html` in a browser. It opens from disk and needs no server, but it loads Mermaid from the network. An amber ⚠ chip by Find means the page found mistakes. Click it for the list. Walk every lesson step and open every inner diagram, because an arrow is only checked once its diagram is drawn. After an edit, run step 2 again and reload. Skip this if you cannot open a browser.
 4. **Check it** against [the checklist](#check-before-handing-it-over). If you could not open a browser, this is the only check. A mistake does not stop the page. It only leaves a shape that does nothing on click.
-5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host.
+5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host. `packed.js` is the same explanation in a smaller file. Anyone can drop it on the [preview page](https://overmesgit.github.io/mermaid-interactive/preview.html) to see it and download the HTML.
 
 The template is described in [ADR-037](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/037-fill-a-template.md).
 
-Inside this repo there is a quicker loop for step 3. Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the content file's path, like `?src=examples/starter.js`. Reload after each edit. No join is needed, and files named with `file=` are read from the server.
+Inside this repo there is a quicker loop for step 3. Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the content file's path, like `?src=examples/starter.js`. Reload after each edit. No packing is needed, and files named with `file=` are read from the server.
 
 ## Shape
 
@@ -205,7 +209,7 @@ So a story can walk the picture: a sentence, the part it is about, the next sent
 
 ## Code files
 
-The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and the join in step 4 finds every name, reads each file, and packs it into the page whole ([ADR-030](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/030-code-folder.md), [ADR-035](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/035-code-from-the-repo.md)).
+The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and packing in step 2 finds every name, reads each file, and adds it whole to the end of the content file, so the page gets it with the content ([ADR-030](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/030-code-folder.md), [ADR-035](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/035-code-from-the-repo.md)).
 
 A note shows a file with an empty fence:
 
@@ -221,13 +225,13 @@ A note shows a file with an empty fence:
 
 To show an older version, put a git revision and `:` before the path, as `git show` takes it: `file=main:api/session.go`. A diff cannot be shown. Show the old and the new version in two notes instead.
 
-The lines are read when the page is joined. If the file may change before then, name the commit, as in `file=4f2c1e9:api/session.go`, so the lines stay where you wrote them.
+The lines are read when the content file is packed. If the file may change before then, name the commit, as in `file=4f2c1e9:api/session.go`, so the lines stay where you wrote them.
 
 The panel shows the lines under a header with the path and the range. Clicking the header switches to the whole file, with the range highlighted, and back. Several notes can point at the same file, and it is packed once.
 
-While you preview with `?src=`, nothing is packed yet, so the page reads each file from the server. That works for files in the served repo. A revision path shows as missing until the join ([ADR-038](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/038-code-files-in-preview-and-export.md)). The Export button packs the files too.
+While you preview with `?src=`, nothing is packed yet, so the page reads each file from the server. That works for files in the served repo. A revision path shows as missing until the content file is packed ([ADR-038](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/038-code-files-in-preview-and-export.md)). The Export button packs the files too.
 
-Do not paste the files into `diagrams.js`.
+Do not paste the files into `diagrams.js`. Packing adds them, and a packed file may hold whole files you did not write.
 
 ## Example
 
@@ -341,7 +345,7 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 4. Both ends of every state edge interaction have a node interaction, or are `"*"`.
 5. Every `opensView`, `parent`, tab `id`, and `lesson` entry is a viewId in `views`.
 6. Every view's `viewId` equals its key.
-7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it.
+7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it, because packing stores them as base64.
 8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
 9. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
 10. No flowchart arrow has an id, like `e1@-->`.

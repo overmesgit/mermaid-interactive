@@ -115,10 +115,10 @@ window.DIAGRAMS = {
 ## Build it
 
 1. **Write `diagrams.js`.** Start from the file above, or from the complete example in `references/format.md`.
-2. **Put it into the page.** `assets/explainer.html` is the whole page, with one line, `/* DIAGRAMS */`, where the content goes. The command in step 2 of `references/format.md` copies the page with your file in place of that line, and packs every code file the notes name. It writes `explanation.html`. Run it from the root of the repo the code comes from.
+2. **Pack it, then put it into the page.** The commands in step 2 of `references/format.md` first pack: they copy your file to `packed.js` and add every code file the notes name to its end. Then they put `packed.js` into `assets/explainer.html`, the whole page with one line, `/* DIAGRAMS */`, where the content goes. They write `packed.js` and `explanation.html`. Run them from the root of the repo the code comes from.
 3. **Look at it.** Open `explanation.html` in a browser. It needs no server, but it loads Mermaid from the network. Walk every step and open every inner diagram, because an arrow is only checked once its diagram is drawn. Fix everything under the ⚠ chip, then run step 2 again and reload.
 4. **Check it by hand** if you cannot open a browser. `references/format.md` has the checklist.
-5. **Hand over `explanation.html`.** Say where it is. Do not commit it or publish it unless asked.
+5. **Hand over `explanation.html`.** Say where it and `packed.js` are. Do not commit or publish them unless asked.
 
 ## Mistakes that are easy to make
 
@@ -142,4 +142,4 @@ Name a file and a line range in an empty fence, and the page shows those lines:
 ~~~
 ```
 
-The path starts at the repo root. Add `mark=44-47` to highlight the lines that matter inside a longer range. Clicking the code's header switches to the whole file, with the range highlighted. To show an older version, put a git revision first, as in `file=main:api/session.go`. Step 2 packs each named file whole into `explanation.html`, so the file works without the repo. `references/format.md` has the details.
+The path starts at the repo root. Add `mark=44-47` to highlight the lines that matter inside a longer range. Clicking the code's header switches to the whole file, with the range highlighted. To show an older version, put a git revision first, as in `file=main:api/session.go`. Step 2 packs each named file whole into the content file, so the explanation works without the repo. `references/format.md` has the details.
