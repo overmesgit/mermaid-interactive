@@ -14,6 +14,8 @@ window.DIAGRAMS = {
       summary: "A web app calls an API, and the API reads a database.",
       story: md`
         Replace this diagram with your own. Each shape's note is keyed by the id in the Mermaid text, like web in web["Web app"].
+
+        The story links each part that has more to read, where it talks about it, like the [API](#api), [the call from the web app](#web->api), and [the session query](#api->db).
       `,
       chart: `flowchart LR
   web["Web app<br><small>Sends the session cookie</small>"]

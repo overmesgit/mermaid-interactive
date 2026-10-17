@@ -1,9 +1,11 @@
 // A PR-style explanation of the Go 1.22 ServeMux router: methods, wildcards, and "the more specific pattern wins".
 // The change is proposal golang/go#61410, landed as about 20 commits by Jonathan Amsterdam in September 2023.
 // Its code notes name files at the go1.21.0 and go1.22.0 tags, so join it from the root of a Go repo clone.
-// It follows docs/rules.md: an overview first, the change side by side, processes instead of sentences, and arrow labels instead of arrow notes.
+// It follows docs/rules.md: an overview first, the change side by side, processes instead of sentences, arrow labels instead of arrow notes,
+// and one color per type of thing: requests, routes, handlers, and the router, in the diagrams and the text.
 
 window.DIAGRAMS = {
+  types: { request: "Request", route: "Route", handler: "Handler", router: "Router" },
   tabs: [
     { id: "overview", label: "Go 1.22 router", lesson: ["overview", "wins", "conflict", "tree", "outcomes"] },
     { id: "basics", label: "Basics" },
@@ -18,11 +20,11 @@ window.DIAGRAMS = {
       story: md`
         **The change in one sentence:** Go 1.22's standard router understands patterns like \`GET /posts/{id}\`, so most servers no longer need a third-party router such as chi or gorilla/mux.
 
-        The picture shows one request, \`GET /posts/42\`, in both versions. On the left, Go 1.21 matches only the path, so the handler checks the method and cuts the id out of the URL itself.
+        The picture shows one request, [\`GET /posts/42\`](~request), in both versions. On the left, the Go 1.21 [ServeMux](#oldMux) matches only the path, so the handler checks the method and cuts the id out of the URL itself.
 
         [](#oldHandler)
 
-        On the right, Go 1.22 matches the method and the path, and hands the handler the id.
+        On the right, the Go 1.22 [ServeMux](#newMux) matches the method and the path, and hands the handler the id.
 
         [](#newHandler)
 
@@ -37,7 +39,7 @@ window.DIAGRAMS = {
 
         **What's ahead:**
 
-        1. \`GET /posts/new\` matches two of these routes. Which one runs?
+        1. \`GET /posts/new\` matches two of these routes, and the more specific one runs.
         2. Two routes where neither wins are refused at startup.
         3. How a request finds its route quickly.
         4. What a request gets when no route matches.
@@ -65,9 +67,10 @@ window.DIAGRAMS = {
   end
   before ~~~ after`,
       nodeInteractions: {
-        oldReq: { label: "GET /posts/42", kicker: "Request", tooltip: "The same request on both sides.", weight: "background" },
+        oldReq: { label: "GET /posts/42", kicker: "Request", type: "request", tooltip: "The same request on both sides." },
         oldMux: {
           label: "ServeMux, Go 1.21",
+          type: "router",
           kicker: "Before",
           tooltip: "Tries the exact path, then the longest registered prefix that ends in a slash.",
           body: md`
@@ -80,6 +83,7 @@ window.DIAGRAMS = {
         oldHandler: {
           label: "Handler for /posts/",
           kicker: "Your code, before",
+          type: "handler",
           tooltip: "Has to check the method and parse the id itself.",
           body: md`
             A typical handler, sketched. Most of it is routing:
@@ -100,9 +104,10 @@ window.DIAGRAMS = {
             ~~~
           `,
         },
-        newReq: { label: "GET /posts/42", kicker: "Request", tooltip: "The same request on both sides.", weight: "background" },
+        newReq: { label: "GET /posts/42", kicker: "Request", type: "request", tooltip: "The same request on both sides." },
         newMux: {
           label: "ServeMux, Go 1.22",
+          type: "router",
           kicker: "After",
           status: "changed",
           weight: "key",
@@ -117,6 +122,7 @@ window.DIAGRAMS = {
         newHandler: {
           label: "Handler for GET /posts/{id}",
           kicker: "Your code, after",
+          type: "handler",
           status: "changed",
           tooltip: "The method check and the parsing are gone.",
           body: md`
@@ -147,69 +153,125 @@ window.DIAGRAMS = {
       tab: "overview",
       parent: null,
       title: "Two routes match: the more specific wins",
-      summary: "GET /posts/new matches GET /posts/new and GET /posts/{id}. The narrower one runs.",
+      summary: "Like addresses, the route that says more goes first: GET /posts/new above GET /posts/{id}.",
       story: md`
-        **This is the hard part.** The request \`GET /posts/new\` matches two routes: \`GET /posts/new\`, and \`GET /posts/{id}\` with \`id = new\`. Which one runs?
+        **This is the hard part.** One request matches two of the routes:
 
-        It is natural to guess "the one registered first", as in many routers, or "the longest", as in Go 1.21. Neither is the rule. The rule is: **the more specific route wins**, meaning the one that matches a strict subset of the other's requests.
+        | | | |
+        | --- | --- | --- |
+        | request | [\`GET /posts/new\`](~request) | |
+        | route 1 | [\`GET /posts/new\`](~route) | |
+        | route 2 | [\`GET /posts/{id}\`](~route) | with \`id = new\` |
 
-        The picture follows the request. Two routes match, so they are compared one part at a time.
+        Which one runs? Your first guess is probably the exact match, route 1, and it is right. To see the rule behind it, picture addresses.
+
+        **Imagine a mail room** that keeps its addresses sorted from the most exact to the least, and sends each letter to the first address that fits. Real mail rooms may work differently. This one is only a picture of the rule.
+
+        | | address | gets the letter |
+        | --- | --- | --- |
+        | 1 | Lyon, Rose Street, house 12 | house 12 |
+        | 2 | Lyon, Rose Street, any house | the Rose Street office |
+        | 3 | Lyon, any street | the city office |
+
+        A letter to "Lyon, Rose Street, house 12" fits all three, and goes to house 12. A letter to house 7 fits only 2 and 3, so it goes to the Rose Street office.
+
+        An address is **more specific** than another when it says everything the other says, and more. Address 1 says the city and the street, like address 2, and adds the house, so it goes above it.
+
+        **A route is an address for requests.** The method is the city, and each path segment is the next part of the address. A wildcard like \`{id}\` is "any house". Here are the two routes, with their addresses on the right:
+
+        | | route | address |
+        | --- | --- | --- |
+        | 1 | [\`GET /posts/new\`](~route) | Lyon, Rose Street, house 12 |
+        | 2 | [\`GET /posts/{id}\`](~route) | Lyon, Rose Street, any house |
+
+        Part by part:
+
+        | part | routes 1 and 2 | addresses 1 and 2 | |
+        | --- | --- | --- | --- |
+        | method, city | \`GET\`, \`GET\` | Lyon, Lyon | the same |
+        | segment 1, street | \`posts\`, \`posts\` | Rose Street, Rose Street | the same |
+        | segment 2, house | \`new\`, \`{id}\` | house 12, any house | 1 says more |
+
+        Route 1 says everything route 2 says, and one part more, so it goes above route 2, as address 1 goes above address 2. The request fits both and stops at route 1, so [newPostForm](#winner) runs. \`GET /posts/42\` is the letter to house 7: it fits only route 2.
 
         [](#compare)
 
+        **What Go really does.** Go is a mail room that never writes the list down, and still gets the same answer:
+
+        1. **At startup**, each new route is compared with the routes it could clash with, like a new address checked against the ones on file. Some pairs cannot be put in order, like "any city, Rose Street, house 12" and "Lyon, Rose Street, any house". A letter to "Lyon, Rose Street, house 12" fits both, and each says a part the other does not. Go refuses such a pair with a panic. That is the next step.
+        2. **When a request comes in**, Go reads it one part at a time, like a carrier reading the city, then the street, then the house. At each part it tries the exact value first, and "any" only after. The first full match is the one the sorted list would give. Step 4 shows this as a tree.
+
         Registration order never decides, on purpose. Packages often register routes from \`init\` functions, which run in an order you do not control.
       `,
-      chart: `flowchart LR
+      chart: `flowchart TB
   req["Request<br><small>GET /posts/new</small>"]
-  pNew["GET /posts/new<br><small>Matches</small>"]
-  pId["GET /posts/{id}<br><small>Matches, with id = new</small>"]
+  subgraph order["The routes that match it, most specific first"]
+    direction TB
+    pNew["1. GET /posts/new<br><small>Matches: the first match wins</small>"]
+    pId["2. GET /posts/{id}<br><small>Would match, with id = new</small>"]
+    pNew ~~~ pId
+  end
   pComments["GET /posts/{id}/comments<br><small>Needs three segments</small>"]
   pPost["POST /posts<br><small>Other method, other path</small>"]
-  compare["Compare the two<br><small>Method: the same, GET<br>Segment 1: the same, posts<br>Segment 2: new is narrower than {id}</small>"]
-  winner["GET /posts/new runs<br><small>It matches a subset of<br>what GET /posts/{id} matches</small>"]
-  req --> pNew
-  req --> pId
+  compare["At startup: compare part by part<br><small>method: GET, GET<br>segment 1: posts, posts<br>segment 2: new, {id}</small>"]
+  winner["newPostForm runs<br><small>The handler of route 1</small>"]
+  req -->|checked from the top| pNew
+  pNew -->|first match| winner
   req -.->|no| pComments
   req -.->|no| pPost
-  pNew --> compare
-  pId --> compare
-  compare --> winner`,
+  compare -.->|puts route 1 above route 2| pNew`,
       nodeInteractions: {
-        req: { label: "Request GET /posts/new", kicker: "Request", tooltip: "The request being routed." },
-        pNew: { label: "Route GET /posts/new", kicker: "Route", tooltip: "Matches only the path /posts/new, for GET and HEAD." },
-        pId: { label: "Route GET /posts/{id}", kicker: "Route", tooltip: "Matches any /posts/x, including /posts/new." },
-        pComments: { label: "Route GET /posts/{id}/comments", kicker: "Route", tooltip: "Needs a third segment, so it does not match.", weight: "background" },
-        pPost: { label: "Route POST /posts", kicker: "Route", tooltip: "Different method and path, so it does not match.", weight: "background" },
+        req: { label: "Request GET /posts/new", kicker: "Request", type: "request", tooltip: "The request being routed." },
+        pNew: { label: "Route 1: GET /posts/new", kicker: "Route", type: "route", weight: "key", tooltip: "First in the order, and it matches, so it wins." },
+        pId: { label: "Route 2: GET /posts/{id}", kicker: "Route", type: "route", tooltip: "Would match, with id = new, but route 1 comes first." },
+        pComments: { label: "Route GET /posts/{id}/comments", kicker: "Route", type: "route", tooltip: "Needs a third segment, so it does not match.", weight: "background" },
+        pPost: { label: "Route POST /posts", kicker: "Route", type: "route", tooltip: "Different method and path, so it does not match.", weight: "background" },
         compare: {
-          label: "Compare the two",
+          label: "At startup: compare part by part",
           kicker: "The rule",
           weight: "key",
-          tooltip: "Method, then each path segment. One part narrower and the rest the same means more specific.",
+          tooltip: "When a route is registered, it is compared with the routes it could clash with. This is what puts route 1 above route 2.",
           body: md`
-            Each part gives one of five answers: the same, more specific, more general, no overlap, or overlap with neither containing the other. Here the methods are the same, the first segments are the same, and the second segment decides: the literal \`new\` is narrower than the wildcard \`{id}\`.
+            Two routes are compared with each other only at startup, when a route is registered. A request never triggers this comparison.
+
+            Comparing the methods of two routes, or their paths, gives one of five answers:
+
+            1. **The same.** \`/posts/{id}\` and \`/posts/{x}\`. The wildcard's name does not matter, so registering both panics.
+            2. **More specific.** \`/posts/new\` against \`/posts/{id}\`. Every request the first matches, the second matches too, but not the other way round.
+            3. **More general.** \`/posts/{id}\` against \`/posts/new\`, the same pair the other way round.
+            4. **No overlap.** \`/posts/new\` against \`/posts/edit\`. No request matches both.
+            5. **Overlap, and neither contains the other.** \`/posts/{id}\` against \`/{kind}/new\`. Both match \`/posts/new\`, but each also matches requests the other does not.
+
+            Here the methods are the same, \`GET\` and \`GET\`, and the paths give answer 2: segment 2 is \`new\` against \`{id}\`.
 
             ~~~go file=go1.22.0:src/net/http/pattern.go lines=314-346 mark=335-340
             ~~~
 
-            Then the answers are combined. "The same" changes nothing. One part more specific and another more general means the routes overlap, and neither wins. That case is the next step.
+            Then the two answers are combined:
+
+            - The method and the path both the same: the same route twice, which panics at registration.
+            - One more specific, and the other the same or also more specific: that route goes first.
+            - One more specific and the other more general: there is no order, and registration panics. That case is the next step.
+            - Either one with no overlap: no request matches both, so the two routes never compete.
 
             ~~~go file=go1.22.0:src/net/http/pattern.go lines=356-379 mark=367-375
             ~~~
           `,
         },
         winner: {
-          label: "GET /posts/new runs",
+          label: "newPostForm runs",
           kicker: "Result",
+          type: "handler",
           weight: "key",
-          tooltip: "Every request GET /posts/new matches, GET /posts/{id} matches too. So it is more specific.",
+          tooltip: "The handler of GET /posts/new, the first route in the order that matches.",
           body: md`
             Checked by running Go 1.22 with the four routes:
 
-            ~~~text
-            GET /posts/new  -> GET /posts/new
-            GET /posts/42   -> GET /posts/{id}, id = "42"
-            HEAD /posts/42  -> GET /posts/{id}, id = "42"
-            ~~~
+            | request | runs | |
+            | --- | --- | --- |
+            | \`GET /posts/new\` | \`GET /posts/new\` | |
+            | \`GET /posts/42\` | \`GET /posts/{id}\` | \`id = "42"\` |
+            | \`HEAD /posts/42\` | \`GET /posts/{id}\` | \`id = "42"\` |
 
             HEAD reaches \`GET /posts/{id}\`, because a GET route also serves HEAD.
           `,
@@ -217,12 +279,10 @@ window.DIAGRAMS = {
       },
       edgeInteractions: [
         ["req", "pNew"],
-        ["req", "pId"],
+        ["pNew", "winner"],
         ["req", "pComments"],
         ["req", "pPost"],
-        ["pNew", "compare"],
-        ["pId", "compare"],
-        ["compare", "winner"],
+        ["compare", "pNew"],
       ],
     },
 
@@ -233,13 +293,20 @@ window.DIAGRAMS = {
       title: "Neither wins: refused at startup",
       summary: "Adding /posts/new next to GET /posts/{id} makes the program panic when it registers the route.",
       story: md`
-        Add one more route, \`/posts/new\` with no method, next to the four. Both \`/posts/new\` and \`GET /posts/{id}\` match the request \`GET /posts/new\`. \`/posts/new\` is narrower in its path but wider in its method, because it takes every method. \`GET /posts/{id}\` is the other way round. So neither is more specific, and there is no rule to pick one.
+        Add one more route, [\`/posts/new\`](#add) with no method, next to the four. Now two routes match the request [\`GET /posts/new\`](~request), and each spells out a part the other does not:
+
+        | | method | path |
+        | --- | --- | --- |
+        | [\`/posts/new\`](~route) | any | \`/posts/new\`, spelled out |
+        | [\`GET /posts/{id}\`](~route) | \`GET\`, spelled out | \`/posts/{id}\` |
+
+        So [neither is more specific](#cmpId), and there is no rule to pick one. They are the two addresses from the previous step that cannot be put in order: \`/posts/new\` is "any city, Rose Street, house 12", and \`GET /posts/{id}\` is "Lyon, Rose Street, any house".
 
         The router does not guess. \`HandleFunc\` panics, so the server fails at startup, not on some request later.
 
         [](#boom)
 
-        To find the route it clashes with, the router does not compare against every route. An index, filled as routes are registered, narrows them down first.
+        To find the route it clashes with, the router does not compare against every route. An [index](#indexData), filled as routes are registered, narrows them down first.
 
         [](#index)
       `,
@@ -259,6 +326,7 @@ window.DIAGRAMS = {
         add: {
           label: "HandleFunc /posts/new",
           kicker: "Registration",
+          type: "route",
           tooltip: "The fifth route. It has no method, so it matches every method.",
           body: md`
             Registration parses the route, asks the index for candidates, and compares each one. Only then is the route added to the tree and the index.
@@ -358,9 +426,9 @@ window.DIAGRAMS = {
       title: "Finding the route quickly",
       summary: "A tree of method, then path segments, tried literal first. GET /posts/new/comments takes the bold path.",
       story: md`
-        Comparing every request with every route would be slow. So the router keeps the four routes in a tree: the method, then one level per path segment. Each route's handler sits where its path ends.
+        Comparing every request with every route would be slow. So the router keeps the four routes in a tree: the [host](#root), then the [method](#get), then one level per path segment. Each route's handler sits where its path ends.
 
-        Follow \`GET /posts/new/comments\`. At the second segment, the tree tries the literal \`new\` first.
+        Follow [\`GET /posts/new/comments\`](~request). At the second segment, the tree tries the literal [\`new\`](#tNew) first.
 
         [](#posts->tNew)
 
@@ -443,13 +511,13 @@ window.DIAGRAMS = {
       title: "What a request gets",
       summary: "A handler, a 405 that lists the allowed methods, or a 404.",
       story: md`
-        When no route matches, Go 1.22 tells two cases apart. If the path matches a route with another method, the answer is **405 Method Not Allowed**, with an \`Allow\` header listing the methods. Otherwise it is 404, as before.
+        The router [looks for a route](#match). If one matches, [your handler](#handler) runs. When no route matches, Go 1.22 tells two cases apart. If the path matches a route with another method, the answer is **405 Method Not Allowed**, with an \`Allow\` header listing the methods. Otherwise it is 404, as before.
 
-        With the four routes, \`GET /users\` gets 404, because no route has that path.
+        With the four routes, [\`GET /users\`](~request) gets 404, because no route has that path.
 
         [](#allowed)
 
-        A few smaller changes came with the series. Paths are now unescaped one segment at a time, so \`%2F\` inside a segment no longer acts as a slash. And setting \`GODEBUG=httpmuxgo121=1\` brings back the whole Go 1.21 router.
+        A few smaller changes came with the series. Paths are now unescaped one segment at a time, so \`%2F\` inside a segment no longer acts as a slash. And setting [\`GODEBUG=httpmuxgo121=1\`](#compat) brings back the whole Go 1.21 router.
 
         **Check yourself.** With the four routes, what does \`DELETE /posts/42\` get? And what if you also register \`/\`? Open the 405 box for the answer.
       `,
@@ -465,10 +533,11 @@ window.DIAGRAMS = {
   match -->|"only with another method"| allowed
   match -->|no| notfound`,
       nodeInteractions: {
-        req: { label: "A request", kicker: "Input", tooltip: "Cleaned first: a path with .. or // is redirected, as before.", weight: "background" },
+        req: { label: "A request", kicker: "Input", type: "request", tooltip: "Cleaned first: a path with .. or // is redirected, as before." },
         match: {
           label: "Does a route match?",
           kicker: "Router",
+          type: "router",
           tooltip: "findHandler searches the tree, and decides what to answer when nothing matches.",
           body: md`
             ~~~go file=go1.22.0:src/net/http/server.go lines=2512-2566 mark=2552-2563
@@ -478,6 +547,7 @@ window.DIAGRAMS = {
         handler: {
           label: "Your handler",
           kicker: "Your code",
+          type: "handler",
           tooltip: "ServeHTTP stores the route and the wildcard values on the request before calling it.",
           body: md`
             ~~~go file=go1.22.0:src/net/http/server.go lines=2669-2684 mark=2681
@@ -526,7 +596,7 @@ window.DIAGRAMS = {
       title: "An HTTP request in one minute",
       summary: "A request names a method and a path. A router picks the function that answers it.",
       story: md`
-        Every page and API call starts as a **request**. Its first line names what the client wants, for example:
+        Every page and API call starts as a [**request**](~request). Its first line names what the client wants, for example:
 
         ~~~text
         GET /posts/42 HTTP/1.1
@@ -535,11 +605,13 @@ window.DIAGRAMS = {
 
         [](#request)
 
-        A server has many functions that can answer, one per kind of request. These are called **handlers**. The **router** reads the method and the path, and picks the handler.
+        A server has many functions that can answer, one per kind of request. These are called [**handlers**](#handler). The **router** reads the method and the path, and picks the handler.
 
         [](#router)
 
-        A route is a rule the router matches against requests, such as \`GET /posts/{id}\`: the method GET, and a path where \`{id}\` stands for any one segment.
+        A [**route**](~route) is a rule the router matches against requests, such as \`GET /posts/{id}\`: the method GET, and a path where \`{id}\` stands for any one segment.
+
+        The lesson draws each of these in its own color, in the pictures and in the text: [requests](~request), [routes](~route), [handlers](~handler), and the [router](~router).
 
         When you are ready, the lesson starts on the first tab.
       `,
@@ -558,6 +630,7 @@ window.DIAGRAMS = {
         request: {
           label: "The request",
           kicker: "Data",
+          type: "request",
           weight: "key",
           tooltip: "A method, a host, and a path, plus headers and sometimes a body.",
           body: md`
@@ -571,6 +644,7 @@ window.DIAGRAMS = {
         router: {
           label: "Router",
           kicker: "This lesson",
+          type: "router",
           weight: "key",
           tooltip: "In Go it is http.ServeMux. You register routes, and it picks one handler per request.",
           body: md`
@@ -588,6 +662,7 @@ window.DIAGRAMS = {
         handler: {
           label: "Handler",
           kicker: "Your code",
+          type: "handler",
           tooltip: "A function that takes the request and writes the response.",
           body: md`
             ~~~go

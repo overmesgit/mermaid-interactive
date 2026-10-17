@@ -16,7 +16,7 @@ window.DIAGRAMS = {
       story: md`
         **The question:** why did a typo in an explanation go unnoticed until a reader clicked a shape and nothing happened?
 
-        An agent writes the content file, and the page draws it. If a note names a shape the chart does not have, the page still draws the diagram. That shape simply has no note, so a click does nothing. Nothing on the page or in the console says why, so the agent cannot know, and the reader thinks the page is broken.
+        An [agent](#writer) writes the [content file](#content), and the [page](#page) draws it. If a note names a shape the chart does not have, the page still draws the diagram. That shape simply has no note, so a click does nothing. Nothing on the page or in the console says why, so the agent cannot know, and the reader thinks the page is broken.
 
         It is natural to think "the page loaded, so the explanation is fine." Loading only proves the JavaScript runs. It says nothing about whether each note found its shape.
 
@@ -84,10 +84,10 @@ window.DIAGRAMS = {
 
         So there are two checks:
 
-        - **The content check** runs once on load and reads every view as text. It catches most mistakes in steps nobody has opened yet. Because it reads text, it can only guess whether Mermaid will draw a given shape.
-        - **The draw check** runs after each diagram is drawn and asks what could not be found in the picture. It is certain, but only for the diagrams drawn so far.
+        - **[The content check](#contentCheck)** runs once on load and reads every view as text. It catches most mistakes in steps nobody has opened yet. Because it reads text, it can only guess whether Mermaid will draw a given shape.
+        - **[The draw check](#drawCheck)** runs after each diagram is drawn and asks what could not be found in the picture. It is certain, but only for the diagrams drawn so far.
 
-        Once a view is drawn, its draw result replaces the content check's guesses about shapes and arrows in that view, so one mistake is not listed twice.
+        Once a view is drawn, its draw result replaces the content check's guesses about shapes and arrows in that view, so one mistake is not listed twice in the [problem list](#list).
 
         Click either check for an example of what only it can catch.
       `,
@@ -164,9 +164,9 @@ window.DIAGRAMS = {
       story: md`
         Follow one page load with a mistake in step 3.
 
-        At boot the content check runs, so the chip can show a count before anything is clicked. Mermaid then parses every chart, which takes a moment, so the list updates a second time.
+        At boot [the content check runs](#Boot->Check), so the chip can show a count before anything is clicked. Mermaid then [parses every chart](#Check->Mermaid), which takes a moment, so the list updates a second time.
 
-        Each time a view is drawn, the wiring code returns what it could not place, and the draw check stores that under the view's id. Opening step 3 adds its certain result, and the list is drawn again.
+        Each time a view is drawn, [the wiring code returns what it could not place](#Bind->Nav), and [the draw check stores that](#Nav->Check) under the view's id. Opening step 3 adds its certain result, and the list is drawn again.
 
         This picture leaves out the dedupe and the console output. Click the arrows for the code.
       `,
@@ -224,7 +224,7 @@ window.DIAGRAMS = {
       title: "The mistake is listed",
       summary: "The page now tells whoever opens it what is wrong.",
       story: md`
-        **The answer:** the typo went unnoticed because the page skipped a note it could not place and said nothing. Now both checks feed one list behind an amber ⚠ chip by Find, and the console prints each problem once.
+        **The answer:** the typo went unnoticed because the page skipped a note it could not place and said nothing. Now both checks feed one list behind an amber [⚠ chip](#chip) by Find, and the console prints each problem once.
 
         An agent with a browser opens the file, walks every step, and fixes everything in the list. An agent without one still goes through the checklist in the format by hand, because nothing can show it the chip.
 

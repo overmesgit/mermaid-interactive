@@ -11,65 +11,84 @@ window.DIAGRAMS = {
       tab: "panel",
       parent: null,
       title: "Side panel",
-      summary: "The panel tells the diagram's story, shows one note, or is hidden.",
+      summary: "The panel shows the diagram's story, a part's note under it, both, or neither.",
       story: md`
-        A reader should not have to click every shape to follow a diagram, so the panel opens on the diagram's story. The story says what the picture shows, then lists its shapes and arrows.
+        A reader should not have to click every shape to follow a diagram, so the panel opens on the diagram's [story](#Story). The story says what the picture shows, and links each part where it talks about it.
 
-        Clicking a shape or an arrow swaps the story for that part's note. Back returns to the story, so the reader never loses their place.
+        [Clicking a part](#Story->Both) opens its note under the story: [story and note](#Both). The story stays where the reader left it, so they can read the detail and go on reading without losing their place. [× or Esc](#Both->Story) closes the note.
 
-        Double-click Note to see which field of the content file fills which part of a note.
+        Close on the story [hides the panel](#Hidden). A note opened then [fills the panel alone](#NoteOnly).
+
+        Double-click Story and note to see which field of the content file fills which part of a note.
       `,
       chart: `stateDiagram-v2
-  state "Note" as Selected
+  state "Story and note" as Both
+  state "Note only" as NoteOnly
   [*] --> Story
-  Story --> Selected: click a part
-  Selected --> Story: Back or Esc
+  Story --> Both: click a part
+  Both --> Story: × or Esc
+  Both --> NoteOnly: Close the story
+  NoteOnly --> Both: Story button
   Story --> Hidden: Close
   Hidden --> Story: Story button
-  Hidden --> Selected: click a part`,
+  Hidden --> NoteOnly: click a part
+  NoteOnly --> Hidden: × or Esc`,
       nodeInteractions: {
         Story: {
           label: "Story",
           tooltip: "Shown when nothing is selected: the diagram's story and a list of its parts.",
           kicker: "Mode",
           body: md`
-            The story comes from the view's \`story\` field, in markdown. Under it, every shape and then every arrow is listed with its tooltip, in the order the content file lists them.
+            The story comes from the view's \`story\` field, in markdown. It links each part where it talks about it, and a line of only links shows those parts as cards. A view with no story lists its parts instead.
 
-            Pointing at a part in the list lights it in the picture. Clicking it opens its note. On a lesson step, the parts that step adds are marked New.
+            Pointing at a link lights its part in the picture. Clicking it opens its note. On a lesson step, the parts that step adds are marked New.
           `,
           facts: [["Field", "story"], ["Title", "the view's title"], ["Kicker", "Diagram, or Step n of m"]],
         },
-        Selected: {
-          label: "Note",
-          tooltip: "One shape or arrow: its note, facts, and links. Double-click to see what fills it.",
+        Both: {
+          label: "Story and note",
+          tooltip: "The story on top, and one part's note under it. Double-click to see what fills a note.",
           kicker: "Mode",
           body: md`
             A note explains one part of the picture. It opens on click, and the picture keeps its zoom and position, so the reader sees the part and its note together.
 
-            The links at the bottom jump to the connected parts. A shape lists its arrows as In and Out. An arrow lists its From and To shapes.
+            The story stays on top and keeps its scroll, so opening a detail never hides the big picture. The story's card for the open part is marked. The divider between the two can be dragged.
+
+            The links at the bottom of the note jump to the connected parts. A shape lists its arrows as In and Out. An arrow lists its From and To shapes.
           `,
-          facts: [["Opens on", "click, Tab and Enter, or a link"], ["Leaves with", "Back or Esc"]],
+          facts: [["Opens on", "click, Tab and Enter, or a link"], ["Leaves with", "× or Esc"]],
           opensView: "note",
+        },
+        NoteOnly: {
+          label: "Note only",
+          tooltip: "The reader closed the story, then opened a part. The note fills the panel.",
+          kicker: "Mode",
+          body: md`
+            On a narrow screen the note covers the story the same way, because the panel is too short for both. Closing the note shows the story again at the same place.
+          `,
         },
         Hidden: {
           label: "Hidden",
           tooltip: "The reader closed the story. It stays closed on the next diagrams too.",
           kicker: "Mode",
           body: md`
-            Some diagrams are wide, and the panel takes space from them. So Close on the story hides the panel, and it stays hidden while the reader moves to other diagrams.
+            Some diagrams are wide, and the panel takes space from them. So Close on the story hides it, and it stays hidden while the reader moves to other diagrams.
 
-            A click on a part still opens its note. Close on that note hides the panel again instead of going back to the story.
+            A click on a part still opens its note, and closing the note hides the panel again.
           `,
           facts: [["Back with", "the Story button"]],
         },
       },
       edgeInteractions: [
-        arrow("*", "Story", "Every diagram opens on its story.", "Unless the reader hid the panel earlier."),
-        arrow("Story", "Selected", "Click a shape, an arrow, or a row in the list.", "The panel title becomes the part's label, and its tooltip becomes the lead line."),
-        arrow("Selected", "Story", "Back or Esc returns to the story.", "Esc on the story then steps up to the parent diagram, if there is one.", [["Keys", "Esc"]]),
-        arrow("Story", "Hidden", "Close hides the panel.", "The diagram gets the full width."),
-        arrow("Hidden", "Story", "The Story button brings it back.", ""),
-        arrow("Hidden", "Selected", "A click still opens a note.", "Its button says Close instead of Back, because there is no story to go back to."),
+        ["*", "Story"],
+        arrow("Story", "Both", "Click a shape, an arrow, or a row in the list.", "The note opens under the story. Its title is the part's label, and its tooltip is the lead line."),
+        arrow("Both", "Story", "×, Esc, or a second click on the part in the story closes the note.", "Esc on the story then steps up to the parent diagram, if there is one.", [["Keys", "Esc"]]),
+        ["Both", "NoteOnly"],
+        ["NoteOnly", "Both"],
+        ["Story", "Hidden"],
+        ["Hidden", "Story"],
+        ["Hidden", "NoteOnly"],
+        ["NoteOnly", "Hidden"],
       ],
     },
     note: {
@@ -81,7 +100,7 @@ window.DIAGRAMS = {
       story: md`
         A note is built only from what the content file says about one shape or arrow. The left column is those fields. The right column is the panel, top to bottom.
 
-        The links are the one part nobody writes, because the page works them out from the view's arrows.
+        The [body](#body) is markdown, and the [facts](#facts) are a short table. The [links](#edges->pLinks) are the one part nobody writes, because the page works them out from the view's arrows.
       `,
       chart: `flowchart LR
   subgraph fields["Content file"]
@@ -96,7 +115,7 @@ window.DIAGRAMS = {
   end
   subgraph shown["Side panel"]
     direction TB
-    pKicker["Kicker<br><small>Small text above the title</small>"]
+    pKicker["Kicker<br><small>Small text after the title</small>"]
     pTitle["Title"]
     pLead["Lead line<br><small>Also the hover tooltip</small>"]
     pNote["Note<br><small>Paragraphs, lists, code</small>"]
@@ -128,7 +147,7 @@ window.DIAGRAMS = {
         facts: { label: "facts", tooltip: "Rows of [term, value].", kicker: "Field", facts: [["Example", "[\"File\", \"api/session.go\"]"]] },
         edges: { label: "edgeInteractions", tooltip: "The view's arrows. The page reads them to build the links.", kicker: "Field" },
         opens: { label: "opensView", tooltip: "The viewId that double-click or the button opens.", kicker: "Field" },
-        pKicker: { label: "Kicker", tooltip: "Small text above the title.", kicker: "Panel" },
+        pKicker: { label: "Kicker", tooltip: "Small gray text after the title, on the same line.", kicker: "Panel" },
         pTitle: { label: "Title", tooltip: "The label, or From → To for an arrow without one.", kicker: "Panel" },
         pLead: { label: "Lead line", tooltip: "The tooltip again, so the panel starts with the short version.", kicker: "Panel" },
         pNote: { label: "Note", tooltip: "The body, rendered from markdown.", kicker: "Panel" },
