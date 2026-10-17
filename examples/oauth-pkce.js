@@ -17,28 +17,28 @@ window.DIAGRAMS = {
       tab: "overview",
       parent: null,
       title: "A stolen code",
-      summary: "With PKCE, the login code alone gets nothing, because only the app has the verifier.",
+      summary: "With PKCE, a stolen login code gets nothing, because only the app has the verifier.",
       story: md`
-        **The common belief:** the login [code](~code) is the secret. When you sign in with another site, the login server sends your browser back to the app with a code in the address, and the app trades the code for [tokens](~token). So whoever holds the code can get the tokens.
+        **Start with a guess.** You tap Sign in on an app. A login page opens, you sign in there, and the login page sends you back to the app with a [code](~code) in the address, such as \`?code=sWuxbESy452V4Do8wQh55Q\`. The app trades that code for [tokens](~token), the keys it uses to read your data. So most people guess that the code is the secret: whoever holds it gets your tokens.
 
-        Without PKCE, that belief is right, and that is the problem. The code travels in an address, through the browser, where other programs can sometimes read it. An app on a phone, or a page in a browser, has no password of its own to add, because anything shipped to every user can be read. The app in the run is set up the same way, with no secret.
+        Without PKCE, the guess is right, and that is the problem. The code travels in an address, and an address passes through the browser, where other programs can sometimes read it. An app on a phone, or one that runs only in the browser, cannot prove it is the real app with a password of its own, because its files are on every user's device, where anyone can read them. So for those apps the code is the only proof. The app in the run has no password either.
 
-        **The change in one sentence:** with PKCE, the app makes a secret, the [verifier](~verifier), for each login, and the login server gives tokens only to whoever shows the code *and* that verifier.
+        **PKCE in one sentence:** at the start of each login the app makes a random secret, the [verifier](~verifier), that never goes into an address, and the login server gives tokens only to whoever brings the code *and* that verifier.
 
-        The picture shows the same theft twice, run against a local test server. On the left, the app does not use PKCE, and the [stolen code](#w1) gets tokens.
+        The picture shows one theft twice, both run against a local test server. On the left the app does not use PKCE, and the [stolen code](#w1) gets tokens.
 
         [](#w3)
 
-        On the right, the app uses PKCE. The [login server](#p2) also asks for the verifier, and the thief does not have it.
+        On the right the app uses PKCE. The [login server](#p2) also asks for the verifier, which the thief never saw.
 
         [](#p3)
 
         **What's ahead:**
 
-        1. The verifier: half of a key that never leaves the app.
+        1. The key idea: a secret the app keeps, and how it proves it has it without showing it too early.
         2. One login, message by message, with the real values.
-        3. A stolen code, with and without PKCE.
-        4. An hour later: new tokens without the verifier.
+        3. How a code gets stolen, and what the thief can try.
+        4. An hour later: new tokens, without the verifier.
 
         **The original change.** PKCE is [RFC 7636](https://www.rfc-editor.org/rfc/rfc7636), from 2015. Its first section is this exact attack, on phones. [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700), the current security advice for OAuth 2.0, asks every app to use it. The code in this lesson is Go's [golang.org/x/oauth2](https://github.com/golang/oauth2), which added PKCE in [commit 55cd552](https://github.com/golang/oauth2/commit/55cd552), reviewed as [CL 463979](https://go-review.googlesource.com/c/oauth2/+/463979).
 
@@ -163,27 +163,39 @@ window.DIAGRAMS = {
     halves: {
       tab: "overview",
       parent: null,
-      title: "The verifier: half of a key",
-      summary: "The app keeps a random verifier, and sends only its SHA-256, the challenge. The code works only with the verifier.",
+      title: "A secret shown only at the end",
+      summary: "The app keeps a secret, the verifier, and shows only its fingerprint, the challenge.",
       story: md`
-        **This is the key idea.** The code still travels in the open. PKCE makes it useless alone.
+        **This is the key idea.** The code still travels in the open. PKCE makes it useless on its own.
 
         **Imagine a cloakroom.** You hand in your coat and get a numbered ticket. Whoever brings the ticket gets the coat, so a pickpocket who takes your ticket takes your coat.
 
-        Now imagine a cloakroom that wants more. Before you hand in the coat, you tear a card in two. You keep one half, and the attendant pins the other half to your coat. To collect, you bring the ticket *and* your half, and the attendant checks that the two halves fit. A pickpocket with your ticket gets nothing. Anyone can look at the half on the coat, but nobody can tear a card to fit it.
+        To stop that, the cloakroom wants a second proof that only you have. But the counter is crowded, and anything said there is overheard, so you cannot just tell the attendant a password. Instead you tear a card in two. You keep one half, and the attendant pins the other half to your coat, where anyone can see it. To collect, you bring the ticket *and* your half, and the attendant checks that the halves fit. A pickpocket has your ticket and has seen the pinned half, and still gets nothing, because nobody can tear a card to fit a half they have only looked at.
 
         **A login is that cloakroom:**
 
         | login | cloakroom |
         | --- | --- |
-        | [verifier](~verifier) | your half of the card, which stays with you |
-        | [challenge](~challenge) | the half pinned to the coat, which anyone can see |
+        | the browser, which carries every address | the crowded counter |
+        | [verifier](~verifier) | your half, which stays with you |
+        | [challenge](~challenge) | the pinned half, which anyone can see |
         | [code](~code) | the ticket |
         | [tokens](~token) | the coat |
 
-        One difference: the two halves of a card are torn at once. Here the app makes the [verifier](#verifier) first, 32 random bytes, and computes the [challenge](#challenge) from it with SHA-256. SHA-256 works in one direction only. Anyone can check that a verifier gives a challenge, but nobody can work the verifier back out of the challenge in any practical time.
+        **So why send a challenge at all?** At the start, the login server has to learn which verifier to accept later. But at that moment the app can reach the login server only through the browser, in an address: the crowded counter. Sending the verifier there would hand it to the same thief who later reads the code. So the app sends something that proves nothing on its own, the challenge, and shows the verifier only at the end, on a path the thief cannot see.
 
-        **Who holds what, and when.** At the start of a login, the app makes both, keeps the verifier, and sends the challenge in the login address. The [login server](#stored) stores the challenge with the code it gives out. At the end, the app sends the code and the verifier straight to the login server, and [the check](#check) is one line: SHA-256 of the verifier must equal the stored challenge.
+        **The tear is a hash.** A hash, here SHA-256, turns any text into a fingerprint of fixed length. The same text always gives the same fingerprint, one changed letter gives a completely different one, and nobody knows a way back from the fingerprint to the text, short of guessing. With the [verifier](#verifier) from the run:
+
+        | | |
+        | --- | --- |
+        | the verifier | \`KanMk1f5-TSoC1q7Kjn9r63DH5ARo5wM_Gzjohwyh7w\` |
+        | its SHA-256, the [challenge](#challenge) | \`6WuKI4zP-XcJSYVGkJAFVJp4xUEvDKRIkCIBrvgl7RQ\` |
+        | the verifier with its last letter changed | \`KanMk1f5-TSoC1q7Kjn9r63DH5ARo5wM_Gzjohwyh7x\` |
+        | its SHA-256 | \`Ui0jfSFvr_DIMcPRZG43iEDm4hve3s8lzloDfQbkBfw\` |
+
+        One difference from the card: its halves are torn at once, but the app makes the verifier first and computes the challenge from it.
+
+        **Who holds what, and when.** The [login server](#stored) keeps the challenge next to the code it gives out. At the end, the app sends the code and the verifier straight to the login server, in a request of its own that never passes through the browser. [The check](#check) is one line: the SHA-256 of the verifier must equal the stored challenge.
 
         | value | made | travels | seen by |
         | --- | --- | --- | --- |
@@ -192,7 +204,7 @@ window.DIAGRAMS = {
         | [code](~code) | by the login server, after you sign in | in an address, through the browser | anyone who reads the address |
         | [tokens](~token) | by the login server, after the check | straight to the app | the app |
 
-        So the two values that travel in the open, the challenge and the code, are no use without the one that does not.
+        So the two values that travel in the open, the challenge and the code, are no use without the one that never does.
       `,
       chart: `flowchart TB
   verifier["Verifier<br><small>KanMk1f5-TSoC1q7…<br>Only the app has it</small>"]
@@ -290,21 +302,26 @@ window.DIAGRAMS = {
       tab: "overview",
       parent: null,
       title: "One login, message by message",
-      summary: "The browser carries the challenge and the code. The verifier goes straight from the app to the login server.",
+      summary: "Messages 3 to 6 pass through the browser, with the challenge and the code.",
       story: md`
-        The run, one message per arrow. On the left is the client side: your browser and the app. On the right is the provider: its login server and the API. Each arrow that carries a value has that value's color.
+        The run, one arrow per step. On the left is the client side: your browser and the app. On the right is the provider: its login server and the API.
+
+        Messages take two paths, and the difference between them is the whole point of PKCE:
+
+        - **Through the browser.** A server answers with a redirect, so your browser opens the next address by itself. The values ride in that address, where the browser history and sometimes other programs can see them. Messages 3 to 6 go this way.
+        - **Straight to a server.** The app sends a request of its own, and your browser never sees it. From message 7 on, everything goes this way.
 
         **At the start, once per login.** You open the app's login link. The app [makes a verifier and its challenge](#App->App), and keeps the verifier until you come back.
 
-        It then [sends your browser to the login server](#App->Browser "peek"), with the challenge in the address. Your browser [asks for the login page](#Browser->Login) with that address.
+        It then [sends your browser to the login server](#App->Browser "peek"), with the challenge in the address, and your browser [opens that address](#Browser->Login).
 
-        **After you sign in.** The run skips the sign-in page and takes the user ada as signed in. The login server [sends your browser back to the app](#Login->Browser) with a code, and your browser follows. Both the challenge and the code went through the browser.
+        **After you sign in.** The run skips the sign-in page and takes the user ada as signed in. The login server [sends your browser back to the app](#Login->Browser) with a code in the address, and your browser follows. So both the challenge and the code took the open path.
 
-        **Back on the app, from server to server.** The app [sends the code and the verifier](#App->Login "peek") straight to the login server. The browser never sees this request.
+        **Back on the app, on the direct path.** The app [sends the code and the verifier](#App->Login "peek") to the login server. This is the first time the verifier leaves the app.
 
         [](#Login->Login)
 
-        The two match, so the login server [answers with the tokens](#Login->App). The code is now used up.
+        They match, so the login server [answers with the tokens](#Login->App), and the code stops working.
 
         **On every API call after that.** The app [sends the access token](#App->API), and the API answers with ada's data.
       `,
@@ -452,17 +469,21 @@ window.DIAGRAMS = {
       tab: "overview",
       parent: null,
       title: "A stolen code, with and without PKCE",
-      summary: "The attacker catches the redirect back to the app. Without PKCE that is enough. With PKCE the login server wants the verifier.",
+      summary: "A thief catches the redirect. Without PKCE the code is enough. With PKCE it is not.",
       story: md`
-        **How a code gets stolen.** The [attacker](#Thief) does not break into anything. On a phone, an app tells the system which addresses it opens, and two apps can claim the same one. A harmful app that claims the real app's address gets the redirect, and the code in it. That is the attack RFC 7636 was written for. A code can also leak from the browser history, or to the next page the browser opens.
+        **How a code gets stolen.** Picture a photo app on a phone. Its login ends by sending the browser to an address only that app should open, such as \`photos-app://callback?code=…\`. A phone lets each app say which addresses it opens, and does not stop a second app from claiming the same one. So a game you installed last week can claim it too, and the phone may hand the address, code and all, to the game. That is the attack RFC 7636 was written for. A code can also stay in the browser history, or reach the next page the browser opens.
 
-        The shaded part is what the attacker does. It splits into the two cases from the first step. The run caught each redirect in the test program, so [the app](#App) never got either code.
+        In the cloakroom's words, the [attacker](#Thief) is the pickpocket with your ticket. The shaded part is what the attacker does, split into the two cases from the first step. In the run, the test program caught each redirect itself, so [the app](#App) never got either code.
 
-        **Without PKCE.** The login asked for no challenge, so the login server checks only the code. The [code is valid](#Login->Thief), and the attacker gets ada's tokens. With them, the [API](#API->Thief) answers as it would answer ada.
+        **Without PKCE.** The login carried no challenge, so the login server checks only the code. The [code is valid](#Login->Thief), and the attacker gets ada's tokens. With them, the [API](#API->Thief) answers as it would answer ada.
 
-        **With PKCE.** The same request now gets 400, \`code_verifier required\`. A made-up verifier gets 400 too, \`code_verifier does not match the challenge\`, because its SHA-256 is a different value. The challenge was in the login address for anyone to read, but it cannot be turned back into the verifier, and 32 random bytes are far too many to guess.
+        **With PKCE.** The thief has the code, and may have seen the challenge in the login address. What can it try?
 
-        **What PKCE does not stop.** A thief who can read the app's memory or its traffic to the login server has the verifier too. PKCE protects the code on its way through the browser, and nothing else.
+        1. **Send the code alone.** The answer is 400, \`code_verifier required\`.
+        2. **Make up a verifier.** The answer is 400, \`code_verifier does not match the challenge\`, because its SHA-256 is some other fingerprint. There are 2²⁵⁶ possible verifiers, a number with 78 digits, so guessing is hopeless.
+        3. **Work the verifier out of the challenge.** That means going backwards through the hash, which nobody knows how to do.
+
+        **What PKCE does not stop.** A thief who can read the app's memory, or its direct requests to the login server, has the verifier too. PKCE protects the code on its trip through the browser, and nothing else.
       `,
       chart: `sequenceDiagram
   box rgb(248,250,252) Client side
@@ -554,7 +575,7 @@ window.DIAGRAMS = {
       tab: "overview",
       parent: null,
       title: "An hour later: the refresh",
-      summary: "When the access token runs out, the app trades the refresh token for new tokens. No verifier is needed, because no code travels.",
+      summary: "The refresh token buys new tokens. No verifier, because nothing passes the browser.",
       story: md`
         The [access token](~token) from the login lasts an hour. The run then set its expiry an hour back, to see what the library does.
 
@@ -641,7 +662,7 @@ window.DIAGRAMS = {
       tab: "basics",
       parent: null,
       title: "Redirects and tokens in one minute",
-      summary: "A redirect sends the browser to another address. A token is what the app shows the API instead of your password.",
+      summary: "A redirect sends your browser elsewhere. A token is what the app shows the API.",
       story: md`
         A login like this involves three parties: the **app** you want to use, a **login server** that knows you, and an **API** that holds your data. The app never sees your password. Two things make that work.
 
