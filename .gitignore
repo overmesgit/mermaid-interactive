@@ -1,4 +1,4 @@
-# The Go router example built into one page. It packs the Go source it quotes, so it is rebuilt from a Go clone instead of kept here.
+# The Go router example built into one page. Build it from examples/go-router.packed.js in the editor instead of keeping it here.
 examples/go-router.html
 
 # Worktrees that Claude Code makes for side branches.

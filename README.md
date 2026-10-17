@@ -37,7 +37,7 @@ Serve the folder over HTTP, then open `http://127.0.0.1:8765/`:
 python3 -m http.server 8765
 ```
 
-The editor builds the page from `page.html`, `styles.css`, and `js/` each time it loads, so an engine change shows on reload. Open a file from `examples/` to try it: `bookshop.js` has one tab per kind of diagram, and `go-router.js` is a full lesson. To start a new explanation, copy `examples/starter.js`.
+The editor builds the page from `page.html`, `styles.css`, and `js/` each time it loads, so an engine change shows on reload. Open a file from `examples/` to try it: `bookshop.js` has one tab per kind of diagram, and `go-router.packed.js` is a full lesson with its code. That code is Go's own source, cut to the lines its notes show, in `examples/go-router/`. To start a new explanation, copy `examples/starter.js`.
 
 `examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, so open `examples/pr-checks.packed.js` to see them. That is the same file after packing (step 2 of [SKILL.md](skill/SKILL.md#build-it), with `content=examples/pr-checks.js`). Copy `packed.js` over it after changing the example.
 

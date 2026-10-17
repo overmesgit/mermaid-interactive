@@ -1,6 +1,7 @@
 // A PR-style explanation of the Go 1.22 ServeMux router: methods, wildcards, and "the more specific pattern wins".
 // The change is proposal golang/go#61410, landed as about 20 commits by Jonathan Amsterdam in September 2023.
-// Its code notes name files at the go1.21.0 and go1.22.0 tags, so join it from the root of a Go repo clone.
+// Its code notes show Go's source from the go1.21.0 and go1.22.0 tags, shortened to the lines they show, in examples/go-router/.
+// examples/go-router.packed.js is this file packed from the repo root, so the editor can show the code. Pack it again after editing this file.
 // It follows docs/rules.md: an overview first, the change side by side, processes instead of sentences, arrow labels instead of arrow notes,
 // and one color per type of thing: requests, routes, handlers, and the router, in the diagrams and the text.
 
@@ -75,7 +76,7 @@ window.DIAGRAMS = {
           body: md`
             The whole matcher: look the path up in a map, and if that fails, walk the slash-ending patterns from longest to shortest. The method is never read.
 
-            ~~~go file=go1.21.0:src/net/http/server.go lines=2375-2392 mark=2384-2390
+            ~~~go file=examples/go-router/go1.21/server.go lines=13-30 mark=22-28
             ~~~
           `,
         },
@@ -113,7 +114,7 @@ window.DIAGRAMS = {
           body: md`
             The map and the sorted list are replaced by a tree, used to match requests, and an index, used to check each new route. The Go 1.21 router is kept for programs that need it.
 
-            ~~~go file=go1.22.0:src/net/http/server.go lines=2432-2438 mark=2434-2435
+            ~~~go file=examples/go-router/go1.22/server.go lines=34-40 mark=36-37
             ~~~
           `,
         },
@@ -133,7 +134,7 @@ window.DIAGRAMS = {
 
             The router stores the matched values on the request, in the order the wildcards appear. \`PathValue\` looks the name up in the route and returns its value.
 
-            ~~~go file=go1.22.0:src/net/http/request.go lines=1441-1446
+            ~~~go file=examples/go-router/go1.22/request.go lines=13-18
             ~~~
           `,
         },
@@ -231,7 +232,7 @@ window.DIAGRAMS = {
 
             Here the methods are the same, \`GET\` and \`GET\`, and the paths give answer 2: segment 2 is \`new\` against \`{id}\`.
 
-            ~~~go file=go1.22.0:src/net/http/pattern.go lines=314-346 mark=335-340
+            ~~~go file=examples/go-router/go1.22/pattern.go lines=37-69 mark=58-63
             ~~~
 
             Then the two answers are combined:
@@ -241,7 +242,7 @@ window.DIAGRAMS = {
             - One more specific and the other more general: there is no order, and registration panics. That case is the next step.
             - Either one with no overlap: no request matches both, so the two routes never compete.
 
-            ~~~go file=go1.22.0:src/net/http/pattern.go lines=356-379 mark=367-375
+            ~~~go file=examples/go-router/go1.22/pattern.go lines=71-94 mark=82-90
             ~~~
           `,
         },
@@ -316,7 +317,7 @@ window.DIAGRAMS = {
           body: md`
             Registration parses the route, asks the index for candidates, and compares each one. Only then is the route added to the tree and the index.
 
-            ~~~go file=go1.22.0:src/net/http/server.go lines=2737-2779 mark=2764-2774
+            ~~~go file=examples/go-router/go1.22/server.go lines=115-157 mark=142-152
             ~~~
           `,
         },
@@ -334,7 +335,7 @@ window.DIAGRAMS = {
             | 2, wildcard | GET /posts/{id}, GET /posts/{id}/comments |
             | 3, comments | GET /posts/{id}/comments |
 
-            ~~~go file=go1.22.0:src/net/http/routing_index.go lines=9-46 mark=19,31-46
+            ~~~go file=examples/go-router/go1.22/routing_index.go lines=13-50 mark=23,35-50
             ~~~
           `,
         },
@@ -345,7 +346,7 @@ window.DIAGRAMS = {
           body: md`
             \`/posts/new\` has two literals. Segment 1, \`posts\`, has four routes. Segment 2, \`new\`, has one route with that literal and two with a wildcard there, so three. The index picks the smaller set: \`GET /posts/new\`, \`GET /posts/{id}\`, and \`GET /posts/{id}/comments\`. A route with a different literal there, such as \`/users/new\`, would never be compared.
 
-            ~~~go file=go1.22.0:src/net/http/routing_index.go lines=89-115 mark=97-111
+            ~~~go file=examples/go-router/go1.22/routing_index.go lines=52-78 mark=60-74
             ~~~
           `,
         },
@@ -362,7 +363,7 @@ window.DIAGRAMS = {
           body: md`
             Two routes conflict when they match the same requests, or when they overlap and neither is more specific. A route with a host never conflicts with one without, because the host always wins.
 
-            ~~~go file=go1.22.0:src/net/http/pattern.go lines=216-238 mark=236-237
+            ~~~go file=examples/go-router/go1.22/pattern.go lines=13-35 mark=33-34
             ~~~
 
             The third candidate, \`GET /posts/{id}/comments\`, is never compared. The check stops at the first conflict.
@@ -388,7 +389,7 @@ window.DIAGRAMS = {
 
             The fix is to pick a side, for example \`GET /posts/new\`, which is already registered.
 
-            ~~~go file=go1.22.0:src/net/http/pattern.go lines=402-427 mark=420-422
+            ~~~go file=examples/go-router/go1.22/pattern.go lines=96-121 mark=114-116
             ~~~
           `,
         },
@@ -444,7 +445,7 @@ window.DIAGRAMS = {
           kicker: "Level 1",
           tooltip: "Routes with the request's host are searched first, then routes with no host.",
           body: md`
-            ~~~go file=go1.22.0:src/net/http/routing_tree.go lines=115-125
+            ~~~go file=examples/go-router/go1.22/routing_tree.go lines=25-35
             ~~~
           `,
         },
@@ -453,7 +454,7 @@ window.DIAGRAMS = {
           kicker: "Level 2",
           tooltip: "The exact method first, then GET for a HEAD request, then routes with no method.",
           body: md`
-            ~~~go file=go1.22.0:src/net/http/routing_tree.go lines=130-146 mark=134,138-143,145
+            ~~~go file=examples/go-router/go1.22/routing_tree.go lines=37-53 mark=41,45-50,52
             ~~~
           `,
         },
@@ -467,7 +468,7 @@ window.DIAGRAMS = {
           body: md`
             The three tries, in order: the literal, the single wildcard, then a \`{name...}\` wildcard. The comment on the first try is the argument from the story.
 
-            ~~~go file=go1.22.0:src/net/http/routing_tree.go lines=166-197 mark=168-174,181-184
+            ~~~go file=examples/go-router/go1.22/routing_tree.go lines=55-86 mark=57-63,70-73
             ~~~
           `,
         },
@@ -520,7 +521,7 @@ window.DIAGRAMS = {
           type: "router",
           tooltip: "findHandler searches the tree, and decides what to answer when nothing matches.",
           body: md`
-            ~~~go file=go1.22.0:src/net/http/server.go lines=2512-2566 mark=2552-2563
+            ~~~go file=examples/go-router/go1.22/server.go lines=42-96 mark=82-93
             ~~~
           `,
         },
@@ -530,7 +531,7 @@ window.DIAGRAMS = {
           type: "handler",
           tooltip: "ServeHTTP stores the route and the wildcard values on the request before calling it.",
           body: md`
-            ~~~go file=go1.22.0:src/net/http/server.go lines=2669-2684 mark=2681
+            ~~~go file=examples/go-router/go1.22/server.go lines=98-113 mark=110
             ~~~
           `,
         },
@@ -555,7 +556,7 @@ window.DIAGRAMS = {
           body: md`
             The doc comment lists what can break in old programs: a route like \`/{x}\` used to be a literal path, and some odd routes that used to be accepted now panic.
 
-            ~~~go file=go1.22.0:src/net/http/server.go lines=2411-2431 mark=2418-2431
+            ~~~go file=examples/go-router/go1.22/server.go lines=13-33 mark=20-33
             ~~~
           `,
         },
