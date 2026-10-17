@@ -1,6 +1,6 @@
 # ADR-050 A note opens under the story instead of replacing it
 
-- Status: accepted
+- Status: superseded by [ADR-053](053-inline-and-peek-notes.md)
 - Date: 2026-10-17
 - Supersedes: a note replacing the story, and Back returning to it, from [ADR-033](033-story-panel.md)
 

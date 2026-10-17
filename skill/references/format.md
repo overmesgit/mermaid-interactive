@@ -45,8 +45,11 @@ Inside this repo there is a quicker loop for step 3. Serve the repo folder with 
 window.DIAGRAMS = {
   tabs: [ /* tab */ ],
   views: { /* viewId: view */ },
+  notePlace: "beside", // optional, see below
 };
 ```
+
+`notePlace` is optional. It says where a peek note sits for every view that does not set its own: `"beside"` its shape, `"below"` it, or in the top right `"corner"`. See [How a note opens](#how-a-note-opens).
 
 ## Tab
 
@@ -71,6 +74,7 @@ An explanation is usually one tab with a lesson, whether it covers a concept, a 
 | `chart` | The Mermaid source. Mermaid is the only reader. |
 | `nodeInteractions` | An object keyed by chartId. |
 | `edgeInteractions` | An array, one entry per arrow. |
+| `notePlace` | Optional. Where a peek note sits on this view: `"beside"`, `"below"`, or `"corner"`. See [How a note opens](#how-a-note-opens). |
 
 ## Chart types
 
@@ -236,6 +240,23 @@ The [API](#api) loads the session, which costs one query per call.
 - The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first.
 
 So a story can walk the picture: a sentence, the part it is about, the next sentence. On a lesson step, the arrows the step adds already flow in the picture, so the story can name them in the order they matter.
+
+### How a note opens
+
+A note opens one of two ways, and the story keeps its place with both.
+
+- **Inline**, inside the story, right under the card or the paragraph with the link. Under a card it shows only the note's text and code, because the card already names the part. Its facts and links are left out.
+- **Peek**, a card on the canvas against the part's shape, with its header, facts, and links. The reader can move it beside the shape, below it, or to the corner.
+
+A link in the story opens inline, and a click on the picture opens a peek. A link's title can choose:
+
+```md
+[API](#api "peek")
+[Session check](#api->db "peek below")
+[Handler](#handler "inline")
+```
+
+Use a peek for a part with long code or wide facts, which need more width than the story has. Where a peek sits, unless the link says, comes from the view's `notePlace`, then the file's, then beside. A wrong title shows in the ⚠ list.
 
 ## Code files
 

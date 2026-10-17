@@ -21,7 +21,7 @@ This skill covers how to use the tool: what the page does, what to write, how to
 - **A note** in the side panel on click. It can hold markdown, code from the repo, and facts, and it links to the connected shapes.
 - **An inner diagram** on double-click, or the ↘ badge, for a shape or arrow that has one. Backspace goes back up.
 - **Find** to filter shapes by name, and pan and zoom with the mouse.
-- **A note under the story.** Opening a part shows its note under the story, which keeps its place. A target icon by the note's title finds the part in the diagram.
+- **A note that keeps the story in place.** A part opened from the story shows its note right under that card or link. A part clicked in the picture shows its note as a card by its shape. A link can choose either with its title, like `[API](#api "peek below")`. A target icon by the note's title finds the part in the diagram.
 - **Back and Forward** in the browser undo and redo each step, drill-down, and opened note.
 - **An amber ⚠ chip** by Find when the content has a mistake. It lists each one.
 

@@ -602,33 +602,12 @@ html.is-resizing * {
   user-select: none;
 }
 
-/* The story on top, the open note under it, and a divider between them that sets the story's height. */
 #panel {
   display: grid;
   grid-template-rows: minmax(0, 1fr);
 }
 
-#panel.is-split {
-  grid-template-rows: minmax(120px, var(--story-height, 40%)) 8px minmax(160px, 1fr);
-}
-
-#panel-divider {
-  border-top: 1px solid var(--line);
-  background: var(--canvas);
-  cursor: row-resize;
-  touch-action: none;
-}
-
-/* The note is a detail of the part open in the story. So it hangs under that card: its rule starts where the card's rule is, and it has the card's color. */
-#note-pane {
-  margin-left: var(--gutter);
-  border-left: 3px solid var(--accent);
-  background: color-mix(in srgb, var(--accent-soft) 30%, var(--paper));
-}
-
-.panel-open #note-pane {
-  padding: 8px var(--gutter) 16px 11px;
-}
+#note-pane:focus { outline: none; }
 
 #note-pane .panel-top { margin-top: 0; }
 
@@ -703,17 +682,6 @@ html.is-resizing * {
   .panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
   .panel-scroll:hover { scrollbar-color: #94a3b8 transparent; }
   .panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
-}
-
-#panel-divider:hover,
-#panel-divider.is-dragging {
-  background: var(--accent);
-}
-
-html.is-resizing-rows,
-html.is-resizing-rows * {
-  cursor: row-resize;
-  user-select: none;
 }
 
 /* The note's close is a cross, because Close on the story above it means something else. */
@@ -1206,15 +1174,107 @@ line.is-edge.is-selected:not(.edge-hit) {
     max-height: 42vh;
   }
   .panel-open .panel-scroll { max-height: 42vh; }
-  /* Too short for two panes, so the note covers the story. The story stays laid out underneath, so it keeps its scroll. */
-  #panel.is-split { grid-template-rows: minmax(0, 1fr); }
-  #panel.is-split #panel-divider { display: none; }
-  #panel.is-split > .panel-scroll { grid-area: 1 / 1; }
-  #panel.is-split #story-pane { visibility: hidden; }
-  #panel.is-split #note-pane { margin-left: 0; background: var(--paper); border-left: 0; padding-left: var(--gutter); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto; }
   #camera { transition: none; }
 }
+
+/* ---- The note: inline in the story, or a peek card on the canvas ---- */
+
+/* Inline: the note opens right under what was clicked, a card or a paragraph, and the story flows around it.
+   It has the open card's rule and a lighter tint of its color, so it reads as that card's detail. */
+#note-pane[data-mode="inline"] {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  margin: 0 0 8px;
+  padding: 8px 12px 10px 11px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--paper));
+}
+
+/* Under a card the note is only its text. The card already names the part, its status, and its tooltip,
+   and the picture shows the connections, so the header, facts and links are left out. */
+#note-pane.under-card { padding-top: 2px; border-radius: 0 0 6px 0; }
+#note-pane.under-card > :is(.note-top, #note-lead) { display: none; }
+#note-pane[data-mode="inline"] > :is(#panel-facts, #panel-links, #panel-zoom) { display: none; }
+
+#note-pane[data-mode="inline"] #note-body {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+#note-pane[data-mode="inline"] #note-body pre { font-size: 12px; }
+
+.panel-body li.is-open .part-card:has(+ #note-pane) { border-radius: 0 6px 0 0; }
+
+/* The open card's chevron turns down, like a section that is open. */
+.panel-body li.is-open .part-card:has(+ #note-pane)::after {
+  color: var(--accent);
+  transform: translateY(-50%) rotate(90deg);
+}
+
+/* The parts list is a grid. Without a cap, a wide code block in the note would widen its column past the panel. */
+#panel-parts ol,
+.panel-body ol.parts { grid-template-columns: minmax(0, 1fr); }
+#panel-parts li:has(> #note-pane) { padding: 0 8px; }
+
+/* Peek: the note is a card on the canvas, held against its shape. The story keeps the whole panel.
+   The card moves with its shape past the canvas edge, so the canvas clips it rather than letting it cover the panel. */
+.stage-wrap { overflow: clip; }
+
+#note-pane[data-mode="peek"] {
+  position: absolute;
+  z-index: 1;
+  width: min(400px, calc(100% - 32px));
+  height: auto;
+  margin: 0;
+  padding: 10px 16px 16px;
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18), 0 0 0 1px var(--line);
+  animation: peek-in 140ms ease-out;
+}
+
+#note-pane[data-mode="peek"][data-place="below"] { width: min(440px, calc(100% - 32px)); }
+#note-pane[data-mode="peek"][data-place="corner"] { width: min(380px, calc(100% - 32px)); }
+
+@keyframes peek-in {
+  from { transform: scale(0.97); opacity: 0; }
+}
+
+/* A small triangle on the card's edge, pointing at the shape. */
+#peek-caret {
+  position: absolute;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border: 8px solid transparent;
+}
+
+#peek-caret[hidden] { display: none; }
+#peek-caret[data-side="right"] { border-right-color: var(--accent); transform: translate(-16px, -50%); }
+#peek-caret[data-side="left"] { border-left-color: var(--accent); transform: translate(0, -50%); }
+#peek-caret[data-side="below"] { border-bottom-color: var(--accent); transform: translate(-50%, -16px); }
+
+/* The card's place buttons sit in its header line. Only a peek card has them. */
+#peek-places { display: none; }
+
+#note-pane[data-mode="peek"] #peek-places {
+  display: inline-flex;
+  flex: none;
+}
+
+#peek-places button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+#peek-places svg { width: 14px; height: 14px; }
+#peek-places button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }

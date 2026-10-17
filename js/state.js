@@ -18,7 +18,9 @@ const app = {
     status: document.getElementById("status"),
     search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
-    panelDivider: document.getElementById("panel-divider"),
+    stage: document.querySelector(".stage-wrap"),
+    peekCaret: document.getElementById("peek-caret"),
+    peekPlaces: document.getElementById("peek-places"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
     legend: document.getElementById("legend"),
@@ -33,7 +35,7 @@ const app = {
     parts: document.getElementById("panel-parts"),
     close: document.getElementById("panel-close"),
   },
-  // The note pane, under the story. It shows the open part.
+  // The note pane. It shows the open part, inline in the story or as a peek card on the canvas.
   note: {
     pane: document.getElementById("note-pane"),
     kicker: document.getElementById("note-kicker"),
@@ -50,6 +52,8 @@ const app = {
   view: null,
   shownViewId: null,
   selectedInteraction: null,
+  // How the open note was opened: { mode: "inline" or "peek", place, anchor }. anchor is the story block it sits under.
+  noteHow: null,
   // The reader closed the story, so the next diagram does not open it again.
   storyHidden: false,
   renderToken: 0,

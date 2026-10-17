@@ -17,8 +17,8 @@ Rules that came from reading real explanations. Each says where it came from and
 ### Details open without hiding the big picture
 **Context:** Reading the story, the reader opened a part from a link. Its note replaced the story, so they lost their place and had to go back to keep reading.
 **Rule:** Opening a detail never hides the overall picture. The reader sees the story and the part's note at the same time, and the story stays where they left it.
-**How:** a part's note opens in a pane under the story. The story keeps its scroll, and its card for the open part is marked.
-**Example:** on the overview, clicking Handler for /posts/ in the story swapped the whole story for that handler's code. Now the code opens under the story, which still shows the paragraph the reader was on.
+**How:** a part's note opens inside the story, under the card or link that was clicked, or as a card on the canvas beside its shape. The story keeps its scroll either way ([ADR-053](decisions/053-inline-and-peek-notes.md)).
+**Example:** on the overview, clicking Handler for /posts/ in the story swapped the whole story for that handler's code. Now the code opens under that card, between the paragraphs the reader was on.
 
 ### Every part is introduced in the text
 **Context:** Under the story, a plain list, "Other parts, to open for detail", held the parts the story did not mention. Nobody read it, because a list of names says nothing about why each part is there.
@@ -29,8 +29,8 @@ Rules that came from reading real explanations. Each says where it came from and
 ### Show how parts belong together
 **Context:** The note opened under the story looked like a second, separate panel, though it was the detail of one card in the story.
 **Rule:** When one thing is a detail of another, the page shows the link with position, a border, or a shared color: a note and its part, an inner diagram and its shape, a step and its lesson. The reader should never have to guess what belongs to what.
-**How:** the open card and the note under it share a blue rule and tint, and the note's rule starts where the card's rule is, one step in.
-**Example:** "Your code, before" sat under the story at full width, with a plain gray line between them. Now it hangs under the Handler for /posts/ card, in the card's blue.
+**How:** an inline note sits directly under its card, with the card's blue rule and a lighter tint, and the card's › turns down. A peek card sits against its shape, with an arrow pointing at it.
+**Example:** "Your code, before" sat under the story at full width, with a plain gray line between them. Now it opens under the Handler for /posts/ card, as that card's lower half.
 
 ### The diagram shows how much each part matters
 **Context:** Every shape looked the same, so the reader could not tell which ones were central and which ones had something worth opening.

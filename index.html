@@ -70,11 +70,13 @@
       </div>
 
       <p id="status" role="status" aria-live="polite"></p>
+      <!-- Points from a peek note to its shape. -->
+      <div id="peek-caret" hidden></div>
     </section>
 
     <aside id="panel" hidden aria-hidden="true" aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
-      <!-- The story stays on top while a part's note opens under it, so opening a detail never hides the whole picture. -->
+      <!-- A part's note opens inline in the story or as a peek card on the canvas, so opening a detail never hides the whole picture. -->
       <section id="story-pane" class="panel-scroll" aria-label="Story">
         <div class="panel-top">
           <p id="panel-kicker" class="panel-kicker"></p>
@@ -88,11 +90,12 @@
           <ol></ol>
         </section>
       </section>
-      <div id="panel-divider" role="separator" aria-orientation="horizontal" aria-label="Resize the story and the note" title="Drag to resize" hidden></div>
-      <section id="note-pane" class="panel-scroll" aria-label="Note" hidden>
+      <!-- It waits here hidden. Under a card in the story it shows only its text, because the card names the part. -->
+      <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden>
         <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
         <div class="panel-top note-top">
           <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
+          <span id="peek-places" role="group" aria-label="Where the card sits"></span>
           <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
             <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"/></svg>
           </button>
@@ -157,7 +160,7 @@
     // The content file comes from ?src=, so one page can show any explanation. The engine starts after it, because js/state.js reads DIAGRAMS at once.
     // Export inlines these scripts in this order, so this list is the only one.
     (() => {
-      const engine = ["state", "camera", "highlight", "panel", "code", "mermaid-svg", "bind", "check", "nav", "export", "boot"].map((name) => `js/${name}.js`);
+      const engine = ["state", "camera", "highlight", "panel", "peek", "code", "mermaid-svg", "bind", "check", "nav", "export", "boot"].map((name) => `js/${name}.js`);
       const src = new URLSearchParams(location.search).get("src") || "diagrams.js";
       const fail = (text) => {
         document.getElementById("camera").textContent = text;

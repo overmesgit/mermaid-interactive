@@ -1,6 +1,6 @@
 # ADR-051 The note hangs under its card, with a compact header and thin scrollbars
 
-- Status: accepted
+- Status: superseded by [ADR-052](052-one-color-per-type.md) and [ADR-053](053-inline-and-peek-notes.md), apart from the thin scrollbars
 - Date: 2026-10-17
 - Supersedes: "Outlined in the diagram" on its own line, from [ADR-047](047-story-reading-cues.md)
 

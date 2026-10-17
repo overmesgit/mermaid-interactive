@@ -43,6 +43,7 @@ mermaid.initialize({
 wireTabs();
 wireCamera();
 wirePanel();
+wirePeek();
 runChecks();
 
 document.getElementById("copy").addEventListener("click", async () => {

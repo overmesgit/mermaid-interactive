@@ -37,6 +37,14 @@ function checkContent() {
       if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
     });
   });
+  // A link's title says how its note opens.
+  const isNoteHow = (title) => {
+    const words = title.trim().toLowerCase().split(/\s+/);
+    return words[0] === "inline" ? words.length === 1 : words[0] === "peek" && (words.length === 1 || (words.length === 2 && ["beside", "below", "corner"].includes(words[1])));
+  };
+  if (DIAGRAMS.notePlace !== undefined && !["beside", "below", "corner"].includes(DIAGRAMS.notePlace)) {
+    found.push({ text: `notePlace is "${DIAGRAMS.notePlace}". It takes "beside", "below", or "corner", so notes open beside their shapes instead.` });
+  }
   Object.entries(views).forEach(([viewId, view]) => {
     const say = (text, match) => found.push({ viewId, text: `${viewId}: ${text}`, match });
     if (view.viewId !== viewId) say(`its viewId is ${view.viewId}. It must equal its key.`);
@@ -89,6 +97,9 @@ function checkContent() {
         say(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
       }
     }
+    if (view.notePlace !== undefined && !["beside", "below", "corner"].includes(view.notePlace)) {
+      say(`notePlace is "${view.notePlace}". It takes "beside", "below", or "corner", so the note opens beside its shape instead.`);
+    }
     // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
     const texts = [
       ["the story", view.story],
@@ -101,7 +112,10 @@ function checkContent() {
       for (const [, name] of prose.matchAll(/\]\(~([^)\s]+)\)/g)) {
         if (!knownType(name)) say(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
       }
-      for (const [, key] of prose.matchAll(/\]\(#([^)\s]+)\)/g)) {
+      for (const [, key, title] of prose.matchAll(/\]\(#([^)\s]+)(?:\s+"([^"]*)")?\)/g)) {
+        if (title !== undefined && !isNoteHow(title)) {
+          say(`${where} links to #${key} with "${title}". A link's title is "inline", "peek", or "peek" with a place: "peek beside", "peek below", "peek corner".`);
+        }
         const isArrow = key.includes("->");
         const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
         if (known) continue;
@@ -114,7 +128,8 @@ function checkContent() {
     if (view.story) {
       const seen = partKeys(views[stepBefore.get(viewId)]);
       const story = String(view.story).replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
-      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)\)/g)].map(([, key]) => key));
+      // A link can carry a title that says how its note opens, like [API](#api "peek").
+      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)(?:\s+"[^"]*")?\)/g)].map(([, key]) => key));
       const hasDetail = (note) => Boolean(note.body || (note.facts && note.facts.length) || note.opensView);
       const left = [
         ...Object.entries(notes).filter(([id, note]) => hasDetail(note)).map(([id]) => id),

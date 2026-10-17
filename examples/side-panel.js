@@ -11,32 +11,32 @@ window.DIAGRAMS = {
       tab: "panel",
       parent: null,
       title: "Side panel",
-      summary: "The panel shows the diagram's story, a part's note under it, both, or neither.",
+      summary: "The panel shows the diagram's story. A part's note opens inside it, or as a card by the part's shape.",
       story: md`
         A reader should not have to click every shape to follow a diagram, so the panel opens on the diagram's [story](#Story). The story says what the picture shows, and links each part where it talks about it.
 
-        [Clicking a part](#Story->Both) opens its note under the story: [story and note](#Both). The story stays where the reader left it, so they can read the detail and go on reading without losing their place. [× or Esc](#Both->Story) closes the note.
+        [Clicking a part in the story](#Story->Inline) opens its note [right under the link or card](#Inline). The story flows around it and stays where the reader left it. [×, Esc, or the link again](#Inline->Story) closes the note.
 
-        Close on the story [hides the panel](#Hidden). A note opened then [fills the panel alone](#NoteOnly).
+        [Clicking a part in the picture](#Story->Peek) opens its note as [a card by the shape](#Peek "peek below"), because that is where the reader is looking.
 
-        Double-click Story and note to see which field of the content file fills which part of a note.
+        Close on the story [hides the panel](#Hidden). A part clicked in the picture [still opens its card](#Hidden->Peek).
+
+        Double-click Inline note to see which field of the content file fills which part of a note.
       `,
       chart: `stateDiagram-v2
-  state "Story and note" as Both
-  state "Note only" as NoteOnly
+  state "Inline note" as Inline
   [*] --> Story
-  Story --> Both: click a part
-  Both --> Story: × or Esc
-  Both --> NoteOnly: Close the story
-  NoteOnly --> Both: Story button
+  Story --> Inline: click a part in the story
+  Inline --> Story: ×, Esc, or the link again
+  Story --> Peek: click a part in the picture
+  Peek --> Story: × or Esc
   Story --> Hidden: Close
   Hidden --> Story: Story button
-  Hidden --> NoteOnly: click a part
-  NoteOnly --> Hidden: × or Esc`,
+  Hidden --> Peek: click a part in the picture`,
       nodeInteractions: {
         Story: {
           label: "Story",
-          tooltip: "Shown when nothing is selected: the diagram's story and a list of its parts.",
+          tooltip: "Shown when nothing is selected: the diagram's story, with a link to each part.",
           kicker: "Mode",
           body: md`
             The story comes from the view's \`story\` field, in markdown. It links each part where it talks about it, and a line of only links shows those parts as cards. A view with no story lists its parts instead.
@@ -45,27 +45,30 @@ window.DIAGRAMS = {
           `,
           facts: [["Field", "story"], ["Title", "the view's title"], ["Kicker", "Diagram, or Step n of m"]],
         },
-        Both: {
-          label: "Story and note",
-          tooltip: "The story on top, and one part's note under it. Double-click to see what fills a note.",
+        Inline: {
+          label: "Inline note",
+          tooltip: "The note opens inside the story, right under the card or link that was clicked. Double-click to see what fills a note.",
           kicker: "Mode",
           body: md`
-            A note explains one part of the picture. It opens on click, and the picture keeps its zoom and position, so the reader sees the part and its note together.
+            A note explains one part of the picture. Opened from the story, it sits right under the card or the paragraph that opened it, and the story flows around it. The picture keeps its zoom and position, so the reader sees the part and its note together.
 
-            The story stays on top and keeps its scroll, so opening a detail never hides the big picture. The story's card for the open part is marked. The divider between the two can be dragged.
+            Under a card the note shows only its text and code. The card already names the part and says what it is, and the picture shows what it connects to.
 
-            The links at the bottom of the note jump to the connected parts. A shape lists its arrows as In and Out. An arrow lists its From and To shapes.
+            A link's title can send its note to a card on the canvas instead: \`[API](#api "peek")\`.
           `,
-          facts: [["Opens on", "click, Tab and Enter, or a link"], ["Leaves with", "× or Esc"]],
+          facts: [["Opens on", "a card or link in the story"], ["Leaves with", "×, Esc, or the link again"]],
           opensView: "note",
         },
-        NoteOnly: {
-          label: "Note only",
-          tooltip: "The reader closed the story, then opened a part. The note fills the panel.",
+        Peek: {
+          label: "Peek",
+          tooltip: "The note is a card on the canvas, held against its shape.",
           kicker: "Mode",
           body: md`
-            On a narrow screen the note covers the story the same way, because the panel is too short for both. Closing the note shows the story again at the same place.
+            A click on the picture opens the note as a card by the shape, because that is where the reader is looking. The card sits beside the shape, below it, or in the corner. Its buttons let the reader move it, and the view's \`notePlace\` sets where it starts.
+
+            The card follows its shape as the reader pans and zooms. It shows the whole note: the header, the facts, and the links to connected parts.
           `,
+          facts: [["Opens on", "a click on the picture, or a link titled peek"], ["Places", "beside, below, corner"]],
         },
         Hidden: {
           label: "Hidden",
@@ -74,21 +77,20 @@ window.DIAGRAMS = {
           body: md`
             Some diagrams are wide, and the panel takes space from them. So Close on the story hides it, and it stays hidden while the reader moves to other diagrams.
 
-            A click on a part still opens its note, and closing the note hides the panel again.
+            A click on a part in the picture still opens its note as a card by the shape.
           `,
           facts: [["Back with", "the Story button"]],
         },
       },
       edgeInteractions: [
         ["*", "Story"],
-        arrow("Story", "Both", "Click a shape, an arrow, or a row in the list.", "The note opens under the story. Its title is the part's label, and its tooltip is the lead line."),
-        arrow("Both", "Story", "×, Esc, or a second click on the part in the story closes the note.", "Esc on the story then steps up to the parent diagram, if there is one.", [["Keys", "Esc"]]),
-        ["Both", "NoteOnly"],
-        ["NoteOnly", "Both"],
+        arrow("Story", "Inline", "Click a card or a link in the story.", "The note opens under it. A link titled peek opens a card on the canvas instead."),
+        arrow("Inline", "Story", "×, Esc, or a second click on the link closes the note.", "Esc on the story then steps up to the parent diagram, if there is one.", [["Keys", "Esc"]]),
+        arrow("Story", "Peek", "Click a shape or an arrow in the picture.", "The camera pans so the shape and its card both fit."),
+        ["Peek", "Story"],
         ["Story", "Hidden"],
         ["Hidden", "Story"],
-        ["Hidden", "NoteOnly"],
-        ["NoteOnly", "Hidden"],
+        arrow("Hidden", "Peek", "Click a shape or an arrow in the picture.", "The card opens on the canvas. The panel stays hidden."),
       ],
     },
     note: {

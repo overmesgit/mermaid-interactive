@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="c1e8141b" />
+  <meta name="engine-fingerprint" content="0b5a538a" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #0f172a;
@@ -609,33 +609,12 @@ html.is-resizing * {
   user-select: none;
 }
 
-/* The story on top, the open note under it, and a divider between them that sets the story's height. */
 #panel {
   display: grid;
   grid-template-rows: minmax(0, 1fr);
 }
 
-#panel.is-split {
-  grid-template-rows: minmax(120px, var(--story-height, 40%)) 8px minmax(160px, 1fr);
-}
-
-#panel-divider {
-  border-top: 1px solid var(--line);
-  background: var(--canvas);
-  cursor: row-resize;
-  touch-action: none;
-}
-
-/* The note is a detail of the part open in the story. So it hangs under that card: its rule starts where the card's rule is, and it has the card's color. */
-#note-pane {
-  margin-left: var(--gutter);
-  border-left: 3px solid var(--accent);
-  background: color-mix(in srgb, var(--accent-soft) 30%, var(--paper));
-}
-
-.panel-open #note-pane {
-  padding: 8px var(--gutter) 16px 11px;
-}
+#note-pane:focus { outline: none; }
 
 #note-pane .panel-top { margin-top: 0; }
 
@@ -710,17 +689,6 @@ html.is-resizing * {
   .panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
   .panel-scroll:hover { scrollbar-color: #94a3b8 transparent; }
   .panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
-}
-
-#panel-divider:hover,
-#panel-divider.is-dragging {
-  background: var(--accent);
-}
-
-html.is-resizing-rows,
-html.is-resizing-rows * {
-  cursor: row-resize;
-  user-select: none;
 }
 
 /* The note's close is a cross, because Close on the story above it means something else. */
@@ -1213,18 +1181,110 @@ line.is-edge.is-selected:not(.edge-hit) {
     max-height: 42vh;
   }
   .panel-open .panel-scroll { max-height: 42vh; }
-  /* Too short for two panes, so the note covers the story. The story stays laid out underneath, so it keeps its scroll. */
-  #panel.is-split { grid-template-rows: minmax(0, 1fr); }
-  #panel.is-split #panel-divider { display: none; }
-  #panel.is-split > .panel-scroll { grid-area: 1 / 1; }
-  #panel.is-split #story-pane { visibility: hidden; }
-  #panel.is-split #note-pane { margin-left: 0; background: var(--paper); border-left: 0; padding-left: var(--gutter); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto; }
   #camera { transition: none; }
 }
+
+/* ---- The note: inline in the story, or a peek card on the canvas ---- */
+
+/* Inline: the note opens right under what was clicked, a card or a paragraph, and the story flows around it.
+   It has the open card's rule and a lighter tint of its color, so it reads as that card's detail. */
+#note-pane[data-mode="inline"] {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  margin: 0 0 8px;
+  padding: 8px 12px 10px 11px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--paper));
+}
+
+/* Under a card the note is only its text. The card already names the part, its status, and its tooltip,
+   and the picture shows the connections, so the header, facts and links are left out. */
+#note-pane.under-card { padding-top: 2px; border-radius: 0 0 6px 0; }
+#note-pane.under-card > :is(.note-top, #note-lead) { display: none; }
+#note-pane[data-mode="inline"] > :is(#panel-facts, #panel-links, #panel-zoom) { display: none; }
+
+#note-pane[data-mode="inline"] #note-body {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+#note-pane[data-mode="inline"] #note-body pre { font-size: 12px; }
+
+.panel-body li.is-open .part-card:has(+ #note-pane) { border-radius: 0 6px 0 0; }
+
+/* The open card's chevron turns down, like a section that is open. */
+.panel-body li.is-open .part-card:has(+ #note-pane)::after {
+  color: var(--accent);
+  transform: translateY(-50%) rotate(90deg);
+}
+
+/* The parts list is a grid. Without a cap, a wide code block in the note would widen its column past the panel. */
+#panel-parts ol,
+.panel-body ol.parts { grid-template-columns: minmax(0, 1fr); }
+#panel-parts li:has(> #note-pane) { padding: 0 8px; }
+
+/* Peek: the note is a card on the canvas, held against its shape. The story keeps the whole panel.
+   The card moves with its shape past the canvas edge, so the canvas clips it rather than letting it cover the panel. */
+.stage-wrap { overflow: clip; }
+
+#note-pane[data-mode="peek"] {
+  position: absolute;
+  z-index: 1;
+  width: min(400px, calc(100% - 32px));
+  height: auto;
+  margin: 0;
+  padding: 10px 16px 16px;
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18), 0 0 0 1px var(--line);
+  animation: peek-in 140ms ease-out;
+}
+
+#note-pane[data-mode="peek"][data-place="below"] { width: min(440px, calc(100% - 32px)); }
+#note-pane[data-mode="peek"][data-place="corner"] { width: min(380px, calc(100% - 32px)); }
+
+@keyframes peek-in {
+  from { transform: scale(0.97); opacity: 0; }
+}
+
+/* A small triangle on the card's edge, pointing at the shape. */
+#peek-caret {
+  position: absolute;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border: 8px solid transparent;
+}
+
+#peek-caret[hidden] { display: none; }
+#peek-caret[data-side="right"] { border-right-color: var(--accent); transform: translate(-16px, -50%); }
+#peek-caret[data-side="left"] { border-left-color: var(--accent); transform: translate(0, -50%); }
+#peek-caret[data-side="below"] { border-bottom-color: var(--accent); transform: translate(-50%, -16px); }
+
+/* The card's place buttons sit in its header line. Only a peek card has them. */
+#peek-places { display: none; }
+
+#note-pane[data-mode="peek"] #peek-places {
+  display: inline-flex;
+  flex: none;
+}
+
+#peek-places button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+#peek-places svg { width: 14px; height: 14px; }
+#peek-places button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1292,11 +1352,13 @@ line.is-edge.is-selected:not(.edge-hit) {
       </div>
 
       <p id="status" role="status" aria-live="polite"></p>
+      <!-- Points from a peek note to its shape. -->
+      <div id="peek-caret" hidden=""></div>
     </section>
 
     <aside id="panel" hidden="" aria-hidden="true" aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
-      <!-- The story stays on top while a part's note opens under it, so opening a detail never hides the whole picture. -->
+      <!-- A part's note opens inline in the story or as a peek card on the canvas, so opening a detail never hides the whole picture. -->
       <section id="story-pane" class="panel-scroll" aria-label="Story">
         <div class="panel-top">
           <p id="panel-kicker" class="panel-kicker"></p>
@@ -1310,11 +1372,12 @@ line.is-edge.is-selected:not(.edge-hit) {
           <ol></ol>
         </section>
       </section>
-      <div id="panel-divider" role="separator" aria-orientation="horizontal" aria-label="Resize the story and the note" title="Drag to resize" hidden=""></div>
-      <section id="note-pane" class="panel-scroll" aria-label="Note" hidden="">
+      <!-- It waits here hidden. Under a card in the story it shows only its text, because the card names the part. -->
+      <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden="">
         <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
         <div class="panel-top note-top">
           <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
+          <span id="peek-places" role="group" aria-label="Where the card sits"></span>
           <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
             <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle><circle cx="8" cy="8" r="1.4" fill="currentColor"></circle><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"></path></svg>
           </button>
@@ -1427,7 +1490,9 @@ const app = {
     status: document.getElementById("status"),
     search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
-    panelDivider: document.getElementById("panel-divider"),
+    stage: document.querySelector(".stage-wrap"),
+    peekCaret: document.getElementById("peek-caret"),
+    peekPlaces: document.getElementById("peek-places"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
     legend: document.getElementById("legend"),
@@ -1442,7 +1507,7 @@ const app = {
     parts: document.getElementById("panel-parts"),
     close: document.getElementById("panel-close"),
   },
-  // The note pane, under the story. It shows the open part.
+  // The note pane. It shows the open part, inline in the story or as a peek card on the canvas.
   note: {
     pane: document.getElementById("note-pane"),
     kicker: document.getElementById("note-kicker"),
@@ -1459,6 +1524,8 @@ const app = {
   view: null,
   shownViewId: null,
   selectedInteraction: null,
+  // How the open note was opened: { mode: "inline" or "peek", place, anchor }. anchor is the story block it sits under.
+  noteHow: null,
   // The reader closed the story, so the next diagram does not open it again.
   storyHidden: false,
   renderToken: 0,
@@ -1856,9 +1923,6 @@ function applySearch() {
 const PANEL_MIN = 240;
 const PANEL_GAP = 280;
 let panelWidth = 340;
-// The story and the note each keep at least this height when the divider is dragged. Until then the story takes 40% of the panel.
-const STORY_MIN = 120;
-const NOTE_MIN = 160;
 
 function safeHref(href) {
   try {
@@ -1909,7 +1973,7 @@ function appendInline(parent, tokens) {
       }
       const part = linkedPart(token.href);
       if (part) {
-        const button = partButton(part, "part-link");
+        const button = partButton(part, "part-link", noteHow(token.title));
         // A link to a part with a type has that type's color, like the part in the picture.
         if (typeIndex(part.type) >= 0) button.classList.add("type-text", `type-${typeIndex(part.type)}`);
         appendInline(button, token.tokens);
@@ -1972,7 +2036,7 @@ function appendBlock(parent, token) {
   if (token.type === "paragraph") {
     const parts = cardParts(token);
     if (parts) {
-      parts.forEach((part) => appendPartCard(parent, part));
+      parts.forEach(({ part, how }) => appendPartCard(parent, part, how));
       return;
     }
     const p = document.createElement("p");
@@ -2068,18 +2132,83 @@ function renderLinks(interaction) {
   });
 }
 
-// The panel shows the story unless the reader hid it, and the open part's note under it. With neither, the panel hides.
+// The panel shows the story unless the reader hid it. A note opened inline sits in the story, so it shows the story too.
+// A peek note sits on the canvas, so with the story hidden the panel hides.
 function layoutPanel() {
-  const story = !app.storyHidden;
-  const note = Boolean(app.selectedInteraction);
+  const how = app.noteHow;
+  const inline = how?.mode === "inline";
+  const story = !app.storyHidden || inline;
+  placeNote(how);
   app.panel.pane.hidden = !story;
-  app.note.pane.hidden = !note;
-  app.els.panelDivider.hidden = !(story && note);
-  app.els.panel.classList.toggle("is-split", story && note);
-  app.els.panel.hidden = !(story || note);
-  app.els.panel.setAttribute("aria-hidden", String(!(story || note)));
-  app.els.workspace.classList.toggle("panel-open", story || note);
+  app.els.panel.hidden = !story;
+  app.els.panel.setAttribute("aria-hidden", String(!story));
+  app.els.workspace.classList.toggle("panel-open", story);
   app.els.storyOpen.setAttribute("aria-pressed", String(story));
+  if (!how) return;
+  if (inline) requestAnimationFrame(scrollInlineNote);
+  else openPeek(how.place);
+}
+
+// Inline puts the note right under what was clicked: in a card's list item, or after the paragraph with the link.
+// Peek puts it on the canvas. A closed note goes back to the panel, where it waits hidden.
+function placeNote(how) {
+  const pane = app.note.pane;
+  pane.hidden = !how;
+  pane.dataset.mode = how ? how.mode : "";
+  pane.classList.toggle("under-card", Boolean(how?.anchor?.matches("li[data-part]")));
+  pane.style.left = pane.style.top = pane.style.maxHeight = "";
+  hidePeekCaret();
+  if (!how) {
+    if (pane.parentElement !== app.els.panel) app.els.panel.append(pane);
+  } else if (how.mode === "inline") {
+    if (how.anchor.matches("li")) how.anchor.append(pane);
+    else how.anchor.after(pane);
+  } else app.els.stage.append(pane);
+}
+
+// The block a story link belongs to: its card, or the paragraph or list item it sits in.
+function anchorOf(button) {
+  return button.closest("li[data-part]") || button.closest("p, li, blockquote, h3, h4, h5, h6");
+}
+
+// The part's card in the story, or in the list under it. Back and Forward reopen an inline note there.
+function cardFor(interaction) {
+  const key = partKey(interaction);
+  return [...app.panel.pane.querySelectorAll("li[data-part]")].find((li) => li.dataset.part === key && !li.closest("#note-pane")) || null;
+}
+
+// A link's title says how its note opens: "inline", "peek", or "peek below". With no title the place the link sits decides.
+function noteHow(title) {
+  const words = String(title || "").trim().toLowerCase().split(/\s+/);
+  const mode = NOTE_MODES.includes(words[0]) ? words[0] : null;
+  const place = mode === "peek" && PEEK_PLACES.includes(words[1]) ? words[1] : null;
+  return { mode, place };
+}
+
+// A link in the story opens inline under itself. A link in a note, a click on the picture, and a part reopened from history with no card open as a peek.
+function resolveHow(interaction, how = {}) {
+  const from = how.from;
+  const inStory = from && from.closest("#story-pane") && !from.closest("#note-pane");
+  let mode = how.mode || (inStory ? "inline" : "peek");
+  let anchor = null;
+  if (mode === "inline") anchor = inStory ? anchorOf(from) : cardFor(interaction);
+  if (!anchor) mode = "peek";
+  return { mode, place: how.place || null, anchor };
+}
+
+// The open card and its note come into view together, card at the top when both do not fit.
+function scrollInlineNote() {
+  const pane = app.note.pane;
+  if (pane.dataset.mode !== "inline") return;
+  const scroller = app.panel.pane;
+  const block = app.noteHow?.anchor || pane;
+  const view = scroller.getBoundingClientRect();
+  const top = block.getBoundingClientRect().top;
+  const bottom = pane.getBoundingClientRect().bottom;
+  if (top >= view.top && bottom <= view.bottom) return;
+  const room = view.bottom - view.top;
+  const delta = bottom - top <= room ? (top < view.top ? top - view.top - 8 : bottom - view.bottom + 8) : top - view.top - 8;
+  scroller.scrollBy({ top: delta, behavior: "smooth" });
 }
 
 // The story's card for the open part is marked, so the reader sees where the note belongs in the story.
@@ -2140,21 +2269,21 @@ function linkedPart(href) {
 function cardParts(paragraph) {
   const tokens = (paragraph.tokens || []).filter((token) => !((token.type === "text" && !token.text.trim()) || token.type === "br"));
   const parts = tokens.map((token) => (token.type === "link" ? linkedPart(token.href) : null));
-  return parts.length && parts.every(Boolean) ? parts : null;
+  return parts.length && parts.every(Boolean) ? parts.map((part, i) => ({ part, how: noteHow(tokens[i].title) })) : null;
 }
 
 // Every way to a part opens its note on click and lights it in the picture on hover.
-// In the story, a second click on the open part closes its note, so the story can be read alone again.
-function partButton(interaction, className) {
+// A second click on the link or card whose note is open closes it, so the story can be read alone again.
+function partButton(interaction, className, how = {}) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
   button.addEventListener("click", () => {
     const open = app.selectedInteraction && partKey(app.selectedInteraction) === partKey(interaction);
-    if (open && button.closest("#story-pane")) {
+    if (open && app.noteHow?.anchor && app.noteHow.anchor === anchorOf(button)) {
       closeNote();
       recordHistory();
-    } else openPanel(interaction);
+    } else openPanel(interaction, { ...how, from: button });
   });
   button.addEventListener("pointerenter", () => highlightAround(interaction));
   button.addEventListener("pointerleave", applySearch);
@@ -2162,10 +2291,10 @@ function partButton(interaction, className) {
 }
 
 // The part's name, its status, and its tooltip. A part with more to read has the same dot as in the picture.
-function partItem(interaction) {
+function partItem(interaction, how) {
   const li = document.createElement("li");
   li.dataset.part = partKey(interaction);
-  const button = partButton(interaction, "part-card");
+  const button = partButton(interaction, "part-card", how);
   if (hasMore(interaction)) button.classList.add("has-more");
   const name = document.createElement("strong");
   name.textContent = interaction.label;
@@ -2179,14 +2308,14 @@ function partItem(interaction) {
 }
 
 // Cards on lines next to each other share one list, so they sit as close as they do in the parts list.
-function appendPartCard(parent, interaction) {
+function appendPartCard(parent, interaction, how) {
   let list = parent.lastElementChild;
   if (!list || !list.matches("ol.parts")) {
     list = document.createElement("ol");
     list.className = "parts";
     parent.append(list);
   }
-  list.append(partItem(interaction));
+  list.append(partItem(interaction, how));
 }
 
 // A view with no story lists its shapes, then its arrows, in the order the content file lists them.
@@ -2203,6 +2332,8 @@ function renderParts() {
 // The story of the whole diagram, and a list of its parts. It is drawn once per view, so opening a note keeps its place.
 function openStory() {
   const { panel, view } = app;
+  // Drawing the story again would take an inline note with it.
+  if (app.note.pane.parentElement !== app.els.panel) app.els.panel.append(app.note.pane);
   const step = lessonStep();
   const onStep = step && step.lesson[step.index] === view.viewId;
   panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
@@ -2217,9 +2348,11 @@ function openStory() {
   layoutPanel();
 }
 
-// The note fills only its own pane, under the story, so the story keeps its place.
-function openPanel(interaction) {
+// The note opens inline under what was clicked in the story, or as a peek card by its shape. Either way the story keeps its place.
+// `how` is { mode, place, from }: from a link's title, and the button that was clicked.
+function openPanel(interaction, how) {
   app.selectedInteraction = interaction;
+  app.noteHow = resolveHow(interaction, how);
   const note = app.note;
   note.title.textContent = interaction.label;
   const status = partStatus(interaction);
@@ -2240,7 +2373,7 @@ function openPanel(interaction) {
   layoutPanel();
   note.pane.scrollTop = 0;
   markOpenCard();
-  note.close.focus();
+  note.pane.focus({ preventScroll: true });
   const selected = markSelected(interaction);
   markStepFlow();
   recordHistory();
@@ -2250,13 +2383,14 @@ function openPanel(interaction) {
 // Closes the note and clears the selection. The story stays as it was.
 function closeNote() {
   app.selectedInteraction = null;
+  app.noteHow = null;
   markSelected(null);
   markStepFlow();
   markOpenCard();
   layoutPanel();
 }
 
-// Close on the story hides it until the Story button. An open note then fills the panel.
+// Close on the story hides it until the Story button. A peek note stays on the canvas.
 function closeStory() {
   app.storyHidden = true;
   layoutPanel();
@@ -2290,39 +2424,6 @@ function setPanelWidth(width) {
   app.els.workspace.style.setProperty("--panel-width", `${panelWidth}px`);
 }
 
-// The divider between the story and the note sets how tall the story is. The note takes the rest.
-function setStoryHeight(height) {
-  const max = app.els.panel.clientHeight - NOTE_MIN - app.els.panelDivider.offsetHeight;
-  app.els.panel.style.setProperty("--story-height", `${Math.round(Math.max(STORY_MIN, Math.min(max, height)))}px`);
-}
-
-function wireDivider() {
-  const handle = app.els.panelDivider;
-  handle.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    handle.setPointerCapture(event.pointerId);
-    handle.classList.add("is-dragging");
-    document.documentElement.classList.add("is-resizing-rows");
-    const startY = event.clientY;
-    const startHeight = app.panel.pane.offsetHeight;
-
-    function move(ev) {
-      setStoryHeight(startHeight + (ev.clientY - startY));
-    }
-    function end() {
-      handle.removeEventListener("pointermove", move);
-      handle.removeEventListener("pointerup", end);
-      handle.removeEventListener("pointercancel", end);
-      handle.classList.remove("is-dragging");
-      document.documentElement.classList.remove("is-resizing-rows");
-    }
-    handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", end);
-    handle.addEventListener("pointercancel", end);
-  });
-}
-
 function wirePanel() {
   const handle = app.els.panelResize;
   handle.addEventListener("pointerdown", (event) => {
@@ -2351,7 +2452,6 @@ function wirePanel() {
     handle.addEventListener("pointercancel", end);
   });
 
-  wireDivider();
   app.panel.close.addEventListener("click", closeStory);
   app.note.close.addEventListener("click", () => {
     closeNote();
@@ -2371,6 +2471,177 @@ function wirePanel() {
       show(app.selectedInteraction.opensView, app.selectedInteraction);
     }
   });
+}
+</script>
+<script>// A peek note: a card on the canvas, held against its part's shape, so the reader sees the note and the shape together.
+// It sits beside the shape, below it, or in the corner. A view sets its default with notePlace, and the card's buttons let the reader pick another.
+
+const NOTE_MODES = ["inline", "peek"];
+const PEEK_PLACES = ["beside", "below", "corner"];
+const PEEK_GAP = 14;
+
+const PEEK_ICONS = {
+  beside: ["Beside the shape", '<rect x="1.5" y="5" width="5" height="6" rx="1" /><rect x="8.5" y="2.5" width="6" height="11" rx="1" />'],
+  below: ["Below the shape", '<rect x="4.5" y="1.5" width="7" height="4.5" rx="1" /><rect x="2" y="8" width="12" height="6.5" rx="1" />'],
+  corner: ["In the corner", '<rect x="1.5" y="2.5" width="13" height="11" rx="1" /><path d="M9 2.5v7h5.5" />'],
+};
+
+// The reader's pick, per view, for this visit only.
+const pickedPlaces = new Map();
+
+// Which side of the shape the card takes. It is chosen when the card opens and kept while the camera moves, so the card does not jump.
+let peekSide = "right";
+
+// The reader's pick wins, then the link's place, then the view's, then the explanation's.
+function peekPlace(linkPlace) {
+  const viewId = app.view?.viewId;
+  const choices = [pickedPlaces.get(viewId), linkPlace, app.view?.notePlace, DIAGRAMS.notePlace];
+  return choices.find((place) => PEEK_PLACES.includes(place)) || "beside";
+}
+
+// The canvas between the islands at the top and the bottom, in the stage's own coordinates.
+function peekArea() {
+  const stage = app.els.stage.getBoundingClientRect();
+  return {
+    left: 16,
+    right: stage.width - 16,
+    top: document.querySelector(".float-top").getBoundingClientRect().bottom - stage.top + 12,
+    bottom: document.querySelector(".float-bottom").getBoundingClientRect().top - stage.top - 12,
+  };
+}
+
+// The open part's shape, in the stage's coordinates. It is read from the picture, so it moves with the camera.
+function shapeBox() {
+  const box = unionRect(wiredElements(app.selectedInteraction));
+  if (!box) return null;
+  const stage = app.els.stage.getBoundingClientRect();
+  return { left: box.left - stage.left, right: box.right - stage.left, top: box.top - stage.top, bottom: box.bottom - stage.top };
+}
+
+function hidePeekCaret() {
+  app.els.peekCaret.hidden = true;
+}
+
+// Opening, or a new place: choose the side, size the card, then pan so the shape and the card both fit.
+function openPeek(linkPlace) {
+  const pane = app.note.pane;
+  const place = peekPlace(linkPlace);
+  pane.dataset.place = place;
+  app.els.peekPlaces.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.place === place)));
+  const area = peekArea();
+  const height = area.bottom - area.top;
+  const shape = shapeBox();
+  if (place === "corner" || !shape) {
+    pane.style.maxHeight = `${Math.round(height)}px`;
+    positionPeek();
+    clearShapeFromCorner();
+    return;
+  }
+  if (place === "below") {
+    peekSide = "below";
+    pane.style.maxHeight = `${Math.round(Math.max(200, Math.min(520, height - (shape.bottom - shape.top) - PEEK_GAP)))}px`;
+  } else {
+    // Right of the shape reads first. Left when the right has less room on screen.
+    peekSide = area.right - shape.right >= shape.left - area.left ? "right" : "left";
+    pane.style.maxHeight = `${Math.round(Math.min(height, 640))}px`;
+  }
+  positionPeek();
+  fitShapeAndCard();
+}
+
+// Puts the card against its shape on the chosen side. Nothing is clamped, so the card stays attached when the shape is panned away.
+function positionPeek() {
+  const pane = app.note.pane;
+  const caret = app.els.peekCaret;
+  if (pane.dataset.mode !== "peek" || pane.hidden || !app.selectedInteraction) return;
+  const area = peekArea();
+  const width = pane.offsetWidth;
+  const shape = shapeBox();
+  if (pane.dataset.place === "corner" || !shape) {
+    pane.style.left = `${Math.round(area.right - width)}px`;
+    pane.style.top = `${Math.round(area.top)}px`;
+    caret.hidden = true;
+    return;
+  }
+  let left;
+  let top;
+  let caretX;
+  let caretY;
+  if (peekSide === "below") {
+    const middle = (shape.left + shape.right) / 2;
+    left = middle - width / 2;
+    top = shape.bottom + PEEK_GAP;
+    caretX = middle;
+    caretY = top;
+  } else {
+    left = peekSide === "right" ? shape.right + PEEK_GAP : shape.left - PEEK_GAP - width;
+    top = shape.top - 12;
+    caretX = peekSide === "right" ? left : left + width;
+    caretY = Math.min((shape.top + shape.bottom) / 2, top + 40);
+  }
+  pane.style.left = `${Math.round(left)}px`;
+  pane.style.top = `${Math.round(top)}px`;
+  caret.dataset.side = peekSide;
+  caret.style.left = `${Math.round(caretX)}px`;
+  caret.style.top = `${Math.round(caretY)}px`;
+  caret.hidden = false;
+}
+
+// Pans the least distance that brings the shape and its card onto the canvas. When both do not fit, the shape's top comes first.
+// The card's own box is used, not its screen box, because it is still scaling in.
+function fitShapeAndCard() {
+  const pane = app.note.pane;
+  const shape = shapeBox();
+  if (!shape) return;
+  const area = peekArea();
+  const left = Math.min(shape.left, pane.offsetLeft);
+  const right = Math.max(shape.right, pane.offsetLeft + pane.offsetWidth);
+  const top = Math.min(shape.top, pane.offsetTop);
+  const bottom = Math.max(shape.bottom, pane.offsetTop + pane.offsetHeight);
+  let dx = 0;
+  let dy = 0;
+  if (right > area.right) dx = area.right - right;
+  if (left + dx < area.left) dx = area.left - left;
+  if (bottom > area.bottom) dy = area.bottom - bottom;
+  if (top + dy < area.top) dy = area.top - top;
+  if (!dx && !dy) return;
+  app.cam.x += dx;
+  app.cam.y += dy;
+  // The camera watcher moves the card with it.
+  applyCam();
+}
+
+// The corner card stays put, so a shape under it pans left until it is clear.
+function clearShapeFromCorner() {
+  const pane = app.note.pane;
+  const shape = shapeBox();
+  if (!shape) return;
+  const cardLeft = pane.offsetLeft - 12;
+  const cardBottom = pane.offsetTop + pane.offsetHeight + 12;
+  if (shape.right < cardLeft || shape.top > cardBottom) return;
+  app.cam.x -= shape.right - cardLeft;
+  applyCam();
+}
+
+function wirePeek() {
+  PEEK_PLACES.forEach((place) => {
+    const [label, icon] = PEEK_ICONS[place];
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "icon";
+    button.dataset.place = place;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.innerHTML = `<svg aria-hidden="true" viewBox="0 0 16 16">${icon}</svg>`;
+    button.addEventListener("click", () => {
+      pickedPlaces.set(app.view.viewId, place);
+      openPeek();
+    });
+    app.els.peekPlaces.append(button);
+  });
+  // The camera sets its transform on #camera, so watching that attribute catches every pan and zoom.
+  new MutationObserver(positionPeek).observe(app.els.camera, { attributes: true, attributeFilter: ["style"] });
+  new ResizeObserver(positionPeek).observe(app.els.stage);
 }
 </script>
 <script>// Code files a note names with ~~~go file=api/session.go lines=40-58. The panel shows those lines, and the header opens the whole file.
@@ -2968,6 +3239,14 @@ function checkContent() {
       if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
     });
   });
+  // A link's title says how its note opens.
+  const isNoteHow = (title) => {
+    const words = title.trim().toLowerCase().split(/\s+/);
+    return words[0] === "inline" ? words.length === 1 : words[0] === "peek" && (words.length === 1 || (words.length === 2 && ["beside", "below", "corner"].includes(words[1])));
+  };
+  if (DIAGRAMS.notePlace !== undefined && !["beside", "below", "corner"].includes(DIAGRAMS.notePlace)) {
+    found.push({ text: `notePlace is "${DIAGRAMS.notePlace}". It takes "beside", "below", or "corner", so notes open beside their shapes instead.` });
+  }
   Object.entries(views).forEach(([viewId, view]) => {
     const say = (text, match) => found.push({ viewId, text: `${viewId}: ${text}`, match });
     if (view.viewId !== viewId) say(`its viewId is ${view.viewId}. It must equal its key.`);
@@ -3020,6 +3299,9 @@ function checkContent() {
         say(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
       }
     }
+    if (view.notePlace !== undefined && !["beside", "below", "corner"].includes(view.notePlace)) {
+      say(`notePlace is "${view.notePlace}". It takes "beside", "below", or "corner", so the note opens beside its shape instead.`);
+    }
     // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
     const texts = [
       ["the story", view.story],
@@ -3032,7 +3314,10 @@ function checkContent() {
       for (const [, name] of prose.matchAll(/\]\(~([^)\s]+)\)/g)) {
         if (!knownType(name)) say(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
       }
-      for (const [, key] of prose.matchAll(/\]\(#([^)\s]+)\)/g)) {
+      for (const [, key, title] of prose.matchAll(/\]\(#([^)\s]+)(?:\s+"([^"]*)")?\)/g)) {
+        if (title !== undefined && !isNoteHow(title)) {
+          say(`${where} links to #${key} with "${title}". A link's title is "inline", "peek", or "peek" with a place: "peek beside", "peek below", "peek corner".`);
+        }
         const isArrow = key.includes("->");
         const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
         if (known) continue;
@@ -3045,7 +3330,8 @@ function checkContent() {
     if (view.story) {
       const seen = partKeys(views[stepBefore.get(viewId)]);
       const story = String(view.story).replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
-      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)\)/g)].map(([, key]) => key));
+      // A link can carry a title that says how its note opens, like [API](#api "peek").
+      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)(?:\s+"[^"]*")?\)/g)].map(([, key]) => key));
       const hasDetail = (note) => Boolean(note.body || (note.facts && note.facts.length) || note.opensView);
       const left = [
         ...Object.entries(notes).filter(([id, note]) => hasDetail(note)).map(([id]) => id),
@@ -3218,8 +3504,11 @@ function currentHash() {
 function recordHistory() {
   const next = historyHash();
   if (currentHash() === next) return;
-  if (app.replaying || !location.hash) history.replaceState(null, "", next);
-  else history.pushState(null, "", next);
+  // The entry keeps how the note was opened, so Back reopens it the same way. The hash alone opens it as a peek.
+  const how = app.noteHow;
+  const state = how ? { note: { mode: how.mode, place: how.place } } : null;
+  if (app.replaying || !location.hash) history.replaceState(state, "", next);
+  else history.pushState(state, "", next);
 }
 
 // `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
@@ -3275,7 +3564,7 @@ async function openFromHash() {
   try {
     if (!app.view || app.view.viewId !== viewId) await show(viewId);
     const part = partId ? linkedPart("#" + partId) : null;
-    if (part) openPanel(part);
+    if (part) openPanel(part, history.state?.note);
     else if (app.selectedInteraction) closeNote();
   } finally {
     app.replaying = false;
@@ -3517,6 +3806,7 @@ mermaid.initialize({
 wireTabs();
 wireCamera();
 wirePanel();
+wirePeek();
 runChecks();
 
 document.getElementById("copy").addEventListener("click", async () => {

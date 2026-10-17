@@ -57,8 +57,11 @@ function currentHash() {
 function recordHistory() {
   const next = historyHash();
   if (currentHash() === next) return;
-  if (app.replaying || !location.hash) history.replaceState(null, "", next);
-  else history.pushState(null, "", next);
+  // The entry keeps how the note was opened, so Back reopens it the same way. The hash alone opens it as a peek.
+  const how = app.noteHow;
+  const state = how ? { note: { mode: how.mode, place: how.place } } : null;
+  if (app.replaying || !location.hash) history.replaceState(state, "", next);
+  else history.pushState(state, "", next);
 }
 
 // `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
@@ -114,7 +117,7 @@ async function openFromHash() {
   try {
     if (!app.view || app.view.viewId !== viewId) await show(viewId);
     const part = partId ? linkedPart("#" + partId) : null;
-    if (part) openPanel(part);
+    if (part) openPanel(part, history.state?.note);
     else if (app.selectedInteraction) closeNote();
   } finally {
     app.replaying = false;
