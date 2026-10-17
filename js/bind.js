@@ -45,6 +45,7 @@ function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
   if (WEIGHTS.includes(interaction.weight)) shape.classList.add(`weight-${interaction.weight}`);
+  if (typeIndex(interaction.type) >= 0) shape.classList.add(`type-${typeIndex(interaction.type)}`);
   makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
   else if (hasMore(interaction)) addMoreDot(shape);

@@ -72,6 +72,7 @@ async function show(viewId, fromInteraction) {
   const origin = wiredElements(fromInteraction);
   app.view = view;
   app.stack = pathTo(view);
+  closeNote();
   openStory();
   hideTooltip();
   renderChrome();
@@ -114,7 +115,7 @@ async function openFromHash() {
     if (!app.view || app.view.viewId !== viewId) await show(viewId);
     const part = partId ? linkedPart("#" + partId) : null;
     if (part) openPanel(part);
-    else if (app.selectedInteraction) openStory();
+    else if (app.selectedInteraction) closeNote();
   } finally {
     app.replaying = false;
   }

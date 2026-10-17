@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="1d5c6d64" />
+  <meta name="engine-fingerprint" content="482ed6d9" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #0f172a;
@@ -30,6 +30,15 @@
   --removed-soft: #f1f5f9;
   --problem: #b91c1c;
   --problem-soft: #fee2e2;
+  /* Type colors, given in order to the types a content file names. None is a status color or the selection blue, and each ink passes 4.5:1 on its soft fill. */
+  --type-0: #6d28d9;
+  --type-0-soft: #ede9fe;
+  --type-1: #0f766e;
+  --type-1-soft: #ccfbf1;
+  --type-2: #be185d;
+  --type-2-soft: #fce7f3;
+  --type-3: #0369a1;
+  --type-3-soft: #e0f2fe;
   --shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -319,8 +328,46 @@ button.icon:hover { color: var(--ink); }
 .status-chip.status-removed { background: var(--removed-soft); color: var(--removed); }
 .status-chip.status-problem { background: var(--problem-soft); color: var(--problem); }
 
-#panel-kicker .status-chip { margin-right: 8px; letter-spacing: 0.04em; }
+.panel-kicker .status-chip { margin-right: 8px; letter-spacing: 0.04em; }
 .part-card .status-chip { margin-left: 8px; }
+
+/* Words in the text written as a type, in that type's color, so the text and the diagram use one color language. */
+.type-text,
+.type-chip {
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.type-chip { font-size: 12px; }
+
+.type-0:is(.type-text, .type-chip) { background: var(--type-0-soft); color: var(--type-0); }
+.type-1:is(.type-text, .type-chip) { background: var(--type-1-soft); color: var(--type-1); }
+.type-2:is(.type-text, .type-chip) { background: var(--type-2-soft); color: var(--type-2); }
+.type-3:is(.type-text, .type-chip) { background: var(--type-3-soft); color: var(--type-3); }
+
+.type-text code { color: inherit; }
+
+/* A table lines up values that are compared. It scrolls sideways instead of squeezing the columns. */
+.panel-body .table-wrap { margin: 8px 0; overflow-x: auto; }
+
+.panel-body table {
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.panel-body :is(th, td) {
+  padding: 3px 16px 3px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.panel-body th { color: var(--muted); font-size: 12px; font-weight: 600; }
+
+.panel-body tr:last-child td { border-bottom: 0; }
 
 .camera-controls .group { margin-left: 8px; }
 
@@ -562,6 +609,126 @@ html.is-resizing * {
   user-select: none;
 }
 
+/* The story on top, the open note under it, and a divider between them that sets the story's height. */
+#panel {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+#panel.is-split {
+  grid-template-rows: minmax(120px, var(--story-height, 40%)) 8px minmax(160px, 1fr);
+}
+
+#panel-divider {
+  border-top: 1px solid var(--line);
+  background: var(--canvas);
+  cursor: row-resize;
+  touch-action: none;
+}
+
+/* The note is a detail of the part open in the story. So it hangs under that card: its rule starts where the card's rule is, and it has the card's color. */
+#note-pane {
+  margin-left: var(--gutter);
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 30%, var(--paper));
+}
+
+.panel-open #note-pane {
+  padding: 8px var(--gutter) 16px 11px;
+}
+
+#note-pane .panel-top { margin-top: 0; }
+
+#note-pane .panel-body { margin-top: 6px; }
+
+/* The note has one header line. What kind of part it is follows the name in small gray text, and wraps under it on a narrow panel. */
+.note-top { gap: 4px; align-items: flex-start; }
+
+.note-head {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  min-width: 0;
+  margin: 0;
+}
+
+.note-title {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.note-title .status-chip { margin-left: 8px; vertical-align: 2px; }
+
+.note-kicker {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.note-lead {
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Finds the part in the picture: hover lights it, click brings it into view. Its square is the outline's color. */
+.note-locate {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--accent);
+}
+
+.note-locate:hover { background: var(--accent-soft); }
+
+#note-pane .panel-close { height: 28px; }
+
+/* Thin scrollbars with no arrows, so they take little room. They darken while the pointer is over them.
+   Chrome drops its own scrollbar styles when the standard properties are set, and its thin standard bar keeps the arrows on Windows. So Chrome gets only its own styles. */
+.panel-scroll::-webkit-scrollbar,
+.panel-body pre::-webkit-scrollbar { width: 6px; height: 6px; }
+
+.panel-scroll::-webkit-scrollbar-track,
+.panel-body pre::-webkit-scrollbar-track,
+.panel-scroll::-webkit-scrollbar-corner,
+.panel-body pre::-webkit-scrollbar-corner { background: transparent; }
+
+.panel-scroll::-webkit-scrollbar-thumb { border-radius: 3px; background: #cbd5e1; }
+.panel-scroll:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+.panel-body pre::-webkit-scrollbar-thumb { border-radius: 3px; background: #475569; }
+.panel-body pre:hover::-webkit-scrollbar-thumb { background: #64748b; }
+
+@supports not selector(::-webkit-scrollbar) {
+  .panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+  .panel-scroll:hover { scrollbar-color: #94a3b8 transparent; }
+  .panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
+}
+
+#panel-divider:hover,
+#panel-divider.is-dragging {
+  background: var(--accent);
+}
+
+html.is-resizing-rows,
+html.is-resizing-rows * {
+  cursor: row-resize;
+  user-select: none;
+}
+
+/* The note's close is a cross, because Close on the story above it means something else. */
+#note-close {
+  font-size: 20px;
+  line-height: 1;
+}
+
 .panel-open aside {
   border-left-color: var(--line);
 }
@@ -576,10 +743,10 @@ html.is-resizing * {
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 0;
 }
 
-#panel-kicker {
+.panel-kicker {
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
@@ -587,85 +754,63 @@ html.is-resizing * {
   text-transform: uppercase;
 }
 
-#panel-close {
+.panel-close {
   margin-right: -8px;
   padding: 0 8px;
   color: var(--muted);
   font-weight: 500;
 }
 
-#panel-close:hover { color: var(--ink); }
+.panel-close:hover { color: var(--ink); }
 
-#panel-title {
-  margin: 8px 0;
-  font-size: 20px;
+.panel-title {
+  margin: 4px 0;
+  font-size: 19px;
   font-weight: 650;
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
-#panel-lead { font-weight: 600; }
+.panel-lead { font-weight: 600; }
 
 /* On a story, the lead tells the reader how to read it. */
-#panel-lead.is-hint {
+.panel-lead.is-hint {
   color: var(--muted);
   font-size: 13px;
   font-weight: 400;
 }
 
-/* The panel names the part outlined in the picture, with the outline's color. */
-#panel-selected {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-#panel-selected::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  border: 2.5px solid var(--accent);
-  border-radius: 3px;
-  background: var(--accent-soft);
-}
-
-#panel-selected + #panel-title { margin-top: 4px; }
-
-#panel-body {
+.panel-body {
   margin-top: 8px;
   color: var(--text);
   font-size: 15px;
   line-height: 1.6;
 }
 
-#panel-body p { margin: 0; }
+.panel-body p { margin: 0; }
 
-#panel-body p + p,
-#panel-body ul,
-#panel-body ol,
-#panel-body blockquote,
-#panel-body h3,
-#panel-body h4,
-#panel-body h5,
-#panel-body h6 { margin-top: 8px; }
+.panel-body p + p,
+.panel-body ul,
+.panel-body ol,
+.panel-body blockquote,
+.panel-body h3,
+.panel-body h4,
+.panel-body h5,
+.panel-body h6 { margin-top: 8px; }
 
-#panel-body ul,
-#panel-body ol { padding-left: 1.2em; }
+.panel-body ul,
+.panel-body ol { padding-left: 1.2em; }
 
-#panel-body h3,
-#panel-body h4,
-#panel-body h5,
-#panel-body h6 {
+.panel-body h3,
+.panel-body h4,
+.panel-body h5,
+.panel-body h6 {
   margin-bottom: 0;
   color: var(--ink);
   font-size: 14px;
 }
 
-#panel-body pre {
+.panel-body pre {
   display: block;
   margin: 16px 0 0;
   padding: 12px;
@@ -680,14 +825,14 @@ html.is-resizing * {
   tab-size: 4;
 }
 
-#panel-body pre code {
+.panel-body pre code {
   font: inherit;
   color: inherit;
 }
 
 .code-file { margin: 16px 0 0; }
 
-#panel-body .code-file + * { margin-top: 16px; }
+.panel-body .code-file + * { margin-top: 16px; }
 
 .code-file-head {
   display: flex;
@@ -709,7 +854,7 @@ button.code-file-head:hover { background: #475569; }
 
 .code-file-range { flex: none; color: #cbd5e1; font-family: var(--sans); }
 
-#panel-body .code-file pre {
+.panel-body .code-file pre {
   position: relative;
   margin: 0;
   padding: 8px 0;
@@ -737,12 +882,12 @@ button.code-file-head:hover { background: #475569; }
 
 .code-file.is-missing pre { color: #fbbf24; white-space: pre-wrap; padding: 8px 12px; }
 
-#panel-body :not(pre) > code {
+.panel-body :not(pre) > code {
   font-family: var(--mono);
   font-size: 12px;
 }
 
-#panel-body a { color: var(--accent); }
+.panel-body a { color: var(--accent); }
 
 /* A part named inside a sentence reads as a link, not as a button. */
 .part-link {
@@ -796,7 +941,7 @@ button.code-file-head:hover { background: #475569; }
 
 /* The parts list, and a card the story puts between its paragraphs, look the same. */
 #panel-parts ol,
-#panel-body ol.parts {
+.panel-body ol.parts {
   display: grid;
   gap: 0;
   margin: 0 -8px;
@@ -804,8 +949,8 @@ button.code-file-head:hover { background: #475569; }
   list-style: none;
 }
 
-#panel-body * + ol.parts,
-#panel-body ol.parts + * { margin-top: 4px; }
+.panel-body * + ol.parts,
+.panel-body ol.parts + * { margin-top: 4px; }
 
 /* Each part's text lines up with the panel's gutter; the hover tint reaches 8px past it. */
 .part-card {
@@ -836,9 +981,9 @@ button.code-file-head:hover { background: #475569; }
 }
 
 /* In a story, a card is an aside to open if you want, not the next thing to read. A rule and a chevron set it apart from the text. */
-#panel-body ol.parts { margin: 0; }
+.panel-body ol.parts { margin: 0; }
 
-#panel-body .part-card {
+.panel-body .part-card {
   position: relative;
   padding: 4px 24px 4px 12px;
   border-left: 2px solid var(--line);
@@ -846,9 +991,9 @@ button.code-file-head:hover { background: #475569; }
   font-size: 13px;
 }
 
-#panel-body .part-card span { font-size: 12.5px; }
+.panel-body .part-card span { font-size: 12.5px; }
 
-#panel-body .part-card::after {
+.panel-body .part-card::after {
   content: "›";
   position: absolute;
   top: 50%;
@@ -858,7 +1003,15 @@ button.code-file-head:hover { background: #475569; }
   transform: translateY(-55%);
 }
 
-#panel-body .part-card:hover { border-left-color: var(--accent); }
+.panel-body .part-card:hover { border-left-color: var(--accent); }
+
+/* The part whose note is open, in the outline's color, so the reader sees where the note belongs in the story. */
+#panel-parts li.is-open .part-card,
+.panel-body li.is-open .part-card {
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
+  background: var(--accent-soft);
+}
 
 #panel-zoom {
   margin-top: 24px;
@@ -916,7 +1069,13 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
   to { stroke-dashoffset: -13; }
 }
 
-/* ---- Status and weight on the SVG. Before selection, so a selected part still shows as selected. ---- */
+/* ---- Type, status, and weight on the SVG. Before selection, so a selected part still shows as selected. ---- */
+
+/* A type colors the shape's border and tint. A status comes after, so it wins: a problem stays red whatever its type. */
+.type-0 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-0-soft) !important; stroke: var(--type-0) !important; }
+.type-1 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-1-soft) !important; stroke: var(--type-1) !important; }
+.type-2 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-2-soft) !important; stroke: var(--type-2) !important; }
+.type-3 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-3-soft) !important; stroke: var(--type-3) !important; }
 
 :is(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke-width: 2px !important; }
 .status-new > :is(rect, polygon, circle, path, ellipse) { fill: var(--new-soft) !important; stroke: var(--new) !important; }
@@ -936,7 +1095,7 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 
 /* A key part has a heavy outline. A background part steps back: a pale box and quieter text. */
 .weight-key > :is(rect, polygon, circle, path, ellipse) { stroke-width: 3px !important; }
-.weight-key:not(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke: var(--ink) !important; }
+.weight-key:not(.status-new, .status-changed, .status-removed, .status-problem, .type-0, .type-1, .type-2, .type-3) > :is(rect, polygon, circle, path, ellipse) { stroke: var(--ink) !important; }
 .weight-background > :is(rect, polygon, circle, path, ellipse) { fill: var(--canvas) !important; stroke: #94a3b8 !important; }
 .weight-background .nodeLabel,
 .weight-background .nodeLabel small { color: var(--muted) !important; }
@@ -1047,6 +1206,12 @@ line.is-edge.is-selected:not(.edge-hit) {
     max-height: 42vh;
   }
   .panel-open .panel-scroll { max-height: 42vh; }
+  /* Too short for two panes, so the note covers the story. The story stays laid out underneath, so it keeps its scroll. */
+  #panel.is-split { grid-template-rows: minmax(0, 1fr); }
+  #panel.is-split #panel-divider { display: none; }
+  #panel.is-split > .panel-scroll { grid-area: 1 / 1; }
+  #panel.is-split #story-pane { visibility: hidden; }
+  #panel.is-split #note-pane { margin-left: 0; background: var(--paper); border-left: 0; padding-left: var(--gutter); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1124,24 +1289,36 @@ line.is-edge.is-selected:not(.edge-hit) {
 
     <aside id="panel" hidden="" aria-hidden="true" aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
-      <div class="panel-scroll">
+      <!-- The story stays on top while a part's note opens under it, so opening a detail never hides the whole picture. -->
+      <section id="story-pane" class="panel-scroll" aria-label="Story">
         <div class="panel-top">
-          <p id="panel-kicker"></p>
-          <button id="panel-close" type="button">Close</button>
+          <p id="panel-kicker" class="panel-kicker"></p>
+          <button id="panel-close" class="panel-close" type="button">Close</button>
         </div>
-        <!-- The panel describes the part outlined in the picture, in the same color. -->
-        <p id="panel-selected" hidden="">Outlined in the diagram</p>
-        <h2 id="panel-title"></h2>
-        <p id="panel-lead"></p>
-        <div id="panel-body"></div>
-        <dl id="panel-facts"></dl>
-        <dl id="panel-links" aria-label="Connections"></dl>
+        <h2 id="panel-title" class="panel-title"></h2>
+        <p id="panel-lead" class="panel-lead"></p>
+        <div id="panel-body" class="panel-body"></div>
         <section id="panel-parts" hidden="">
-          <h3>In this picture</h3>
+          <h3>Parts, to open for detail</h3>
           <ol></ol>
         </section>
+      </section>
+      <div id="panel-divider" role="separator" aria-orientation="horizontal" aria-label="Resize the story and the note" title="Drag to resize" hidden=""></div>
+      <section id="note-pane" class="panel-scroll" aria-label="Note" hidden="">
+        <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
+        <div class="panel-top note-top">
+          <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
+          <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle><circle cx="8" cy="8" r="1.4" fill="currentColor"></circle><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"></path></svg>
+          </button>
+          <button id="note-close" class="panel-close" type="button" aria-label="Close the note" title="Close the note (Esc)">×</button>
+        </div>
+        <p id="note-lead" class="note-lead"></p>
+        <div id="note-body" class="panel-body"></div>
+        <dl id="panel-facts"></dl>
+        <dl id="panel-links" aria-label="Connections"></dl>
         <button id="panel-zoom" type="button" hidden="">Open inner diagram</button>
-      </div>
+      </section>
     </aside>
   </div>
 
@@ -1155,7 +1332,7 @@ line.is-edge.is-selected:not(.edge-hit) {
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>
       <dt><kbd>/</kbd></dt><dd>Find</dd>
-      <dt><kbd>Esc</kbd></dt><dd>Back to the story, then step up</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close the note, then step up</dd>
       <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
       <dt>Prev, Next</dt><dd>Move through the lesson</dd>
       <dt><kbd>←</kbd>, <kbd>→</kbd></dt><dd>Previous or next lesson step</dd>
@@ -1243,21 +1420,33 @@ const app = {
     status: document.getElementById("status"),
     search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
+    panelDivider: document.getElementById("panel-divider"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
     legend: document.getElementById("legend"),
   },
+  // The story pane, on top of the panel.
   panel: {
+    pane: document.getElementById("story-pane"),
     kicker: document.getElementById("panel-kicker"),
     title: document.getElementById("panel-title"),
     lead: document.getElementById("panel-lead"),
     body: document.getElementById("panel-body"),
+    parts: document.getElementById("panel-parts"),
+    close: document.getElementById("panel-close"),
+  },
+  // The note pane, under the story. It shows the open part.
+  note: {
+    pane: document.getElementById("note-pane"),
+    kicker: document.getElementById("note-kicker"),
+    locate: document.getElementById("note-locate"),
+    title: document.getElementById("note-title"),
+    lead: document.getElementById("note-lead"),
+    body: document.getElementById("note-body"),
     facts: document.getElementById("panel-facts"),
     links: document.getElementById("panel-links"),
-    parts: document.getElementById("panel-parts"),
     zoom: document.getElementById("panel-zoom"),
-    selected: document.getElementById("panel-selected"),
-    close: document.getElementById("panel-close"),
+    close: document.getElementById("note-close"),
   },
   stack: [],
   view: null,
@@ -1278,6 +1467,19 @@ const STATUSES = { new: "New", changed: "Changed", removed: "Removed", problem: 
 
 // How much a part matters to the point: key parts stand out, background parts step back.
 const WEIGHTS = ["key", "background"];
+
+// The types of thing an explanation names in DIAGRAMS.types, such as request, route, and handler, each keep one color in the diagram and in the text.
+// The colors are fixed and given in order, so every explanation reads the same and none is confused with a status.
+const TYPE_COLORS = 4;
+
+function typeIndex(name) {
+  const index = Object.keys(DIAGRAMS.types || {}).indexOf(name);
+  return index < TYPE_COLORS ? index : -1;
+}
+
+function typeLabel(name) {
+  return (DIAGRAMS.types || {})[name] || name;
+}
 
 // A part whose note says more than its tooltip is worth opening, and the page marks it.
 function hasMore(interaction) {
@@ -1584,6 +1786,8 @@ function markStepFlow() {
 // The legend under the summary lists only the statuses this picture uses.
 function markStatuses() {
   const used = new Set();
+  // The legend names the types this diagram shows, then the statuses.
+  const types = [...new Set(nodeInteractions().map((interaction) => interaction.type).filter((name) => typeIndex(name) >= 0))];
   const byChartId = new Map(nodeInteractions().map((interaction) => [interaction.chartId, interaction]));
   const byEdgeId = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
   app.els.camera.querySelectorAll(`.is-node, ${EDGE_PIECES}`).forEach((el) => {
@@ -1594,11 +1798,19 @@ function markStatuses() {
   });
   const legend = app.els.legend;
   legend.replaceChildren(
+    ...types.map((name) => typeChip(name)),
     ...Object.keys(STATUSES)
       .filter((name) => used.has(name))
       .map((name) => statusChip(name)),
   );
-  legend.hidden = !used.size;
+  legend.hidden = !used.size && !types.length;
+}
+
+function typeChip(name) {
+  const chip = document.createElement("span");
+  chip.className = `type-chip type-${typeIndex(name)}`;
+  chip.textContent = typeLabel(name);
+  return chip;
 }
 
 function statusChip(name) {
@@ -1637,6 +1849,9 @@ function applySearch() {
 const PANEL_MIN = 240;
 const PANEL_GAP = 280;
 let panelWidth = 340;
+// The story and the note each keep at least this height when the divider is dragged. Until then the story takes 40% of the panel.
+const STORY_MIN = 120;
+const NOTE_MIN = 160;
 
 function safeHref(href) {
   try {
@@ -1676,9 +1891,20 @@ function appendInline(parent, tokens) {
       return;
     }
     if (token.type === "link") {
+      // [GET /posts/new](~route) colors the words as that type, the same color as its shapes.
+      if (token.href.startsWith("~")) {
+        const span = document.createElement("span");
+        const index = typeIndex(token.href.slice(1));
+        if (index >= 0) span.className = `type-text type-${index}`;
+        appendInline(span, token.tokens);
+        parent.append(span);
+        return;
+      }
       const part = linkedPart(token.href);
       if (part) {
         const button = partButton(part, "part-link");
+        // A link to a part with a type has that type's color, like the part in the picture.
+        if (typeIndex(part.type) >= 0) button.classList.add("type-text", `type-${typeIndex(part.type)}`);
         appendInline(button, token.tokens);
         parent.append(button);
         return;
@@ -1696,7 +1922,7 @@ function appendInline(parent, tokens) {
       parent.append(link);
       return;
     }
-    if (token.type === "paragraph" || token.type === "list" || token.type === "code" || token.type === "heading" || token.type === "blockquote" || token.type === "space") {
+    if (["paragraph", "list", "code", "heading", "blockquote", "space", "table"].includes(token.type)) {
       appendBlock(parent, token);
       return;
     }
@@ -1762,6 +1988,33 @@ function appendBlock(parent, token) {
     parent.append(list);
     return;
   }
+  // A table lines up values that are compared, so the difference stands out. With an empty header row, it has no header.
+  if (token.type === "table") {
+    const row = (cells, tag) => {
+      const tr = document.createElement("tr");
+      cells.forEach((cell, index) => {
+        const td = document.createElement(tag);
+        if (token.align[index]) td.style.textAlign = token.align[index];
+        appendInline(td, cell.tokens);
+        tr.append(td);
+      });
+      return tr;
+    };
+    const table = document.createElement("table");
+    if (token.header.some((cell) => cell.text.trim())) {
+      const head = document.createElement("thead");
+      head.append(row(token.header, "th"));
+      table.append(head);
+    }
+    const body = document.createElement("tbody");
+    token.rows.forEach((cells) => body.append(row(cells, "td")));
+    table.append(body);
+    const wrap = document.createElement("div");
+    wrap.className = "table-wrap";
+    wrap.append(table);
+    parent.append(wrap);
+    return;
+  }
   if (token.type === "blockquote") {
     const quote = document.createElement("blockquote");
     (token.tokens || []).forEach((child) => appendBlock(quote, child));
@@ -1794,7 +2047,7 @@ function renderLinks(interaction) {
       }
     });
   }
-  app.panel.links.replaceChildren();
+  app.note.links.replaceChildren();
   rows.forEach(({ term, target, text }) => {
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
@@ -1804,21 +2057,33 @@ function renderLinks(interaction) {
     button.addEventListener("click", () => openPanel(target));
     dt.textContent = term;
     dd.append(button);
-    app.panel.links.append(dt, dd);
+    app.note.links.append(dt, dd);
   });
 }
 
-function showPanel() {
-  app.els.panel.hidden = false;
-  app.els.panel.setAttribute("aria-hidden", "false");
-  app.els.workspace.classList.add("panel-open");
+// The panel shows the story unless the reader hid it, and the open part's note under it. With neither, the panel hides.
+function layoutPanel() {
+  const story = !app.storyHidden;
+  const note = Boolean(app.selectedInteraction);
+  app.panel.pane.hidden = !story;
+  app.note.pane.hidden = !note;
+  app.els.panelDivider.hidden = !(story && note);
+  app.els.panel.classList.toggle("is-split", story && note);
+  app.els.panel.hidden = !(story || note);
+  app.els.panel.setAttribute("aria-hidden", String(!(story || note)));
+  app.els.workspace.classList.toggle("panel-open", story || note);
+  app.els.storyOpen.setAttribute("aria-pressed", String(story));
 }
 
-function hidePanel() {
-  app.els.panel.hidden = true;
-  app.els.panel.setAttribute("aria-hidden", "true");
-  app.els.workspace.classList.remove("panel-open");
-  app.panel.zoom.hidden = true;
+// The story's card for the open part is marked, so the reader sees where the note belongs in the story.
+function markOpenCard() {
+  const key = app.selectedInteraction ? partKey(app.selectedInteraction) : null;
+  app.panel.pane.querySelectorAll("li[data-part]").forEach((li) => {
+    const open = li.dataset.part === key;
+    li.classList.toggle("is-open", open);
+    if (open) li.setAttribute("aria-current", "true");
+    else li.removeAttribute("aria-current");
+  });
 }
 
 // A part is a shape or an arrow. Two arrows between the same shapes count as one part.
@@ -1872,11 +2137,18 @@ function cardParts(paragraph) {
 }
 
 // Every way to a part opens its note on click and lights it in the picture on hover.
+// In the story, a second click on the open part closes its note, so the story can be read alone again.
 function partButton(interaction, className) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.addEventListener("click", () => openPanel(interaction));
+  button.addEventListener("click", () => {
+    const open = app.selectedInteraction && partKey(app.selectedInteraction) === partKey(interaction);
+    if (open && button.closest("#story-pane")) {
+      closeNote();
+      recordHistory();
+    } else openPanel(interaction);
+  });
   button.addEventListener("pointerenter", () => highlightAround(interaction));
   button.addEventListener("pointerleave", applySearch);
   return button;
@@ -1910,84 +2182,77 @@ function appendPartCard(parent, interaction) {
   list.append(partItem(interaction));
 }
 
-// The shapes, then the arrows, in the order the content file lists them. A part the story already showed as a card is not listed again.
+// A view with no story lists its shapes, then its arrows, in the order the content file lists them.
+// A story points at its parts where it talks about them instead, so it has no list. The checks name parts with detail that it leaves out.
 function renderParts() {
   const list = app.panel.parts.querySelector("ol");
-  const inStory = new Set([...app.panel.body.querySelectorAll("ol.parts li")].map((li) => li.dataset.part));
   list.replaceChildren();
   // An arrow with nothing more than its tooltip says it in its label on the picture, so the list leaves it out.
-  const listed = [...nodeInteractions(), ...edgeInteractions().filter((edge) => hasMore(edge) || edge.status)];
-  listed.forEach((interaction) => {
-    if (!inStory.has(partKey(interaction))) list.append(partItem(interaction));
-  });
-  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Other parts, to open for detail" : "Parts, to open for detail";
+  const listed = app.view.story ? [] : [...nodeInteractions(), ...edgeInteractions().filter((edge) => hasMore(edge) || edge.status)];
+  listed.forEach((interaction) => list.append(partItem(interaction)));
   app.panel.parts.hidden = !list.children.length;
 }
 
-// With nothing selected, the panel tells the story of the whole diagram and lists its parts.
+// The story of the whole diagram, and a list of its parts. It is drawn once per view, so opening a note keeps its place.
 function openStory() {
-  app.selectedInteraction = null;
-  markSelected(null);
-  markStepFlow();
-  app.els.storyOpen.setAttribute("aria-pressed", String(!app.storyHidden));
-  if (app.storyHidden) {
-    hidePanel();
-    return;
-  }
   const { panel, view } = app;
   const step = lessonStep();
   const onStep = step && step.lesson[step.index] === view.viewId;
   panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
   panel.title.textContent = view.title;
-  panel.selected.hidden = true;
   // The summary is already in the bar above the diagram. The lead says how to read the story instead.
   panel.lead.textContent = view.story ? "Read top to bottom. Click a part only when you want more detail." : "";
   panel.lead.classList.add("is-hint");
   renderNote(panel.body, view.story || "");
-  panel.facts.replaceChildren();
-  panel.links.replaceChildren();
+  panel.pane.scrollTop = 0;
   renderParts();
-  panel.zoom.hidden = true;
-  panel.close.textContent = "Close";
-  showPanel();
+  markOpenCard();
+  layoutPanel();
 }
 
+// The note fills only its own pane, under the story, so the story keeps its place.
 function openPanel(interaction) {
   app.selectedInteraction = interaction;
-  app.els.storyOpen.setAttribute("aria-pressed", "false");
-  const panel = app.panel;
-  panel.kicker.textContent = interaction.kicker || "";
+  const note = app.note;
+  note.title.textContent = interaction.label;
   const status = partStatus(interaction);
-  if (status) panel.kicker.prepend(statusChip(status));
-  panel.selected.hidden = false;
-  panel.title.textContent = interaction.label;
-  panel.lead.textContent = interaction.tooltip;
-  panel.lead.classList.remove("is-hint");
-  renderNote(panel.body, interaction.body || "");
-  panel.facts.replaceChildren();
+  if (status) note.title.append(statusChip(status));
+  note.kicker.textContent = interaction.kicker || "";
+  note.lead.textContent = interaction.tooltip;
+  renderNote(note.body, interaction.body || "");
+  note.facts.replaceChildren();
   (interaction.facts || []).forEach(([term, detail]) => {
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
     dt.textContent = term;
     dd.textContent = detail;
-    panel.facts.append(dt, dd);
+    note.facts.append(dt, dd);
   });
   renderLinks(interaction);
-  panel.parts.hidden = true;
-  panel.zoom.hidden = !interaction.opensView;
-  panel.close.textContent = app.storyHidden ? "Close" : "Back";
-  showPanel();
-  panel.close.focus();
+  note.zoom.hidden = !interaction.opensView;
+  layoutPanel();
+  note.pane.scrollTop = 0;
+  markOpenCard();
+  note.close.focus();
   const selected = markSelected(interaction);
   markStepFlow();
   recordHistory();
   requestAnimationFrame(() => reveal(selected));
 }
 
-// From a note, Close goes back to the story. From the story, it hides the panel until the Story button.
-function closePanel() {
-  if (!app.selectedInteraction) app.storyHidden = true;
-  openStory();
+// Closes the note and clears the selection. The story stays as it was.
+function closeNote() {
+  app.selectedInteraction = null;
+  markSelected(null);
+  markStepFlow();
+  markOpenCard();
+  layoutPanel();
+}
+
+// Close on the story hides it until the Story button. An open note then fills the panel.
+function closeStory() {
+  app.storyHidden = true;
+  layoutPanel();
   recordHistory();
 }
 
@@ -2018,6 +2283,39 @@ function setPanelWidth(width) {
   app.els.workspace.style.setProperty("--panel-width", `${panelWidth}px`);
 }
 
+// The divider between the story and the note sets how tall the story is. The note takes the rest.
+function setStoryHeight(height) {
+  const max = app.els.panel.clientHeight - NOTE_MIN - app.els.panelDivider.offsetHeight;
+  app.els.panel.style.setProperty("--story-height", `${Math.round(Math.max(STORY_MIN, Math.min(max, height)))}px`);
+}
+
+function wireDivider() {
+  const handle = app.els.panelDivider;
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    handle.setPointerCapture(event.pointerId);
+    handle.classList.add("is-dragging");
+    document.documentElement.classList.add("is-resizing-rows");
+    const startY = event.clientY;
+    const startHeight = app.panel.pane.offsetHeight;
+
+    function move(ev) {
+      setStoryHeight(startHeight + (ev.clientY - startY));
+    }
+    function end() {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+      handle.classList.remove("is-dragging");
+      document.documentElement.classList.remove("is-resizing-rows");
+    }
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  });
+}
+
 function wirePanel() {
   const handle = app.els.panelResize;
   handle.addEventListener("pointerdown", (event) => {
@@ -2046,8 +2344,22 @@ function wirePanel() {
     handle.addEventListener("pointercancel", end);
   });
 
-  app.panel.close.addEventListener("click", closePanel);
-  app.panel.zoom.addEventListener("click", () => {
+  wireDivider();
+  app.panel.close.addEventListener("click", closeStory);
+  app.note.close.addEventListener("click", () => {
+    closeNote();
+    recordHistory();
+  });
+  // The icon by the title lights the part in the picture on hover, and brings it into view on click.
+  const locate = app.note.locate;
+  locate.addEventListener("pointerenter", () => {
+    if (app.selectedInteraction) highlightAround(app.selectedInteraction);
+  });
+  locate.addEventListener("pointerleave", applySearch);
+  locate.addEventListener("click", () => {
+    if (app.selectedInteraction) reveal(markSelected(app.selectedInteraction));
+  });
+  app.note.zoom.addEventListener("click", () => {
     if (app.selectedInteraction && app.selectedInteraction.opensView) {
       show(app.selectedInteraction.opensView, app.selectedInteraction);
     }
@@ -2475,6 +2787,7 @@ function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
   if (WEIGHTS.includes(interaction.weight)) shape.classList.add(`weight-${interaction.weight}`);
+  if (typeIndex(interaction.type) >= 0) shape.classList.add(`type-${typeIndex(interaction.type)}`);
   makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
   else if (hasMore(interaction)) addMoreDot(shape);
@@ -2632,6 +2945,16 @@ function checkContent() {
   const isView = (id) => Object.hasOwn(views, id);
   const tabIds = new Set(tabs.map((tab) => tab.id));
   if (!tabs.length) found.push({ text: "There are no tabs, so nothing opens." });
+  const types = Object.keys(DIAGRAMS.types || {});
+  if (types.length > TYPE_COLORS) found.push({ text: `DIAGRAMS.types names ${types.length} types, but there are only ${TYPE_COLORS} type colors, so ${types.slice(TYPE_COLORS).join(", ")} stay uncolored.` });
+  const knownType = (name) => types.includes(name);
+  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
+  const stepBefore = new Map();
+  tabs.forEach((tab) => (tab.lesson || []).forEach((id, index) => index && stepBefore.set(id, tab.lesson[index - 1])));
+  const partKeys = (view) => new Set([
+    ...Object.keys(view?.nodeInteractions || {}),
+    ...(view?.edgeInteractions || []).map((edge) => edgeEnds(edge).join("->")),
+  ]);
   tabs.forEach((tab) => {
     if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
     (tab.lesson || []).forEach((id) => {
@@ -2655,6 +2978,7 @@ function checkContent() {
     }
     // A misspelt status or weight changes nothing in the picture, so it would go unnoticed.
     const checkMarks = (name, note) => {
+      if (note.type !== undefined && !knownType(note.type)) say(`${name} has type "${note.type}", which DIAGRAMS.types does not name, so it has no color.`);
       if (note.status !== undefined && !STATUSES[note.status]) say(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
       if (note.weight !== undefined && !WEIGHTS.includes(note.weight)) say(`${name} has weight "${note.weight}". It must be ${WEIGHTS.join(" or ")}.`);
     };
@@ -2698,6 +3022,9 @@ function checkContent() {
     texts.forEach(([where, text]) => {
       // Code can show the link syntax without being a link.
       const prose = String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
+      for (const [, name] of prose.matchAll(/\]\(~([^)\s]+)\)/g)) {
+        if (!knownType(name)) say(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
+      }
       for (const [, key] of prose.matchAll(/\]\(#([^)\s]+)\)/g)) {
         const isArrow = key.includes("->");
         const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
@@ -2706,6 +3033,19 @@ function checkContent() {
         say(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
       }
     });
+    // A story has no parts list, so a part with something to open must be linked where the story talks about it.
+    // On a lesson step, only the parts the step adds.
+    if (view.story) {
+      const seen = partKeys(views[stepBefore.get(viewId)]);
+      const story = String(view.story).replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
+      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)\)/g)].map(([, key]) => key));
+      const hasDetail = (note) => Boolean(note.body || (note.facts && note.facts.length) || note.opensView);
+      const left = [
+        ...Object.entries(notes).filter(([id, note]) => hasDetail(note)).map(([id]) => id),
+        ...edges.filter((edge) => !Array.isArray(edge) && hasDetail(edge)).map((edge) => `${edge.from}->${edge.to}`),
+      ].filter((key) => !linked.has(key) && !seen.has(key));
+      if (left.length) say(`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`);
+    }
   });
   return found;
 }
@@ -2886,6 +3226,7 @@ async function show(viewId, fromInteraction) {
   const origin = wiredElements(fromInteraction);
   app.view = view;
   app.stack = pathTo(view);
+  closeNote();
   openStory();
   hideTooltip();
   renderChrome();
@@ -2928,7 +3269,7 @@ async function openFromHash() {
     if (!app.view || app.view.viewId !== viewId) await show(viewId);
     const part = partId ? linkedPart("#" + partId) : null;
     if (part) openPanel(part);
-    else if (app.selectedInteraction) openStory();
+    else if (app.selectedInteraction) closeNote();
   } finally {
     app.replaying = false;
   }
@@ -3199,10 +3540,10 @@ moreMenu.addEventListener("click", (event) => {
   if (event.target.closest("button, a")) moreMenu.hidePopover();
 });
 document.getElementById("fit").addEventListener("click", fit);
-// Story is a switch: it shows the story, or hides it when the story is already showing.
+// Story is a switch: it shows the story, or hides it. An open note stays either way.
 app.els.storyOpen.addEventListener("click", () => {
-  app.storyHidden = !app.storyHidden && !app.selectedInteraction && !app.els.panel.hidden;
-  openStory();
+  app.storyHidden = !app.storyHidden;
+  layoutPanel();
   recordHistory();
 });
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
@@ -3230,9 +3571,11 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape") {
     hideTooltip();
-    // A note goes back to the story first. The story itself stays open while stepping up.
-    if (app.selectedInteraction) closePanel();
-    else showParent();
+    // An open note closes first. The story itself stays open while stepping up.
+    if (app.selectedInteraction) {
+      closeNote();
+      recordHistory();
+    } else showParent();
   }
   if (event.key === "Backspace" && !typing && showParent()) {
     event.preventDefault();

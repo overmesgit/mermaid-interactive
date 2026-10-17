@@ -106,6 +106,8 @@ function markStepFlow() {
 // The legend under the summary lists only the statuses this picture uses.
 function markStatuses() {
   const used = new Set();
+  // The legend names the types this diagram shows, then the statuses.
+  const types = [...new Set(nodeInteractions().map((interaction) => interaction.type).filter((name) => typeIndex(name) >= 0))];
   const byChartId = new Map(nodeInteractions().map((interaction) => [interaction.chartId, interaction]));
   const byEdgeId = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
   app.els.camera.querySelectorAll(`.is-node, ${EDGE_PIECES}`).forEach((el) => {
@@ -116,11 +118,19 @@ function markStatuses() {
   });
   const legend = app.els.legend;
   legend.replaceChildren(
+    ...types.map((name) => typeChip(name)),
     ...Object.keys(STATUSES)
       .filter((name) => used.has(name))
       .map((name) => statusChip(name)),
   );
-  legend.hidden = !used.size;
+  legend.hidden = !used.size && !types.length;
+}
+
+function typeChip(name) {
+  const chip = document.createElement("span");
+  chip.className = `type-chip type-${typeIndex(name)}`;
+  chip.textContent = typeLabel(name);
+  return chip;
 }
 
 function statusChip(name) {

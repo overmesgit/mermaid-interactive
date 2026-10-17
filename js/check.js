@@ -21,6 +21,16 @@ function checkContent() {
   const isView = (id) => Object.hasOwn(views, id);
   const tabIds = new Set(tabs.map((tab) => tab.id));
   if (!tabs.length) found.push({ text: "There are no tabs, so nothing opens." });
+  const types = Object.keys(DIAGRAMS.types || {});
+  if (types.length > TYPE_COLORS) found.push({ text: `DIAGRAMS.types names ${types.length} types, but there are only ${TYPE_COLORS} type colors, so ${types.slice(TYPE_COLORS).join(", ")} stay uncolored.` });
+  const knownType = (name) => types.includes(name);
+  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
+  const stepBefore = new Map();
+  tabs.forEach((tab) => (tab.lesson || []).forEach((id, index) => index && stepBefore.set(id, tab.lesson[index - 1])));
+  const partKeys = (view) => new Set([
+    ...Object.keys(view?.nodeInteractions || {}),
+    ...(view?.edgeInteractions || []).map((edge) => edgeEnds(edge).join("->")),
+  ]);
   tabs.forEach((tab) => {
     if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
     (tab.lesson || []).forEach((id) => {
@@ -44,6 +54,7 @@ function checkContent() {
     }
     // A misspelt status or weight changes nothing in the picture, so it would go unnoticed.
     const checkMarks = (name, note) => {
+      if (note.type !== undefined && !knownType(note.type)) say(`${name} has type "${note.type}", which DIAGRAMS.types does not name, so it has no color.`);
       if (note.status !== undefined && !STATUSES[note.status]) say(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
       if (note.weight !== undefined && !WEIGHTS.includes(note.weight)) say(`${name} has weight "${note.weight}". It must be ${WEIGHTS.join(" or ")}.`);
     };
@@ -87,6 +98,9 @@ function checkContent() {
     texts.forEach(([where, text]) => {
       // Code can show the link syntax without being a link.
       const prose = String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
+      for (const [, name] of prose.matchAll(/\]\(~([^)\s]+)\)/g)) {
+        if (!knownType(name)) say(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
+      }
       for (const [, key] of prose.matchAll(/\]\(#([^)\s]+)\)/g)) {
         const isArrow = key.includes("->");
         const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
@@ -95,6 +109,19 @@ function checkContent() {
         say(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
       }
     });
+    // A story has no parts list, so a part with something to open must be linked where the story talks about it.
+    // On a lesson step, only the parts the step adds.
+    if (view.story) {
+      const seen = partKeys(views[stepBefore.get(viewId)]);
+      const story = String(view.story).replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
+      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)\)/g)].map(([, key]) => key));
+      const hasDetail = (note) => Boolean(note.body || (note.facts && note.facts.length) || note.opensView);
+      const left = [
+        ...Object.entries(notes).filter(([id, note]) => hasDetail(note)).map(([id]) => id),
+        ...edges.filter((edge) => !Array.isArray(edge) && hasDetail(edge)).map((edge) => `${edge.from}->${edge.to}`),
+      ].filter((key) => !linked.has(key) && !seen.has(key));
+      if (left.length) say(`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`);
+    }
   });
   return found;
 }

@@ -18,21 +18,33 @@ const app = {
     status: document.getElementById("status"),
     search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
+    panelDivider: document.getElementById("panel-divider"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
     legend: document.getElementById("legend"),
   },
+  // The story pane, on top of the panel.
   panel: {
+    pane: document.getElementById("story-pane"),
     kicker: document.getElementById("panel-kicker"),
     title: document.getElementById("panel-title"),
     lead: document.getElementById("panel-lead"),
     body: document.getElementById("panel-body"),
+    parts: document.getElementById("panel-parts"),
+    close: document.getElementById("panel-close"),
+  },
+  // The note pane, under the story. It shows the open part.
+  note: {
+    pane: document.getElementById("note-pane"),
+    kicker: document.getElementById("note-kicker"),
+    locate: document.getElementById("note-locate"),
+    title: document.getElementById("note-title"),
+    lead: document.getElementById("note-lead"),
+    body: document.getElementById("note-body"),
     facts: document.getElementById("panel-facts"),
     links: document.getElementById("panel-links"),
-    parts: document.getElementById("panel-parts"),
     zoom: document.getElementById("panel-zoom"),
-    selected: document.getElementById("panel-selected"),
-    close: document.getElementById("panel-close"),
+    close: document.getElementById("note-close"),
   },
   stack: [],
   view: null,
@@ -53,6 +65,19 @@ const STATUSES = { new: "New", changed: "Changed", removed: "Removed", problem: 
 
 // How much a part matters to the point: key parts stand out, background parts step back.
 const WEIGHTS = ["key", "background"];
+
+// The types of thing an explanation names in DIAGRAMS.types, such as request, route, and handler, each keep one color in the diagram and in the text.
+// The colors are fixed and given in order, so every explanation reads the same and none is confused with a status.
+const TYPE_COLORS = 4;
+
+function typeIndex(name) {
+  const index = Object.keys(DIAGRAMS.types || {}).indexOf(name);
+  return index < TYPE_COLORS ? index : -1;
+}
+
+function typeLabel(name) {
+  return (DIAGRAMS.types || {})[name] || name;
+}
 
 // A part whose note says more than its tooltip is worth opening, and the page marks it.
 function hasMore(interaction) {

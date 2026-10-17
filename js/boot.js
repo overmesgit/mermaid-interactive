@@ -73,10 +73,10 @@ moreMenu.addEventListener("click", (event) => {
   if (event.target.closest("button, a")) moreMenu.hidePopover();
 });
 document.getElementById("fit").addEventListener("click", fit);
-// Story is a switch: it shows the story, or hides it when the story is already showing.
+// Story is a switch: it shows the story, or hides it. An open note stays either way.
 app.els.storyOpen.addEventListener("click", () => {
-  app.storyHidden = !app.storyHidden && !app.selectedInteraction && !app.els.panel.hidden;
-  openStory();
+  app.storyHidden = !app.storyHidden;
+  layoutPanel();
   recordHistory();
 });
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
@@ -104,9 +104,11 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape") {
     hideTooltip();
-    // A note goes back to the story first. The story itself stays open while stepping up.
-    if (app.selectedInteraction) closePanel();
-    else showParent();
+    // An open note closes first. The story itself stays open while stepping up.
+    if (app.selectedInteraction) {
+      closeNote();
+      recordHistory();
+    } else showParent();
   }
   if (event.key === "Backspace" && !typing && showParent()) {
     event.preventDefault();

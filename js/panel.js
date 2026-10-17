@@ -3,6 +3,9 @@
 const PANEL_MIN = 240;
 const PANEL_GAP = 280;
 let panelWidth = 340;
+// The story and the note each keep at least this height when the divider is dragged. Until then the story takes 40% of the panel.
+const STORY_MIN = 120;
+const NOTE_MIN = 160;
 
 function safeHref(href) {
   try {
@@ -42,9 +45,20 @@ function appendInline(parent, tokens) {
       return;
     }
     if (token.type === "link") {
+      // [GET /posts/new](~route) colors the words as that type, the same color as its shapes.
+      if (token.href.startsWith("~")) {
+        const span = document.createElement("span");
+        const index = typeIndex(token.href.slice(1));
+        if (index >= 0) span.className = `type-text type-${index}`;
+        appendInline(span, token.tokens);
+        parent.append(span);
+        return;
+      }
       const part = linkedPart(token.href);
       if (part) {
         const button = partButton(part, "part-link");
+        // A link to a part with a type has that type's color, like the part in the picture.
+        if (typeIndex(part.type) >= 0) button.classList.add("type-text", `type-${typeIndex(part.type)}`);
         appendInline(button, token.tokens);
         parent.append(button);
         return;
@@ -62,7 +76,7 @@ function appendInline(parent, tokens) {
       parent.append(link);
       return;
     }
-    if (token.type === "paragraph" || token.type === "list" || token.type === "code" || token.type === "heading" || token.type === "blockquote" || token.type === "space") {
+    if (["paragraph", "list", "code", "heading", "blockquote", "space", "table"].includes(token.type)) {
       appendBlock(parent, token);
       return;
     }
@@ -128,6 +142,33 @@ function appendBlock(parent, token) {
     parent.append(list);
     return;
   }
+  // A table lines up values that are compared, so the difference stands out. With an empty header row, it has no header.
+  if (token.type === "table") {
+    const row = (cells, tag) => {
+      const tr = document.createElement("tr");
+      cells.forEach((cell, index) => {
+        const td = document.createElement(tag);
+        if (token.align[index]) td.style.textAlign = token.align[index];
+        appendInline(td, cell.tokens);
+        tr.append(td);
+      });
+      return tr;
+    };
+    const table = document.createElement("table");
+    if (token.header.some((cell) => cell.text.trim())) {
+      const head = document.createElement("thead");
+      head.append(row(token.header, "th"));
+      table.append(head);
+    }
+    const body = document.createElement("tbody");
+    token.rows.forEach((cells) => body.append(row(cells, "td")));
+    table.append(body);
+    const wrap = document.createElement("div");
+    wrap.className = "table-wrap";
+    wrap.append(table);
+    parent.append(wrap);
+    return;
+  }
   if (token.type === "blockquote") {
     const quote = document.createElement("blockquote");
     (token.tokens || []).forEach((child) => appendBlock(quote, child));
@@ -160,7 +201,7 @@ function renderLinks(interaction) {
       }
     });
   }
-  app.panel.links.replaceChildren();
+  app.note.links.replaceChildren();
   rows.forEach(({ term, target, text }) => {
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
@@ -170,21 +211,33 @@ function renderLinks(interaction) {
     button.addEventListener("click", () => openPanel(target));
     dt.textContent = term;
     dd.append(button);
-    app.panel.links.append(dt, dd);
+    app.note.links.append(dt, dd);
   });
 }
 
-function showPanel() {
-  app.els.panel.hidden = false;
-  app.els.panel.setAttribute("aria-hidden", "false");
-  app.els.workspace.classList.add("panel-open");
+// The panel shows the story unless the reader hid it, and the open part's note under it. With neither, the panel hides.
+function layoutPanel() {
+  const story = !app.storyHidden;
+  const note = Boolean(app.selectedInteraction);
+  app.panel.pane.hidden = !story;
+  app.note.pane.hidden = !note;
+  app.els.panelDivider.hidden = !(story && note);
+  app.els.panel.classList.toggle("is-split", story && note);
+  app.els.panel.hidden = !(story || note);
+  app.els.panel.setAttribute("aria-hidden", String(!(story || note)));
+  app.els.workspace.classList.toggle("panel-open", story || note);
+  app.els.storyOpen.setAttribute("aria-pressed", String(story));
 }
 
-function hidePanel() {
-  app.els.panel.hidden = true;
-  app.els.panel.setAttribute("aria-hidden", "true");
-  app.els.workspace.classList.remove("panel-open");
-  app.panel.zoom.hidden = true;
+// The story's card for the open part is marked, so the reader sees where the note belongs in the story.
+function markOpenCard() {
+  const key = app.selectedInteraction ? partKey(app.selectedInteraction) : null;
+  app.panel.pane.querySelectorAll("li[data-part]").forEach((li) => {
+    const open = li.dataset.part === key;
+    li.classList.toggle("is-open", open);
+    if (open) li.setAttribute("aria-current", "true");
+    else li.removeAttribute("aria-current");
+  });
 }
 
 // A part is a shape or an arrow. Two arrows between the same shapes count as one part.
@@ -238,11 +291,18 @@ function cardParts(paragraph) {
 }
 
 // Every way to a part opens its note on click and lights it in the picture on hover.
+// In the story, a second click on the open part closes its note, so the story can be read alone again.
 function partButton(interaction, className) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.addEventListener("click", () => openPanel(interaction));
+  button.addEventListener("click", () => {
+    const open = app.selectedInteraction && partKey(app.selectedInteraction) === partKey(interaction);
+    if (open && button.closest("#story-pane")) {
+      closeNote();
+      recordHistory();
+    } else openPanel(interaction);
+  });
   button.addEventListener("pointerenter", () => highlightAround(interaction));
   button.addEventListener("pointerleave", applySearch);
   return button;
@@ -276,84 +336,77 @@ function appendPartCard(parent, interaction) {
   list.append(partItem(interaction));
 }
 
-// The shapes, then the arrows, in the order the content file lists them. A part the story already showed as a card is not listed again.
+// A view with no story lists its shapes, then its arrows, in the order the content file lists them.
+// A story points at its parts where it talks about them instead, so it has no list. The checks name parts with detail that it leaves out.
 function renderParts() {
   const list = app.panel.parts.querySelector("ol");
-  const inStory = new Set([...app.panel.body.querySelectorAll("ol.parts li")].map((li) => li.dataset.part));
   list.replaceChildren();
   // An arrow with nothing more than its tooltip says it in its label on the picture, so the list leaves it out.
-  const listed = [...nodeInteractions(), ...edgeInteractions().filter((edge) => hasMore(edge) || edge.status)];
-  listed.forEach((interaction) => {
-    if (!inStory.has(partKey(interaction))) list.append(partItem(interaction));
-  });
-  app.panel.parts.querySelector("h3").textContent = inStory.size ? "Other parts, to open for detail" : "Parts, to open for detail";
+  const listed = app.view.story ? [] : [...nodeInteractions(), ...edgeInteractions().filter((edge) => hasMore(edge) || edge.status)];
+  listed.forEach((interaction) => list.append(partItem(interaction)));
   app.panel.parts.hidden = !list.children.length;
 }
 
-// With nothing selected, the panel tells the story of the whole diagram and lists its parts.
+// The story of the whole diagram, and a list of its parts. It is drawn once per view, so opening a note keeps its place.
 function openStory() {
-  app.selectedInteraction = null;
-  markSelected(null);
-  markStepFlow();
-  app.els.storyOpen.setAttribute("aria-pressed", String(!app.storyHidden));
-  if (app.storyHidden) {
-    hidePanel();
-    return;
-  }
   const { panel, view } = app;
   const step = lessonStep();
   const onStep = step && step.lesson[step.index] === view.viewId;
   panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
   panel.title.textContent = view.title;
-  panel.selected.hidden = true;
   // The summary is already in the bar above the diagram. The lead says how to read the story instead.
   panel.lead.textContent = view.story ? "Read top to bottom. Click a part only when you want more detail." : "";
   panel.lead.classList.add("is-hint");
   renderNote(panel.body, view.story || "");
-  panel.facts.replaceChildren();
-  panel.links.replaceChildren();
+  panel.pane.scrollTop = 0;
   renderParts();
-  panel.zoom.hidden = true;
-  panel.close.textContent = "Close";
-  showPanel();
+  markOpenCard();
+  layoutPanel();
 }
 
+// The note fills only its own pane, under the story, so the story keeps its place.
 function openPanel(interaction) {
   app.selectedInteraction = interaction;
-  app.els.storyOpen.setAttribute("aria-pressed", "false");
-  const panel = app.panel;
-  panel.kicker.textContent = interaction.kicker || "";
+  const note = app.note;
+  note.title.textContent = interaction.label;
   const status = partStatus(interaction);
-  if (status) panel.kicker.prepend(statusChip(status));
-  panel.selected.hidden = false;
-  panel.title.textContent = interaction.label;
-  panel.lead.textContent = interaction.tooltip;
-  panel.lead.classList.remove("is-hint");
-  renderNote(panel.body, interaction.body || "");
-  panel.facts.replaceChildren();
+  if (status) note.title.append(statusChip(status));
+  note.kicker.textContent = interaction.kicker || "";
+  note.lead.textContent = interaction.tooltip;
+  renderNote(note.body, interaction.body || "");
+  note.facts.replaceChildren();
   (interaction.facts || []).forEach(([term, detail]) => {
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
     dt.textContent = term;
     dd.textContent = detail;
-    panel.facts.append(dt, dd);
+    note.facts.append(dt, dd);
   });
   renderLinks(interaction);
-  panel.parts.hidden = true;
-  panel.zoom.hidden = !interaction.opensView;
-  panel.close.textContent = app.storyHidden ? "Close" : "Back";
-  showPanel();
-  panel.close.focus();
+  note.zoom.hidden = !interaction.opensView;
+  layoutPanel();
+  note.pane.scrollTop = 0;
+  markOpenCard();
+  note.close.focus();
   const selected = markSelected(interaction);
   markStepFlow();
   recordHistory();
   requestAnimationFrame(() => reveal(selected));
 }
 
-// From a note, Close goes back to the story. From the story, it hides the panel until the Story button.
-function closePanel() {
-  if (!app.selectedInteraction) app.storyHidden = true;
-  openStory();
+// Closes the note and clears the selection. The story stays as it was.
+function closeNote() {
+  app.selectedInteraction = null;
+  markSelected(null);
+  markStepFlow();
+  markOpenCard();
+  layoutPanel();
+}
+
+// Close on the story hides it until the Story button. An open note then fills the panel.
+function closeStory() {
+  app.storyHidden = true;
+  layoutPanel();
   recordHistory();
 }
 
@@ -384,6 +437,39 @@ function setPanelWidth(width) {
   app.els.workspace.style.setProperty("--panel-width", `${panelWidth}px`);
 }
 
+// The divider between the story and the note sets how tall the story is. The note takes the rest.
+function setStoryHeight(height) {
+  const max = app.els.panel.clientHeight - NOTE_MIN - app.els.panelDivider.offsetHeight;
+  app.els.panel.style.setProperty("--story-height", `${Math.round(Math.max(STORY_MIN, Math.min(max, height)))}px`);
+}
+
+function wireDivider() {
+  const handle = app.els.panelDivider;
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    handle.setPointerCapture(event.pointerId);
+    handle.classList.add("is-dragging");
+    document.documentElement.classList.add("is-resizing-rows");
+    const startY = event.clientY;
+    const startHeight = app.panel.pane.offsetHeight;
+
+    function move(ev) {
+      setStoryHeight(startHeight + (ev.clientY - startY));
+    }
+    function end() {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+      handle.classList.remove("is-dragging");
+      document.documentElement.classList.remove("is-resizing-rows");
+    }
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  });
+}
+
 function wirePanel() {
   const handle = app.els.panelResize;
   handle.addEventListener("pointerdown", (event) => {
@@ -412,8 +498,22 @@ function wirePanel() {
     handle.addEventListener("pointercancel", end);
   });
 
-  app.panel.close.addEventListener("click", closePanel);
-  app.panel.zoom.addEventListener("click", () => {
+  wireDivider();
+  app.panel.close.addEventListener("click", closeStory);
+  app.note.close.addEventListener("click", () => {
+    closeNote();
+    recordHistory();
+  });
+  // The icon by the title lights the part in the picture on hover, and brings it into view on click.
+  const locate = app.note.locate;
+  locate.addEventListener("pointerenter", () => {
+    if (app.selectedInteraction) highlightAround(app.selectedInteraction);
+  });
+  locate.addEventListener("pointerleave", applySearch);
+  locate.addEventListener("click", () => {
+    if (app.selectedInteraction) reveal(markSelected(app.selectedInteraction));
+  });
+  app.note.zoom.addEventListener("click", () => {
     if (app.selectedInteraction && app.selectedInteraction.opensView) {
       show(app.selectedInteraction.opensView, app.selectedInteraction);
     }

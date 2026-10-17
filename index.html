@@ -74,24 +74,36 @@
 
     <aside id="panel" hidden aria-hidden="true" aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
-      <div class="panel-scroll">
+      <!-- The story stays on top while a part's note opens under it, so opening a detail never hides the whole picture. -->
+      <section id="story-pane" class="panel-scroll" aria-label="Story">
         <div class="panel-top">
-          <p id="panel-kicker"></p>
-          <button id="panel-close" type="button">Close</button>
+          <p id="panel-kicker" class="panel-kicker"></p>
+          <button id="panel-close" class="panel-close" type="button">Close</button>
         </div>
-        <!-- The panel describes the part outlined in the picture, in the same color. -->
-        <p id="panel-selected" hidden>Outlined in the diagram</p>
-        <h2 id="panel-title"></h2>
-        <p id="panel-lead"></p>
-        <div id="panel-body"></div>
-        <dl id="panel-facts"></dl>
-        <dl id="panel-links" aria-label="Connections"></dl>
+        <h2 id="panel-title" class="panel-title"></h2>
+        <p id="panel-lead" class="panel-lead"></p>
+        <div id="panel-body" class="panel-body"></div>
         <section id="panel-parts" hidden>
-          <h3>In this picture</h3>
+          <h3>Parts, to open for detail</h3>
           <ol></ol>
         </section>
+      </section>
+      <div id="panel-divider" role="separator" aria-orientation="horizontal" aria-label="Resize the story and the note" title="Drag to resize" hidden></div>
+      <section id="note-pane" class="panel-scroll" aria-label="Note" hidden>
+        <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
+        <div class="panel-top note-top">
+          <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
+          <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"/></svg>
+          </button>
+          <button id="note-close" class="panel-close" type="button" aria-label="Close the note" title="Close the note (Esc)">×</button>
+        </div>
+        <p id="note-lead" class="note-lead"></p>
+        <div id="note-body" class="panel-body"></div>
+        <dl id="panel-facts"></dl>
+        <dl id="panel-links" aria-label="Connections"></dl>
         <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
-      </div>
+      </section>
     </aside>
   </div>
 
@@ -105,7 +117,7 @@
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>
       <dt><kbd>/</kbd></dt><dd>Find</dd>
-      <dt><kbd>Esc</kbd></dt><dd>Back to the story, then step up</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close the note, then step up</dd>
       <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
       <dt>Prev, Next</dt><dd>Move through the lesson</dd>
       <dt><kbd>←</kbd>, <kbd>→</kbd></dt><dd>Previous or next lesson step</dd>
