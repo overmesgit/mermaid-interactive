@@ -1,6 +1,6 @@
 # Rules
 
-Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last nine came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17: two from writing it, and seven from a reader's review of it. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
+Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last eleven came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17: two from writing it, and nine from a reader's reviews of it. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
 
 ### Color carries meaning
 **Context:** The page and the diagrams are almost all gray, so nothing tells the eye where to look.
@@ -175,9 +175,9 @@ route 2   GET /posts/{id}   with id = new
 **Rule:** A sentence must be true without a hidden qualifier. If it is true only in a narrow reading, rewrite it to say the narrow thing, or say plainly that it is a simplification.
 **Example:** the sentence is gone. The step now says when routes are compared with each other, at startup, and what happens to a request, a walk down the tree.
 
-### Lead with the analogy, and carry it through
+### Bring the analogy in early, and carry it through
 **Context:** The letters to "12 Main St" and "12 Main St, Apt 4" came after the routes, as a one-line aside. The reader had already struggled with the routes by the time the picture that made them easy arrived, and the rest of the step never used it again.
-**Rule:** When an analogy carries the key idea, put it first, worked out on its own with a few concrete cases. Then map the real case onto it explicitly, part by part, with the real thing on the left and the analogy on the right, so the reader never has to work out which part is which. Keep using its words for later points, including where the analogy and the real thing differ.
+**Rule:** When an analogy carries the key idea, bring it in before the details: right after a short, plain account of what happens (see Show what happens, then why), and worked out on its own with a few concrete cases. Then map the real case onto it explicitly, part by part, with the real thing on the left and the analogy on the right, so the reader never has to work out which part is which. Keep using its words for later points, including where the analogy and the real thing differ.
 **Example:** the step opens with imagined sorted addresses: a house, a street, a city. Then "A route is an address for requests": the method is the city, each segment the next part, and `{id}` is "any house", in a table with the routes on the left and their addresses on the right. "What Go really does" is a mail room that never writes the list down, and the clash in the next step is two addresses that cannot be put in order.
 
 ### An analogy says it is imagined
@@ -258,3 +258,13 @@ flowchart TB
 **Rule:** Each layer the reader can open, such as a tooltip, a note, or an inner diagram, must say something the layer above it does not. Leave it out otherwise.
 **How:** `tooltip` is optional ([ADR-057](decisions/057-optional-tooltips.md)). A part with no tooltip still lights up on hover.
 **Example:** the OAuth PKCE example has no tooltips. Its labels say what each part is, and the notes hold the real requests from the run.
+
+### Show what happens, then why
+**Context:** Step 1 of the OAuth lesson opened with the cloakroom, then walked the login. The reader met a picture of something they had not yet seen, so they could not tell what it was a picture of.
+**Rule:** In each step, first say plainly what happens, in the order it happens, with the diagram. Then explain why it works or why it is built that way, with the analogy. The reader then has the facts in mind for the reasons to explain.
+**Example:** step 1 now walks the login first, then asks "Why a code first, and not the tokens straight away?" and answers with the cloakroom. Step 2 runs the theft before saying why the code alone is enough, and step 3 shows the login with PKCE before the torn card.
+
+### Build each picture on the one before
+**Context:** Steps 1 to 3 of the OAuth lesson were sequence charts with the same players in the same places, but step 4 was a flowchart of two boxes side by side. The reader had to learn a new picture for the last point, instead of seeing what changed in the one they knew.
+**Rule:** Keep the same kind of diagram, the same players in the same places, and the same bands and colors from step to step, so each step reads as the one before with something added or changed. Change the kind of diagram only when the new point cannot be drawn in the old one.
+**Example:** step 4 is now step 2's theft against step 3's login: the same sequence chart and bands, with the verifier and challenge from step 3, and the attacker's two failed tries where step 2 had its success.

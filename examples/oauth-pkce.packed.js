@@ -34,7 +34,11 @@ window.DIAGRAMS = {
         - **Through the browser**, the red band. A server answers with a redirect, an answer that tells the browser to open another address, and the browser opens it by itself. Any value rides inside that address, where the browser's history and, on a phone, other apps can see it.
         - **Direct**, the green band. The app sends its own request to a server, over HTTPS in real use. The browser never sees it, and nobody else can read it.
 
-        **Imagine a cloakroom** with a crowded front counter and a quiet back window. Anything handed across the counter can be seen, or snatched, by someone in the crowd. Nobody overhears what is said at the back window. So the coat never goes across the crowd: the counter hands out a numbered ticket, and the coat is collected at the back window.
+        **One login, without PKCE.** Ada opens the app's login link, and the app [sends her browser to the login server](#App->Browser "peek"). She signs in there. The login server [sends her browser back to the app](#Login->Browser) with a [code](~code) in the address. So the code is the one value that crosses the browser.
+
+        On the direct path, the app [trades the code](#App->Login "peek") for [two tokens](#Login->App), an [access token](~token) and a [refresh token](~token). From then on, [every API call](#App->API) carries the access token, and the API answers with ada's data.
+
+        **Why a code first, and not the tokens straight away?** Imagine a cloakroom with a crowded front counter and a quiet back window. Anything handed across the counter can be seen, or snatched, by someone in the crowd. Nobody overhears what is said at the back window. So the coat never goes across the crowd: the counter hands out a numbered ticket, and the coat is collected at the back window.
 
         | login | cloakroom |
         | --- | --- |
@@ -44,10 +48,6 @@ window.DIAGRAMS = {
         | [tokens](~token) | the coat |
 
         One difference: a real coat is hung up before its ticket is given out. The login server makes the tokens only when the code comes back.
-
-        **One login, without PKCE.** Ada opens the app's login link, and the app [sends her browser to the login server](#App->Browser "peek"). She signs in there. The login server [sends her browser back to the app](#Login->Browser) with a [code](~code) in the address. So the code is the one value that crosses the browser.
-
-        On the direct path, the app [trades the code](#App->Login "peek") for [two tokens](#Login->App), an [access token](~token) and a [refresh token](~token). From then on, [every API call](#App->API) carries the access token, and the API answers with ada's data.
 
         **Code or token?** Both are random strings from the login server, so they are easy to mix up. Their jobs differ:
 
@@ -177,19 +177,18 @@ window.DIAGRAMS = {
       story: md`
         **The problem.** The [code](~code) crosses the browser, and for many apps the login server gives the [tokens](~token) to whoever brings it.
 
-        **When a code alone is not enough.** A website whose code runs on its own server can prove who it is when it trades the code. It sends a client secret, a password of its own, on the direct path. A stolen code is no use without that secret. In the cloakroom, it is a staff badge shown at the back window.
+        **The theft, in the run.** The login starts as in step 1, and a test program plays the [attacker](#Thief). It catches [the redirect](#Browser->Thief) before the app gets it. Then, on the direct path, it [trades the code](#Thief->Login "peek") as the app would, and [gets ada's tokens](#Login->Thief). The [API answers](#API->Thief) as it would answer ada, because a token works for whoever holds it.
 
-        **When it is.** An app on a phone, or one that runs only in the browser, cannot keep such a secret. Its files are on every user's device, so a secret inside them is one anyone can read. RFC 6749 calls these public clients. For them the code is the only proof, and the app in the run is one: \`demo-app\` has no secret.
+        The app never gets its code, and cannot tell. Ada sees a login that never finishes, and tries again. In the cloakroom, a pickpocket in the crowd took the ticket and reached the back window first.
 
-        **How a code gets stolen.** Picture the photo app on a phone. Its login ends by sending the browser to an address only that app should open, such as \`photos-app://callback?code=…\`. A phone lets each app claim the addresses it opens, and does not stop a second app from claiming the same one. So a game installed last week can claim it too, and the phone may hand the address, code and all, to the game. RFC 7636 was written for this attack. In the cloakroom, a pickpocket in the crowd takes the ticket and reaches the back window first.
+        **How a code gets stolen in real life.** Picture the photo app on a phone. Its login ends by sending the browser to an address only that app should open, such as \`photos-app://callback?code=…\`. A phone lets each app claim the addresses it opens, and does not stop a second app from claiming the same one. So a game installed last week can claim it too, and the phone may hand the address, code and all, to the game. RFC 7636 was written for this attack.
 
-        **The run.** A test program played the [attacker](#Thief). It caught [the redirect](#Browser->Thief) before the app got it. Then, on the direct path, it [traded the code](#Thief->Login "peek") as the app would, and [got ada's tokens](#Login->Thief). The [API answered](#API->Thief) as it would answer ada, because a token works for whoever holds it.
-
-        The app never got its code, and cannot tell. Ada sees a login that never finishes, and tries again.
+        **Why the code alone is enough.** A website whose code runs on its own server can prove who it is when it trades the code. It sends a client secret, a password of its own, on the direct path, so a stolen code is no use without it. In the cloakroom, that is a staff badge shown at the back window. But an app on a phone, or one that runs only in the browser, cannot keep such a secret. Its files are on every user's device, so a secret inside them is one anyone can read. RFC 6749 calls these public clients. For them the code is the only proof, and the app in the run is one: \`demo-app\` has no secret.
 
         So the login server needs a second proof: one the real app has, and a thief who reads the browser cannot get. That is what PKCE adds.
       `,
       chart: `sequenceDiagram
+  autonumber
   participant Browser as Ada's browser
   participant App
   participant Thief as Attacker
@@ -279,7 +278,14 @@ window.DIAGRAMS = {
       story: md`
         **The problem.** The login server needs a second proof that only the real app has. But at the start of a login, the app can reach the login server only through the browser, where a thief can read everything.
 
-        **Back in the cloakroom.** The cloakroom wants a second proof that only you have. It cannot be a password said at the counter, because the crowd hears it. So you tear a card in two. You keep one half, and the attendant pins the other half to your coat, where anyone can see it. To collect at the back window, you bring the ticket *and* your half, and the attendant checks that the halves fit. A pickpocket has your ticket and has seen the pinned half, and still gets nothing, because nobody can tear a card to fit a half they have only looked at.
+        **The login with PKCE** is the login from step 1 with two values added, a [verifier](~verifier) and a [challenge](~challenge):
+
+        1. When ada opens the login link, the app [makes a verifier and its challenge](#App->App), and keeps the verifier.
+        2. The [redirect to the login server](#App->Browser "peek") carries the [challenge](~challenge) in the address. The login server keeps it next to the [code](~code) it gives out.
+        3. On the direct path, the app [sends the code and the verifier](#App->Login "peek"). This is the first time the [verifier](~verifier) leaves the app.
+        4. The login server [checks](#Login->Login) that the SHA-256 of the verifier equals the stored challenge. It does, so the [tokens](~token) come back as in step 1.
+
+        **Why it works, back in the cloakroom.** The cloakroom wants a second proof that only you have. It cannot be a password said at the counter, because the crowd hears it. So you tear a card in two. You keep one half, and the attendant pins the other half to your coat, where anyone can see it. To collect at the back window, you bring the ticket *and* your half, and the attendant checks that the halves fit. A pickpocket has your ticket and has seen the pinned half, and still gets nothing, because nobody can tear a card to fit a half they have only looked at.
 
         PKCE adds the two halves to the login:
 
@@ -300,13 +306,6 @@ window.DIAGRAMS = {
         | its SHA-256 | \`T5lhrBRH_P06bxBI6EABHPJu0qZqxWkv7bl0os6Sd70\` |
 
         One difference from the card: its halves are torn at once, but the app makes the verifier first and computes the challenge from it.
-
-        **The login with PKCE** is the login from step 1 with these two values added:
-
-        1. When ada opens the login link, the app [makes a verifier and its challenge](#App->App), and keeps the verifier.
-        2. The [redirect to the login server](#App->Browser "peek") carries the [challenge](~challenge) in the address. The login server keeps it next to the [code](~code) it gives out.
-        3. On the direct path, the app [sends the code and the verifier](#App->Login "peek"). This is the first time the [verifier](~verifier) leaves the app.
-        4. The login server [checks](#Login->Login) that the SHA-256 of the verifier equals the stored challenge. It does, so the [tokens](~token) come back as in step 1.
 
         So the two values that cross the browser, the challenge and the code, are no use without the one that never does.
       `,
@@ -429,80 +428,113 @@ window.DIAGRAMS = {
       title: "The same theft, with PKCE",
       summary: "The thief has the code and the challenge, and gets no tokens without the verifier.",
       story: md`
-        **The theft from step 2 again**, now against an app that uses PKCE. On the left is step 2, where the code alone was enough. On the right is the new run.
+        **The theft from step 2, against the login from step 3.** The app [made a verifier](#App->App) and sent only the [challenge](~challenge) through the browser. The attacker [catches the redirect](#Browser->Thief) the same way as in step 2, so it has the [code](~code), and it saw the challenge in the login address.
 
-        The attacker caught the redirect the same way, so it has the [code](~code), and it saw the [challenge](~challenge) in the login address. In the cloakroom, the pickpocket has your ticket and has looked at the pinned half. What can it try?
+        On the direct path, it tries what it can:
 
-        1. **Send the code alone**, as in step 2. [The answer](#p2) is 400, \`code_verifier required\`.
-        2. **Make up a verifier.** [The answer](#p3) is 400, \`code_verifier does not match the challenge\`, because the SHA-256 of a made-up verifier is some other fingerprint. There are 2²⁵⁶ possible verifiers, a number with 78 digits, so guessing is hopeless.
-        3. **Work the verifier out of the challenge.** That means running the hash backwards, which nobody knows how to do.
+        1. **The code alone**, as in step 2. The [request](#Thief->Login "peek") is the one that got tokens before, and [the answer](#Login->Thief) is now 400, \`code_verifier required\`.
+        2. **The code and a made-up verifier.** The login server [hashes it](#Login->Login) and gets some other fingerprint, so the answer is 400, \`code_verifier does not match the challenge\`.
+
+        The API never hears from the attacker.
+
+        **Why it cannot do better.** In the cloakroom, the pickpocket has your ticket and has looked at the pinned half, but cannot tear a card to fit it. A made-up verifier is a guess, and there are 2²⁵⁶ possible verifiers, a number with 78 digits. Working the verifier out of the challenge means running the hash backwards, which nobody knows how to do.
 
         **What PKCE does not stop.** A thief who can read the app's memory, or its direct requests, has the [verifier](~verifier) too. PKCE protects the code on its trip through the browser, and nothing else.
 
         **In one sentence:** the code crosses the browser, so it must be useless on its own, and PKCE makes it useless without a verifier that never crosses the browser.
       `,
-      chart: `flowchart LR
-  subgraph without["Without PKCE, step 2"]
-    direction TB
-    w1["The attacker has the code<br><small>vdxNXxxoazUrmmvHVFM8wA</small>"]
-    w2["200: ada's tokens<br><small>at_IZ8WUNSU…</small>"]
-    w3["200: ada's data"]
-    w1 -->|"POST /token: the code"| w2
-    w2 -->|"GET /me"| w3
+      chart: `sequenceDiagram
+  autonumber
+  participant Browser as Ada's browser
+  participant App
+  participant Thief as Attacker
+  participant Login as Login server
+  participant API
+  rect rgba(185,28,28,0.07)
+    Note over Browser,Login: Through the browser
+    Browser->>App: GET /login
+    App->>App: Make a verifier and its challenge
+    App-->>Browser: 302 to the login server, with the challenge
+    Browser->>Login: GET /authorize?code_challenge=sQNF0y4E…
+    Login-->>Browser: 302 back to the app, with the code
+    Browser-->>Thief: The redirect reaches the attacker
   end
-  subgraph with["With PKCE"]
-    direction TB
-    p1["The attacker has the code<br><small>eILhYqxxutMqFjsf-anl3g<br>and saw the challenge sQNF0y4E…</small>"]
-    p2["400: code_verifier required"]
-    p3["400: code_verifier does not<br>match the challenge"]
-    p1 -->|"POST /token: the code alone"| p2
-    p1 -->|"POST /token: the code and a made-up verifier"| p3
-  end
-  without ~~~ with`,
+  rect rgba(21,128,61,0.07)
+    Note over Thief,API: Direct
+    Thief->>Login: POST /token with the code alone
+    Login-->>Thief: 400 code_verifier required
+    Thief->>Login: POST /token with the code and a made-up verifier
+    Login->>Login: SHA-256 of the verifier equals the challenge?
+    Login-->>Thief: 400 does not match the challenge
+  end`,
       nodeInteractions: {
-        w1: { label: "The attacker has the code", type: "code" },
-        w2: { label: "Ada's tokens, to the attacker", type: "token", status: "problem" },
-        w3: { label: "Ada's data, to the attacker", status: "problem" },
-        p1: { label: "The attacker has the code", type: "code" },
-        p2: {
-          label: "400: code_verifier required",
-          status: "new",
-          body: md`
-            From the run:
-
-            ~~~text
-            POST /token  code=eILhYqxxutMqFjsf-anl3g
-            400 {"error":"invalid_grant",
-                 "error_description":"code_verifier required"}
-            ~~~
-
-            The login carried a [challenge](~challenge), so the login server gives out tokens for this [code](~code) only with the [verifier](~verifier) that matches it. The error text is the test server's own. RFC 7636 asks for \`invalid_grant\` and leaves the description to the server.
-          `,
-        },
-        p3: {
-          label: "400: does not match the challenge",
-          status: "new",
-          body: md`
-            From the run:
-
-            | | |
-            | --- | --- |
-            | the made-up [verifier](~verifier) | \`NDX6LsfxPnm4Az9NSm4XBSq9Dj8EKZ3IibKTF7Onkps\` |
-            | its SHA-256 | \`UTu01g_vVmjboQsayNQosMdFb_noH6yaLUEjZf2z5kE\` |
-            | the stored [challenge](~challenge) | \`sQNF0y4Ez0bueQOw41mgxBNxBsY5-ZQ1llUxGC2mQgE\` |
-
-            ~~~text
-            400 {"error":"invalid_grant",
-                 "error_description":"code_verifier does not match the challenge"}
-            ~~~
-          `,
-        },
+        Browser: { label: "Ada's browser" },
+        App: { label: "App" },
+        Thief: { label: "Attacker", status: "problem" },
+        Login: { label: "Login server" },
+        API: { label: "API" },
       },
       edgeInteractions: [
-        arrow("w1", "w2", "", "", [], { type: "code" }),
-        arrow("w2", "w3", "", "", [], { type: "token" }),
-        arrow("p1", "p2", "", "", [], { type: "code" }),
-        arrow("p1", "p3", "", "", [], { type: "verifier" }),
+        arrow("Browser", "App", "", "", [], { mermaidText: "GET /login" }),
+        arrow("App", "App", "", md`
+          From the run. The app keeps the verifier, and the attacker never sees it:
+
+          | | |
+          | --- | --- |
+          | [verifier](~verifier) | \`AZJCkiuJOhrtZASirNn4wv0VwACi0MCA0rijGBJjfWI\` |
+          | [challenge](~challenge) | \`sQNF0y4Ez0bueQOw41mgxBNxBsY5-ZQ1llUxGC2mQgE\` |
+        `, [], { mermaidText: "Make a verifier and its challenge", type: "verifier", label: "The app makes a verifier" }),
+        arrow("App", "Browser", "", "", [], { mermaidText: "302 to the login server, with the challenge", type: "challenge" }),
+        arrow("Browser", "Login", "", "", [], { mermaidText: "GET /authorize?code_challenge=", type: "challenge" }),
+        arrow("Login", "Browser", "", "", [], { mermaidText: "302 back to the app, with the code", type: "code" }),
+        arrow("Browser", "Thief", "", md`
+          The address from the run, meant for the app:
+
+          ~~~text
+          http://app.example/callback?code=eILhYqxxutMqFjsf-anl3g&state=soXm32imDjA8GKZs
+          ~~~
+        `, [], { mermaidText: "The redirect reaches the attacker", type: "code", status: "problem", label: "The attacker gets the redirect" }),
+        arrow("Thief", "Login", "", md`
+          The same request that got tokens in step 2, from the run:
+
+          ~~~text
+          POST http://login.example/token
+            grant_type=authorization_code
+            client_id=demo-app
+            code=eILhYqxxutMqFjsf-anl3g
+            redirect_uri=http://app.example/callback
+          ~~~
+        `, [], { mermaidText: "POST /token with the code alone", type: "code", label: "The attacker trades the code alone" }),
+        arrow("Login", "Thief", "", md`
+          ~~~text
+          400 {"error":"invalid_grant",
+               "error_description":"code_verifier required"}
+          ~~~
+
+          The login carried a [challenge](~challenge), so the login server gives out tokens for this [code](~code) only with the [verifier](~verifier) that matches it. The error text is the test server's own. RFC 7636 asks for \`invalid_grant\` and leaves the description to the server.
+        `, [], { mermaidText: "400 code_verifier required", status: "new", label: "No verifier, no tokens" }),
+        arrow("Thief", "Login", "", md`
+          The request from the run, with a verifier the attacker made up:
+
+          ~~~text
+          POST http://login.example/token
+            grant_type=authorization_code
+            client_id=demo-app
+            code=eILhYqxxutMqFjsf-anl3g
+            redirect_uri=http://app.example/callback
+            code_verifier=NDX6LsfxPnm4Az9NSm4XBSq9Dj8EKZ3IibKTF7Onkps
+          ~~~
+        `, [], { mermaidText: "POST /token with the code and a made-up verifier", type: "verifier", label: "The attacker tries a made-up verifier" }),
+        arrow("Login", "Login", "", md`
+          The same check as in step 3, from the run:
+
+          | | |
+          | --- | --- |
+          | the made-up [verifier](~verifier) | \`NDX6LsfxPnm4Az9NSm4XBSq9Dj8EKZ3IibKTF7Onkps\` |
+          | its SHA-256 | \`UTu01g_vVmjboQsayNQosMdFb_noH6yaLUEjZf2z5kE\` |
+          | the stored [challenge](~challenge) | \`sQNF0y4Ez0bueQOw41mgxBNxBsY5-ZQ1llUxGC2mQgE\` |
+        `, [], { mermaidText: "SHA-256 of the verifier equals the challenge?", label: "The login server checks the verifier" }),
+        arrow("Login", "Thief", "", "", [], { mermaidText: "400 does not match the challenge", status: "new" }),
       ],
     },
 
