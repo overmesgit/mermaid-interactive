@@ -1,6 +1,6 @@
 ---
 name: interactive-explainer
-description: Build an interactive explanation as one HTML file with this diagram tool. Mermaid diagrams are walked step by step with Prev and Next, every shape and arrow has a tooltip and a note in a side panel, a shape can open an inner diagram, and notes can show real code from the repo. Use when asked to make an explanation, walkthrough, or lesson with the interactive Mermaid page.
+description: Build an interactive explanation as one HTML file with this diagram tool. Mermaid diagrams are walked step by step with Prev and Next, every shape and arrow can have a note in a side panel, a shape can open an inner diagram, and notes can show real code from the repo. Use when asked to make an explanation, walkthrough, or lesson with the interactive Mermaid page.
 ---
 
 # Interactive explainer
@@ -17,7 +17,7 @@ This skill covers how to use the tool: what the page does, what to write, how to
 - **Colors that mean something.** A part can be marked new, changed, removed, or a problem, and the word shows with the color. A dot marks a part with more to read.
 - **One color per type of thing**, such as requests, routes, and handlers, in the diagram and in the text.
 - **Tables** in notes and stories, to line up what is compared.
-- **A tooltip** on hover over any shape or arrow you wrote a note for. The arrows it lights flow from start to end, and so do the arrows a lesson step adds.
+- **A highlight** on hover over any shape or arrow you wrote a note for, with a tooltip if you wrote one. The arrows it lights flow from start to end, and so do the arrows a lesson step adds.
 - **A note** on click. It can hold markdown, code from the repo, and facts.
 - **An inner diagram** on double-click, for a shape or arrow that has one. A ↘ badge marks the shape. Backspace goes back up.
 - **Pan and zoom** with the mouse.

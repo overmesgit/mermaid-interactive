@@ -11,12 +11,14 @@ function setStatus(text) {
   }, 2400);
 }
 
+// A tooltip is optional, so a part without one only lights up on hover.
 function tooltipText(interaction) {
-  return interaction.opensView ? `${interaction.tooltip} Double-click to open the inner diagram.` : interaction.tooltip;
+  return [interaction.tooltip, interaction.opensView && "Double-click to open the inner diagram."].filter(Boolean).join(" ");
 }
 
 function placeTooltip(event) {
   const tooltip = app.els.tooltip;
+  if (!tooltip.textContent) return;
   tooltip.hidden = false;
   const rect = tooltip.getBoundingClientRect();
   let x = event.clientX + 14;
@@ -29,6 +31,7 @@ function placeTooltip(event) {
 
 function showTooltip(event, interaction) {
   app.els.tooltip.textContent = tooltipText(interaction);
+  app.els.tooltip.hidden = true;
   placeTooltip(event);
   highlightAround(interaction);
 }

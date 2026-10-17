@@ -55,7 +55,7 @@ Zooming the picture versus opening another diagram.
 | [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current, partly replaced by 041, 052, and 053 |
 | [041](041-story-links-to-parts.md) | The story points at parts where it talks about them | Current, partly replaced by 047 and 052 |
 | [047](047-story-reading-cues.md) | The panel says how to read it, in readable text | Current, partly replaced by 052 and 053 |
-| [052](052-one-color-per-type.md) | One color per type of thing, tables, a one-line note header, and no parts list under a story | Current, partly replaced by 055 |
+| [052](052-one-color-per-type.md) | One color per type of thing, tables, a one-line note header, and no parts list under a story | Current, partly replaced by 055 and 057 |
 | [053](053-inline-and-peek-notes.md) | A note opens inline under its link, or as a peek card by its shape | Current, partly replaced by 055 |
 
 ## Notes and code in the panel
@@ -75,6 +75,7 @@ Prev and Next through the steps of a tab.
 | [020](020-lesson-steps.md) | Step through the How lesson with buttons, not badges | Current, partly replaced by 021 |
 | [021](021-lesson-stays.md) | Prev and Next keep their place, even inside an inner diagram | Current, partly replaced by 022 |
 | [022](022-lesson-on-diagram.md) | Prev and Next sit on the top left of the diagram | Current, partly replaced by 036 |
+| [057](057-optional-tooltips.md) | A tooltip is optional, and a lesson step's New is measured against every step before it | Current |
 
 ## Look and feel
 
@@ -87,7 +88,7 @@ Prev and Next through the steps of a tab.
 | [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
 | [036](036-floating-controls.md) | Controls float over a full-window diagram | Current, partly replaced by 055 |
 | [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current, partly replaced by 043 and 055 |
-| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current, partly replaced by 052, 055, and 056 |
+| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current, partly replaced by 052, 055, 056, and 057 |
 | [046](046-side-by-side-in-one-chart.md) | Show a change side by side in one chart | Current |
 
 ## Files and export

@@ -42,25 +42,25 @@ function checkContent() {
   if (DIAGRAMS.notePlace !== undefined && !PEEK_PLACES.includes(DIAGRAMS.notePlace)) {
     found.push({ text: `notePlace is "${DIAGRAMS.notePlace}". It takes "beside", "below", or "corner", so notes open beside their shapes instead.` });
   }
-  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
-  const stepBefore = new Map();
+  // The parts the lesson steps before each step showed. A part one of them showed was introduced there, so the story need not link it again.
+  const shownBefore = new Map();
   tabs.forEach((tab) => {
     if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
     (tab.lesson || []).forEach((id, index) => {
       if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
-      else if (index && isView(tab.lesson[index - 1])) stepBefore.set(id, DIAGRAMS.views[tab.lesson[index - 1]]);
+      else if (index) shownBefore.set(id, partKeysBefore(DIAGRAMS.views, tab.lesson, index));
     });
   });
   Object.entries(DIAGRAMS.views).forEach(([viewId, view]) => {
     const say = (text) => ({ viewId, text: `${viewId}: ${text}` });
-    found.push(...checkView(view, stepBefore.get(viewId)).map(say));
+    found.push(...checkView(view, shownBefore.get(viewId)).map(say));
     checks.chartIds[viewId] = checkChartIds(view).map(say);
   });
   return found;
 }
 
-// Everything about one view except whether its chart has each shape and arrow. `before` is the lesson step before it, if any.
-function checkView(view, before) {
+// Everything about one view except whether its chart has each shape and arrow. `seen` is the parts the lesson steps before it showed, if any.
+function checkView(view, seen) {
   const problems = [];
   const parts = viewParts(view);
   const kind = chartKind(view.chart);
@@ -96,7 +96,7 @@ function checkView(view, before) {
       problems.push(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
     }
   }
-  problems.push(...checkLinks(view, parts), ...checkStoryLinks(view, parts, before));
+  problems.push(...checkLinks(view, parts), ...checkStoryLinks(view, parts, seen));
   return problems;
 }
 
@@ -123,9 +123,8 @@ function checkLinks(view, parts) {
 
 // A story has no parts list, so a part with something to open must be linked where the story talks about it.
 // On a lesson step, only the parts the step adds.
-function checkStoryLinks(view, parts, before) {
+function checkStoryLinks(view, parts, seen = new Set()) {
   if (!view.story) return [];
-  const seen = before ? partKeysOf(before) : new Set();
   const linked = new Set([...prose(view.story).matchAll(/\]\(#([^)\s]+)/g)].map(([, key]) => key));
   const left = [...new Set(parts.filter(({ note, key }) => hasMore(note) && !linked.has(key) && !seen.has(key)).map(({ key }) => key))];
   return left.length ? [`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`] : [];

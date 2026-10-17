@@ -130,7 +130,7 @@ The key is the chartId. Do not repeat it inside the object.
 | Field | Meaning |
 | --- | --- |
 | `label` | The panel title. Arrows use it to name their ends. |
-| `tooltip` | One sentence on hover. It is also the panel's lead line. |
+| `tooltip` | Optional. One sentence on hover, also the note's lead line. Write one only when it adds a fact the label cannot hold, because each layer is more to read ([ADR-057](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/057-optional-tooltips.md)). |
 | `kicker` | One word or two, such as `Service` or `Your code`, in small text after the note's title. |
 | `type` | Optional. One of the [types](#types) the file names, such as `route`. The shape takes that type's color. |
 | `body` | The panel note, in markdown. |
@@ -140,7 +140,7 @@ The key is the chartId. Do not repeat it inside the object.
 
 Every part looking the same tells the reader nothing, so say what changed with `status` ([ADR-043](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/043-status-and-weight.md)). Leave most parts without one.
 
-The page adds two marks by itself. A shape whose note has a `body` or `facts` gets a small dot, so the reader can see what is worth opening. On a lesson step, a part the step adds gets `status: "new"` unless you gave it a status or a type, but only when the step shares a part with the step before. So a part with a type keeps its color. To mark it New too, give it the status.
+The page adds two marks by itself. A shape whose note has a `body` or `facts` gets a small dot, so the reader can see what is worth opening. On a lesson step, a part the step adds gets `status: "new"` unless you gave it a status or a type, but only when the step shares a part with an earlier step, and only if no earlier step showed it. So a part with a type keeps its color. To mark it New too, give it the status.
 
 ## Edge interaction
 
@@ -206,10 +206,10 @@ The [API](#api) loads the session, which costs one query per call.
 [](#api->db)
 ```
 
-- A line that holds only such links shows each part as a card in that place: the part's name and tooltip. The link text is not shown, so it can be empty, but the name keeps the source readable. Links on lines next to each other each get a card.
+- A line that holds only such links shows each part as a card in that place: the part's name, and its tooltip if it has one. The link text is not shown, so it can be empty, but the name keeps the source readable. Links on lines next to each other each get a card.
 - A link inside a sentence shows as a link.
 - Both open the part's note on click, and light the part in the picture on hover.
-- A view with a story has no list of its parts, so link every part that has a `body`, `facts`, or `opensView`. The checks name the ones a story misses. On a lesson step, a part the step before already showed does not need a link again.
+- A view with a story has no list of its parts, so link every part that has a `body`, `facts`, or `opensView`. The checks name the ones a story misses. On a lesson step, a part an earlier step already showed does not need a link again.
 - The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first. Two participants in a sequence chart often trade several messages, so put the detail a story links to on the first message between them, or on a participant.
 
 So a story can walk the picture: a sentence, the part it is about, the next sentence. On a lesson step, the arrows the step adds already flow in the picture, so the story can name them in the order they matter.

@@ -1,6 +1,6 @@
 # Rules
 
-Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last two came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
+Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last nine came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17: two from writing it, and seven from a reader's review of it. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
 
 ### Color carries meaning
 **Context:** The page and the diagrams are almost all gray, so nothing tells the eye where to look.
@@ -220,3 +220,41 @@ flowchart TB
   code -->|"4. POST /token"| check["Login server checks"]
   verifier -->|"4. straight to the login server"| check
 ```
+
+### Show the whole before the part
+**Context:** The lesson on PKCE opened with "a stolen code gets nothing". The reader had not yet seen an OAuth login, so they did not know where the code comes from, where it goes, or why anyone would steal it.
+**Rule:** Before explaining a part, show the whole system it belongs to, once, with its main players and one worked example. Then say the problem, then the part that solves it.
+**Example:** the lesson now starts with a plain OAuth login, message by message, with no PKCE. Step 2 is the problem, a stolen code. Step 3 is PKCE, as the same login with two values added.
+
+### Find an everyday picture for each hard idea
+**Context:** The cloakroom, a ticket for a coat and a card torn in two, was the part of the lesson the reader remembered. The OAuth login before it had players and messages but nothing to picture, so it was harder to hold in mind.
+**Rule:** People imagine everyday, physical things more easily than abstract ones, so a good real-world analogy is one of the strongest tools an explanation has. Look for one wherever the reader must keep an idea in their head, not only at the key idea. Prefer growing one analogy over the whole lesson to adding a new one per step.
+**Example:** the cloakroom now starts in step 1, where the crowded counter is the browser, a quiet back window is the direct path, the ticket is the code, and the coat is the tokens. Step 2 adds a pickpocket and a staff badge, and step 3 the torn card.
+
+### Tell look-alikes apart by their jobs
+**Context:** A code and an access token are both random strings from the login server, and the reader kept mixing them up. The lesson used both words without ever showing what each was for.
+**Rule:** When two things look alike, put them side by side and say for each where it is made, where it travels, what it is used for, and how long it lasts, with a real value of each.
+**Example:** step 1 has a table with the code `kebUrZQWTL_-3VXPX_2HUQ` in one column and the access token `at_1KTuiveM4YrC1j_33md3Vn-_` in the other: through the browser once against direct on every API call, getting the tokens against reading the data.
+
+### Color a type everywhere it appears
+**Context:** Codes and tokens had their own colors, but only some mentions used them. Other mentions of the same values in the text, and some arrows that carried them, stayed plain, so the colors could not be trusted.
+**Rule:** Once a thing has a type color, use it on every mention: each word in the text that names it, each shape, and each arrow that carries it. A color used only sometimes tells the reader nothing.
+**How:** `[code](~code)` in text, and `type` on each shape and on each arrow, also in `arrow()`.
+**Example:** every message that carries the code is the code's color, in all four steps, and so is every word "code" that means the value.
+
+### Draw the places that change the answer
+**Context:** The whole point of PKCE is that some messages pass through the browser, where others can read them, and some go straight to a server. The diagrams drew both kinds the same way, so the reader had to keep the difference in mind.
+**Rule:** When it matters where something happens, such as an exposed place and a private one, or a client and a server, draw those places in the diagram, and name them in it.
+**How:** in a sequence chart, `rect` shades a block of messages, and a `Note over` at its top names it. In a flowchart, a `subgraph`.
+**Example:** the messages through the browser sit on a red band, "Through the browser: other programs may see these", and the direct ones on a green band, "Direct: only the app and the server see these".
+
+### Give each step one new idea
+**Context:** Three steps walked the same login, each from another angle, so the reader met the same messages three times. A fourth step, the token refresh, did not help explain PKCE at all.
+**Rule:** Each step adds one idea the steps before did not have. Merge steps that show the same thing, and cut a topic that does not serve the lesson's point, or reduce it to a sentence where it fits.
+**Example:** the four steps are now the login, the problem, PKCE, and the theft with PKCE. The refresh is one sentence in step 1, and the Basics tab shows it.
+
+### Add a layer only when it carries something
+**Context:** Every shape and arrow had a tooltip. Most repeated the label or the arrow's text, and the reader found them noise: one more thing to read, with nothing new in it.
+**Rule:** Each layer the reader can open, such as a tooltip, a note, or an inner diagram, must say something the layer above it does not. Leave it out otherwise.
+**How:** `tooltip` is optional ([ADR-057](decisions/057-optional-tooltips.md)). A part with no tooltip still lights up on hover.
+**Example:** the OAuth PKCE example has no tooltips. Its labels say what each part is, and the notes hold the real requests from the run.

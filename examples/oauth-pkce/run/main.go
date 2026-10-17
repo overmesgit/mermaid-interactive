@@ -1,7 +1,7 @@
 // A real run of OAuth 2.0 login with PKCE, for the values in examples/oauth-pkce.js.
 // Three local servers: the app (app.example), the login server (login.example), and the API (api.example).
 // A transport maps those names to 127.0.0.1, so URLs read like real ones.
-// Scenarios: a normal login with PKCE, a token refresh, and a stolen code with and without PKCE.
+// Scenarios: a login without PKCE and a stolen code, then a login with PKCE and a stolen code, then a token refresh.
 // Run it with `go run .` in this folder. Each run makes new random values. output.txt is the run the lesson shows.
 package main
 
@@ -305,46 +305,42 @@ func main() {
 	var current *app
 	serve("app.example", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { current.routes().ServeHTTP(w, r) }))
 
-	say("===== 1. Login with PKCE =====")
-	current = newApp(true)
-	login(nil)
-
-	say("\n===== 2. The app calls the API =====")
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, &http.Client{Transport: transport})
-	client := current.conf.Client(ctx, current.token)
-	resp, err := client.Get("http://api.example/me")
-	if err != nil {
-		panic(err)
+	callAPI := func(tok *oauth2.Token) {
+		resp, err := current.conf.Client(ctx, tok).Get("http://api.example/me")
+		if err != nil {
+			panic(err)
+		}
+		b, _ := io.ReadAll(resp.Body)
+		say("[app] API answered %d %s", resp.StatusCode, b)
 	}
-	b, _ := io.ReadAll(resp.Body)
-	say("[app] API answered %d %s", resp.StatusCode, b)
 
-	say("\n===== 3. An hour later: the access token has expired =====")
-	old := *current.token
-	expired := old
-	expired.Expiry = time.Now().Add(-time.Minute) // as if the hour had passed
-	client = current.conf.Client(ctx, &expired)
-	resp, err = client.Get("http://api.example/me")
-	if err != nil {
-		panic(err)
-	}
-	b, _ = io.ReadAll(resp.Body)
-	say("[app] API answered %d %s", resp.StatusCode, b)
-	say("[app] the old refresh token %s used again:", old.RefreshToken)
-	stale := old
-	stale.AccessToken, stale.Expiry = "", time.Now().Add(-time.Minute)
-	_, err = current.conf.TokenSource(ctx, &stale).Token()
-	say("      %v", err)
+	say("===== 1. Login without PKCE =====")
+	current = newApp(false)
+	login(nil)
+	callAPI(current.token)
 
-	say("\n===== 4. Stolen code, app WITHOUT PKCE =====")
+	say("\n===== 2. Stolen code, app WITHOUT PKCE =====")
 	current = newApp(false)
 	login(func(code string) { attackerExchange(code, "") })
 
-	say("\n===== 5. Stolen code, app WITH PKCE =====")
+	say("\n===== 3. Login with PKCE =====")
+	current = newApp(true)
+	login(nil)
+	callAPI(current.token)
+	withPKCE := current
+
+	say("\n===== 4. Stolen code, app WITH PKCE =====")
 	current = newApp(true)
 	login(func(code string) {
 		attackerExchange(code, "")
 		attackerExchange(code, oauth2.GenerateVerifier())
 		say("[attacker] the challenge %s was in the address, but SHA-256 cannot be run backwards to get the verifier", oauth2.S256ChallengeFromVerifier(current.verifier))
 	})
+
+	say("\n===== 5. An hour later: the access token from login 3 has expired =====")
+	current = withPKCE
+	expired := *current.token
+	expired.Expiry = time.Now().Add(-time.Minute) // as if the hour had passed
+	callAPI(&expired)
 }

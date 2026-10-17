@@ -1,6 +1,6 @@
 # Interactive Mermaid
 
-A page for explaining hard things: a concept, a subsystem, a pull request. An explanation is a series of Mermaid diagrams with a tooltip on every shape and arrow, a details panel with notes and code, drill-down into an inner diagram, and Prev and Next through the lesson. It exports to one HTML file.
+A page for explaining hard things: a concept, a subsystem, a pull request. An explanation is a series of Mermaid diagrams whose shapes and arrows light up on hover and open notes, a details panel with notes and code, drill-down into an inner diagram, and Prev and Next through the lesson. It exports to one HTML file.
 
 There are two ways to make one.
 
@@ -41,7 +41,7 @@ The editor builds the page from `page.html`, `styles.css`, and `js/` each time i
 
 `examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, so open `examples/pr-checks.packed.js` to see them. That is the same file after packing (step 2 of [SKILL.md](skill/SKILL.md#build-it), with `content=examples/pr-checks.js`). Copy `packed.js` over it after changing the example.
 
-`examples/oauth-pkce.js` explains OAuth 2.0 login with PKCE in sequence charts, with each kind of value in its own color. Every value in it comes from running golang.org/x/oauth2 against local test servers, in `examples/oauth-pkce/run/`, and its code notes show the library's PKCE code, cut to the lines they show, in `examples/oauth-pkce/`. Open `examples/oauth-pkce.packed.js` to see the code.
+`examples/oauth-pkce.js` explains an OAuth 2.0 login, then PKCE, in sequence charts that shade what passes through the browser, with each kind of value in its own color. Every value in it comes from running golang.org/x/oauth2 against local test servers, in `examples/oauth-pkce/run/`, and its code notes show the library's PKCE file, copied into `examples/oauth-pkce/`. Open `examples/oauth-pkce.packed.js` to see the code.
 
 To check a content file in Chrome, run `python3 tools/check.py examples/oauth-pkce.packed.js`. It opens the file in the editor, clicks every part and arrow of every view, and prints what missed and what the editor lists as a problem. From WSL it starts Windows Chrome on its own. In Claude Code, the `browser-check` agent runs it on a smaller model and reports only the result.
 

@@ -92,6 +92,12 @@ function partKeysOf(view) {
   return new Set([...Object.keys(view.nodeInteractions || {}), ...view.edgeInteractions.map((edge) => `${edge.from}->${edge.to}`)]);
 }
 
+// The keys of every part the steps of a lesson before `index` showed. A part any of them showed is not new,
+// even when the step just before left it out, as a step on an attack leaves out the normal login.
+function partKeysBefore(views, lesson, index) {
+  return new Set(lesson.slice(0, index).filter((id) => views[id]).flatMap((id) => [...partKeysOf(views[id])]));
+}
+
 // The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
 function nodeInteractions() {
   const stored = (app.view && app.view.nodeInteractions) || {};
@@ -119,7 +125,6 @@ function edgeInteractions() {
     return {
       kicker: "Arrow",
       label: `${fromLabel} → ${toLabel}`,
-      tooltip: `${fromLabel} to ${toLabel}`,
       ...edge,
       edgeId: `${edge.from}-${edge.to}-${index}`,
       kind: "edge",

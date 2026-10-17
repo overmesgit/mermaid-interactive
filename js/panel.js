@@ -170,13 +170,13 @@ function markOpenCard() {
   });
 }
 
-// What a lesson step adds to the step before it, as part keys. Null outside a lesson step, and on the first step.
+// What a lesson step adds to the steps before it, as part keys. Null outside a lesson step, and on the first step.
 function addedInStep() {
   const step = lessonStep();
   if (!step || !step.index || step.lesson[step.index] !== app.view.viewId) return null;
-  const seen = partKeysOf(app.views[step.lesson[step.index - 1]]);
+  const seen = partKeysBefore(app.views, step.lesson, step.index);
   const keys = [...partKeysOf(app.view)];
-  // A step with a new picture shares nothing with the step before. Marking all of it New would say nothing.
+  // A step with a new picture shares nothing with the steps before. Marking all of it New would say nothing.
   if (!keys.some((key) => seen.has(key))) return null;
   return new Set(keys.filter((key) => !seen.has(key)));
 }
@@ -214,7 +214,7 @@ function wirePart(button, interaction, how) {
   button.addEventListener("pointerleave", clearHighlight);
 }
 
-// The part's name, its status, and its tooltip. A part with more to read has the same dot as in the picture.
+// The part's name, its status, and its tooltip if it has one. A part with more to read has the same dot as in the picture.
 function partItem(interaction, how = {}) {
   const li = document.createElement("li");
   li.dataset.part = partKey(interaction);
@@ -227,9 +227,12 @@ function partItem(interaction, how = {}) {
   name.textContent = interaction.label;
   const status = partStatus(interaction);
   if (status) name.append(statusChip(status));
-  const line = document.createElement("span");
-  line.textContent = interaction.tooltip;
-  button.append(name, line);
+  button.append(name);
+  if (interaction.tooltip) {
+    const line = document.createElement("span");
+    line.textContent = interaction.tooltip;
+    button.append(line);
+  }
   li.append(button);
   return li;
 }
@@ -273,7 +276,8 @@ function openPanel(interaction, how) {
   const status = partStatus(interaction);
   if (status) note.title.append(statusChip(status));
   note.kicker.textContent = interaction.kicker || "";
-  note.lead.textContent = interaction.tooltip;
+  note.lead.textContent = interaction.tooltip || "";
+  note.lead.hidden = !interaction.tooltip;
   renderNote(note.body, interaction.body || "");
   note.facts.replaceChildren();
   (interaction.facts || []).forEach(([term, detail]) => {
