@@ -182,8 +182,8 @@ route 2   GET /posts/{id}   with id = new
 
 ### An analogy says it is imagined
 **Context:** "A mail room keeps its addresses sorted from the most exact to the least" read as a claim about real mail rooms. The reader stopped to wonder whether it was true, which does not matter to the point.
-**Rule:** Present an analogy as a picture, not as a fact about the world: "imagine", "picture", "suppose". If the real thing works differently, one short sentence can say so. Then the reader spends no attention checking it.
-**Example:** "Imagine a mail room that keeps its addresses sorted from the most exact to the least... Real mail rooms may work differently. This one is only a picture of the rule."
+**Rule:** Present an analogy as a picture, not as a fact about the world: "imagine", "picture", "suppose". The word is enough. A sentence saying that the real thing may differ only adds noise. Then the reader spends no attention checking it.
+**Example:** "Imagine a mail room that sorts its addresses from the most exact to the least, and sends each letter to the first one that fits."
 
 ### Use examples every reader knows
 **Context:** "12 Main St, Apt 4" is how addresses are written in the US. Readers elsewhere write them in another order and with other words, so the example asked them to translate first.
@@ -194,3 +194,8 @@ route 2   GET /posts/{id}   with id = new
 **Context:** The step had four tables, and the two routes appeared in three of them. The same fact, that the more specific route runs, was said in the summary, the story, a card, and two notes.
 **Rule:** Give each point one place. When a point comes back, refer to it instead of restating it. A note can repeat what the story says only when it would not make sense without it.
 **Example:** the separate table of the two routes in order is gone, because the part-by-part table already shows their order. The note on newPostForm no longer repeats the tree search the story describes.
+
+### Mark every identifier in the text
+**Context:** In "A letter to house 7 stops at 2" and "GET /posts/42 reaches route 2", the names of things ran together with the words around them, so the reader had to find where each name started and ended.
+**Rule:** Set every name the reader may need to spot again apart from the prose: code values, labels such as route 1, and the analogy's names such as house 12. Use the type's color where the thing has a type, and code style otherwise.
+**Example:** "A letter to `house 7` stops at 2", and "`GET /posts/42` is the letter to `house 7`: it reaches route 2", with the request and the routes in their type colors.

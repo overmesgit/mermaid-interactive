@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="482ed6d9" />
+  <meta name="engine-fingerprint" content="c1e8141b" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #0f172a;
@@ -882,10 +882,17 @@ button.code-file-head:hover { background: #475569; }
 
 .code-file.is-missing pre { color: #fbbf24; white-space: pre-wrap; padding: 8px 12px; }
 
+/* An identifier in the text stands apart from the words around it, so the reader can spot it again. Inside a type's color, the color does that. */
 .panel-body :not(pre) > code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #eef2f6;
+  color: var(--ink);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 12.5px;
 }
+
+.panel-body .type-text > code { padding: 0; background: transparent; color: inherit; }
 
 .panel-body a { color: var(--accent); }
 

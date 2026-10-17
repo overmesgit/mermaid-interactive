@@ -163,43 +163,34 @@ window.DIAGRAMS = {
         | route 1 | [\`GET /posts/new\`](~route) | |
         | route 2 | [\`GET /posts/{id}\`](~route) | with \`id = new\` |
 
-        Which one runs? Your first guess is probably the exact match, route 1, and it is right. To see the rule behind it, picture addresses.
+        Which one runs? Your first guess is probably the exact match, [route 1](~route), and it is right. Addresses show why.
 
-        **Imagine a mail room** that keeps its addresses sorted from the most exact to the least, and sends each letter to the first address that fits. Real mail rooms may work differently. This one is only a picture of the rule.
+        **Imagine a mail room** that sorts its addresses from the most exact to the least, and sends each letter to the first one that fits.
 
-        | | address | gets the letter |
-        | --- | --- | --- |
-        | 1 | Lyon, Rose Street, house 12 | house 12 |
-        | 2 | Lyon, Rose Street, any house | the Rose Street office |
-        | 3 | Lyon, any street | the city office |
+        | | address |
+        | --- | --- |
+        | 1 | \`Lyon, Rose Street, house 12\` |
+        | 2 | \`Lyon, Rose Street, any house\` |
+        | 3 | \`Lyon, any street\` |
 
-        A letter to "Lyon, Rose Street, house 12" fits all three, and goes to house 12. A letter to house 7 fits only 2 and 3, so it goes to the Rose Street office.
+        A letter to \`house 12\` fits all three and stops at 1. A letter to \`house 7\` stops at 2. An address goes higher when it says everything the one below says, and more: that is **more specific**.
 
-        An address is **more specific** than another when it says everything the other says, and more. Address 1 says the city and the street, like address 2, and adds the house, so it goes above it.
-
-        **A route is an address for requests.** The method is the city, and each path segment is the next part of the address. A wildcard like \`{id}\` is "any house". Here are the two routes, with their addresses on the right:
-
-        | | route | address |
-        | --- | --- | --- |
-        | 1 | [\`GET /posts/new\`](~route) | Lyon, Rose Street, house 12 |
-        | 2 | [\`GET /posts/{id}\`](~route) | Lyon, Rose Street, any house |
-
-        Part by part:
+        **A route is an address for requests.** The method is the city, each path segment is the next part, and \`{id}\` is \`any house\`:
 
         | part | routes 1 and 2 | addresses 1 and 2 | |
         | --- | --- | --- | --- |
-        | method, city | \`GET\`, \`GET\` | Lyon, Lyon | the same |
-        | segment 1, street | \`posts\`, \`posts\` | Rose Street, Rose Street | the same |
-        | segment 2, house | \`new\`, \`{id}\` | house 12, any house | 1 says more |
+        | method, city | \`GET\`, \`GET\` | \`Lyon\`, \`Lyon\` | the same |
+        | segment 1, street | \`posts\`, \`posts\` | \`Rose Street\`, \`Rose Street\` | the same |
+        | segment 2, house | \`new\`, \`{id}\` | \`house 12\`, \`any house\` | 1 says more |
 
-        Route 1 says everything route 2 says, and one part more, so it goes above route 2, as address 1 goes above address 2. The request fits both and stops at route 1, so [newPostForm](#winner) runs. \`GET /posts/42\` is the letter to house 7: it fits only route 2.
+        So [route 1](~route) goes above [route 2](~route), the request stops there, and [newPostForm](#winner) runs. [\`GET /posts/42\`](~request) is the letter to \`house 7\`: it reaches [route 2](~route).
 
         [](#compare)
 
-        **What Go really does.** Go is a mail room that never writes the list down, and still gets the same answer:
+        **What Go really does.** Go never writes the list down, and still gets the same answer:
 
-        1. **At startup**, each new route is compared with the routes it could clash with, like a new address checked against the ones on file. Some pairs cannot be put in order, like "any city, Rose Street, house 12" and "Lyon, Rose Street, any house". A letter to "Lyon, Rose Street, house 12" fits both, and each says a part the other does not. Go refuses such a pair with a panic. That is the next step.
-        2. **When a request comes in**, Go reads it one part at a time, like a carrier reading the city, then the street, then the house. At each part it tries the exact value first, and "any" only after. The first full match is the one the sorted list would give. Step 4 shows this as a tree.
+        1. **At startup** it compares each new route with the ones it could clash with. A pair that cannot be put in order, like \`any city, Rose Street, house 12\` and \`Lyon, Rose Street, any house\`, makes it panic. That is the next step.
+        2. **On each request** it reads the method, then each segment, and tries the exact value before \`any\`. The first full match is the one the list would give. Step 4 shows it as a tree.
 
         Registration order never decides, on purpose. Packages often register routes from \`init\` functions, which run in an order you do not control.
       `,
@@ -300,7 +291,7 @@ window.DIAGRAMS = {
         | [\`/posts/new\`](~route) | any | \`/posts/new\`, spelled out |
         | [\`GET /posts/{id}\`](~route) | \`GET\`, spelled out | \`/posts/{id}\` |
 
-        So [neither is more specific](#cmpId), and there is no rule to pick one. They are the two addresses from the previous step that cannot be put in order: \`/posts/new\` is "any city, Rose Street, house 12", and \`GET /posts/{id}\` is "Lyon, Rose Street, any house".
+        So [neither is more specific](#cmpId), and there is no rule to pick one. They are the two addresses from the previous step that cannot be put in order: [\`/posts/new\`](~route) is \`any city, Rose Street, house 12\`, and [\`GET /posts/{id}\`](~route) is \`Lyon, Rose Street, any house\`.
 
         The router does not guess. \`HandleFunc\` panics, so the server fails at startup, not on some request later.
 
