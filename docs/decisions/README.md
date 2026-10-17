@@ -35,6 +35,7 @@ How a note finds its piece of Mermaid's SVG and becomes clickable.
 | [004](004-arrows.md) | Arrows are clickable, the same way as shapes | Current |
 | [018](018-box-by-chart-type.md) | Find shapes with one rule per chart type | Current |
 | [019](019-interaction-naming.md) | Names show whether a thing is Mermaid's or ours | Current, partly replaced by 054 |
+| [056](056-sequence-arrows-and-typed-arrows.md) | Sequence arrows take clicks across their width, and an arrow can have a type | Current |
 
 ## Camera and inner diagrams
 
@@ -86,7 +87,7 @@ Prev and Next through the steps of a tab.
 | [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
 | [036](036-floating-controls.md) | Controls float over a full-window diagram | Current, partly replaced by 055 |
 | [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current, partly replaced by 043 and 055 |
-| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current, partly replaced by 052 and 055 |
+| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current, partly replaced by 052, 055, and 056 |
 | [046](046-side-by-side-in-one-chart.md) | Show a change side by side in one chart | Current |
 
 ## Files and export

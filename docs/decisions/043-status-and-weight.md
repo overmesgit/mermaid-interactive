@@ -1,6 +1,6 @@
 # ADR-043 Each part can show its status and how much it matters
 
-- Status: accepted, partly superseded by [ADR-052](052-one-color-per-type.md): no parts list under a story, and [ADR-055](055-fewer-features.md): no `weight` and no legend
+- Status: accepted, partly superseded by [ADR-052](052-one-color-per-type.md): no parts list under a story, [ADR-055](055-fewer-features.md): no `weight` and no legend, and [ADR-056](056-sequence-arrows-and-typed-arrows.md): a part with a type is not marked New
 - Date: 2026-10-16
 
 ## Context

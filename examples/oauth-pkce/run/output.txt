@@ -1,0 +1,116 @@
+===== 1. Login with PKCE =====
+[browser] GET http://app.example/login
+  [app.example] GET /login
+      verifier  = KanMk1f5-TSoC1q7Kjn9r63DH5ARo5wM_Gzjohwyh7w  (kept by the app, never sent here)
+      challenge = 6WuKI4zP-XcJSYVGkJAFVJp4xUEvDKRIkCIBrvgl7RQ  (S256 of the verifier)
+      -> 302 Location: http://login.example/authorize?client_id=demo-app&code_challenge=6WuKI4zP-XcJSYVGkJAFVJp4xUEvDKRIkCIBrvgl7RQ&code_challenge_method=S256&redirect_uri=http%3A%2F%2Fapp.example%2Fcallback&response_type=code&scope=profile&state=_8gZZuuMASqNHPe-
+[browser] follows to login.example
+  [login.example] GET /authorize
+      response_type = code
+      client_id = demo-app
+      redirect_uri = http://app.example/callback
+      scope = profile
+      state = _8gZZuuMASqNHPe-
+      code_challenge = 6WuKI4zP-XcJSYVGkJAFVJp4xUEvDKRIkCIBrvgl7RQ
+      code_challenge_method = S256
+      stores code sWuxbESy452V4Do8wQh55Q with challenge 6WuKI4zP-XcJSYVGkJAFVJp4xUEvDKRIkCIBrvgl7RQ
+[browser] login.example answered 302 Location: http://app.example/callback?code=sWuxbESy452V4Do8wQh55Q&state=_8gZZuuMASqNHPe-
+  [app.example] GET /callback?code=sWuxbESy452V4Do8wQh55Q&state=_8gZZuuMASqNHPe-
+  [login.example] POST /token
+      grant_type = authorization_code
+      client_id = demo-app
+      code = sWuxbESy452V4Do8wQh55Q
+      redirect_uri = http://app.example/callback
+      code_verifier = KanMk1f5-TSoC1q7Kjn9r63DH5ARo5wM_Gzjohwyh7w
+      SHA-256 of the verifier, base64url = 6WuKI4zP-XcJSYVGkJAFVJp4xUEvDKRIkCIBrvgl7RQ
+      equals the stored challenge
+      -> 200 {"access_token":"at_sMgrcK4pVh9BTbKG-URL0XB_","token_type":"Bearer","expires_in":3600,"refresh_token":"rt_JoAwPqvHsQ44rgPfcf41mjdr"}
+      Exchange gave access at_sMgrcK4pVh9BTbKG-URL0XB_, refresh rt_JoAwPqvHsQ44rgPfcf41mjdr, expires 18:32:16
+[browser] app answered 200 signed in
+
+===== 2. The app calls the API =====
+  [api.example] GET /me  Authorization: Bearer at_sMgrcK4pVh9BTbKG-URL0XB_
+      -> 200 {"user":"ada","email":"ada@mail.example"}
+[app] API answered 200 {"user":"ada","email":"ada@mail.example"}
+
+===== 3. An hour later: the access token has expired =====
+  [login.example] POST /token
+      grant_type = refresh_token
+      client_id = demo-app
+      refresh_token = rt_JoAwPqvHsQ44rgPfcf41mjdr
+      -> 200 {"access_token":"at_s8Tzx7g926k6dB2wQYtTRVI9","token_type":"Bearer","expires_in":3600,"refresh_token":"rt_RJGGB6nshRKM59eTxANBATvO"}
+  [api.example] GET /me  Authorization: Bearer at_s8Tzx7g926k6dB2wQYtTRVI9
+      -> 200 {"user":"ada","email":"ada@mail.example"}
+[app] API answered 200 {"user":"ada","email":"ada@mail.example"}
+[app] the old refresh token rt_JoAwPqvHsQ44rgPfcf41mjdr used again:
+  [login.example] POST /token
+      grant_type = refresh_token
+      client_id = demo-app
+      refresh_token = rt_JoAwPqvHsQ44rgPfcf41mjdr
+      -> 400 {"error":"invalid_grant","error_description":"unknown refresh token"}
+      oauth2: "invalid_grant" "unknown refresh token"
+
+===== 4. Stolen code, app WITHOUT PKCE =====
+[browser] GET http://app.example/login
+  [app.example] GET /login
+      -> 302 Location: http://login.example/authorize?client_id=demo-app&redirect_uri=http%3A%2F%2Fapp.example%2Fcallback&response_type=code&scope=profile&state=E0HmqrPT9pDQUQxi
+[browser] follows to login.example
+  [login.example] GET /authorize
+      response_type = code
+      client_id = demo-app
+      redirect_uri = http://app.example/callback
+      scope = profile
+      state = E0HmqrPT9pDQUQxi
+      stores code 4WMGIwCn9npDIvi_3BuNag with no challenge
+[browser] login.example answered 302 Location: http://app.example/callback?code=4WMGIwCn9npDIvi_3BuNag&state=E0HmqrPT9pDQUQxi
+[attacker] reads the redirect, so the app never gets it
+[attacker] POST http://login.example/token with the stolen code
+  [login.example] POST /token
+      grant_type = authorization_code
+      client_id = demo-app
+      code = 4WMGIwCn9npDIvi_3BuNag
+      redirect_uri = http://app.example/callback
+      -> 200 {"access_token":"at_RZTyN07gXWiB9ZTkLItVjbtd","token_type":"Bearer","expires_in":3600,"refresh_token":"rt_5tOtkWbABEztJj5TcV5lTlI-"}
+[attacker] got 200 {"access_token":"at_RZTyN07gXWiB9ZTkLItVjbtd","token_type":"Bearer","expires_in":3600,"refresh_token":"rt_5tOtkWbABEztJj5TcV5lTlI-"}
+  [api.example] GET /me  Authorization: Bearer at_RZTyN07gXWiB9ZTkLItVjbtd
+      -> 200 {"user":"ada","email":"ada@mail.example"}
+[attacker] the API answered 200 {"user":"ada","email":"ada@mail.example"}
+
+===== 5. Stolen code, app WITH PKCE =====
+[browser] GET http://app.example/login
+  [app.example] GET /login
+      verifier  = x_Qu40s2LIx250zOBhF8zDto5hfQ4Gq8-nAg4nfkAZ4  (kept by the app, never sent here)
+      challenge = 0FomuDot7MmuGO212kKMNuy_4V5jcSfcQyqhE5hqlz0  (S256 of the verifier)
+      -> 302 Location: http://login.example/authorize?client_id=demo-app&code_challenge=0FomuDot7MmuGO212kKMNuy_4V5jcSfcQyqhE5hqlz0&code_challenge_method=S256&redirect_uri=http%3A%2F%2Fapp.example%2Fcallback&response_type=code&scope=profile&state=eGZBKZZApuYvGEdr
+[browser] follows to login.example
+  [login.example] GET /authorize
+      response_type = code
+      client_id = demo-app
+      redirect_uri = http://app.example/callback
+      scope = profile
+      state = eGZBKZZApuYvGEdr
+      code_challenge = 0FomuDot7MmuGO212kKMNuy_4V5jcSfcQyqhE5hqlz0
+      code_challenge_method = S256
+      stores code LdPK2dsvptARabRgdc2snA with challenge 0FomuDot7MmuGO212kKMNuy_4V5jcSfcQyqhE5hqlz0
+[browser] login.example answered 302 Location: http://app.example/callback?code=LdPK2dsvptARabRgdc2snA&state=eGZBKZZApuYvGEdr
+[attacker] reads the redirect, so the app never gets it
+[attacker] POST http://login.example/token with the stolen code
+  [login.example] POST /token
+      grant_type = authorization_code
+      client_id = demo-app
+      code = LdPK2dsvptARabRgdc2snA
+      redirect_uri = http://app.example/callback
+      -> 400 {"error":"invalid_grant","error_description":"code_verifier required"}
+[attacker] got 400 {"error":"invalid_grant","error_description":"code_verifier required"}
+[attacker] POST http://login.example/token with the stolen code and a guessed verifier
+  [login.example] POST /token
+      grant_type = authorization_code
+      client_id = demo-app
+      code = LdPK2dsvptARabRgdc2snA
+      redirect_uri = http://app.example/callback
+      code_verifier = 9ctDqaRR_NIfat_rFhM18G7zYhN2HqdpHvb7h_mFYJE
+      SHA-256 of the verifier, base64url = uCiSnFZ50U6ZobXpSNsf_a_7jKrqQoZ9sXDlEFwIAYk
+      does not equal the stored challenge 0FomuDot7MmuGO212kKMNuy_4V5jcSfcQyqhE5hqlz0
+      -> 400 {"error":"invalid_grant","error_description":"code_verifier does not match the challenge"}
+[attacker] got 400 {"error":"invalid_grant","error_description":"code_verifier does not match the challenge"}
+[attacker] the challenge 0FomuDot7MmuGO212kKMNuy_4V5jcSfcQyqhE5hqlz0 was in the address, but SHA-256 cannot be run backwards to get the verifier

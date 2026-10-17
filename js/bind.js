@@ -96,6 +96,7 @@ function wireArrow(interaction, arrowElements) {
   arrowElements.filter(Boolean).forEach((element) => {
     element.dataset.wired = "1";
     element.dataset.edgeId = interaction.edgeId;
+    if (typeIndex(interaction.type) >= 0) element.classList.add(`type-${typeIndex(interaction.type)}`);
     if (element.tagName === "path" || element.tagName === "line") {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);
@@ -168,7 +169,7 @@ function bindEdgeInteractions(svg) {
     });
   }
 
-  claimByText(sequenceMessages(svg), (message) => [message.line, message.text]);
+  claimByText(sequenceMessages(svg), (message) => [message.line, ...message.texts]);
   claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
 
   const paths = [...svg.querySelectorAll("path.transition")].filter((path) => !path.dataset.wired);

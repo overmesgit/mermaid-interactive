@@ -925,10 +925,12 @@ button.code-file-head:hover { background: #475569; }
 
 .is-node, .is-edge-label, .edge-hit { cursor: pointer; }
 
+/* !important, because Mermaid's sequence style sets every line to 2px under the diagram's id, and a reply's dashes sit in its inline style. Without it a sequence arrow takes clicks only on a 2px line, and a reply only on its dashes. */
 .edge-hit {
   fill: none;
   stroke: transparent;
-  stroke-width: 18px;
+  stroke-width: 18px !important;
+  stroke-dasharray: none !important;
   pointer-events: stroke;
 }
 
@@ -963,6 +965,10 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 .status-removed > :is(rect, polygon, circle, path, ellipse) { stroke-dasharray: 5 4; }
 .status-removed .nodeLabel { text-decoration: line-through; }
 
+/* An arrow with a type carries that kind of thing, such as a code in a message, so its line and its label take the type's color. A status comes after, and wins. */
+:is(path, line).is-edge:is(.type-0, .type-1, .type-2, .type-3):not(.edge-hit) { stroke: var(--c) !important; stroke-width: 2px !important; }
+text.is-edge-label:is(.type-0, .type-1, .type-2, .type-3) { fill: var(--c) !important; }
+.is-edge-label:is(.type-0, .type-1, .type-2, .type-3) :is(span, p) { color: var(--c) !important; }
 :is(path, line).is-edge:is(.status-new, .status-changed, .status-removed, .status-problem):not(.edge-hit) { stroke: var(--c) !important; stroke-width: 2px !important; }
 :is(path, line).is-edge.status-removed:not(.edge-hit) { stroke-dasharray: 5 4; }
 
@@ -1908,8 +1914,10 @@ function addedInStep() {
 }
 
 // The status the content gives a part, or New when this lesson step adds it. `added` is addedInStep(), passed in when many parts ask at once.
+// A part with a type keeps its type's color, because the author chose it, and New is only the page's guess.
 function partStatus(interaction, added = addedInStep()) {
   if (STATUSES[interaction.status]) return interaction.status;
+  if (typeIndex(interaction.type) >= 0) return null;
   return added && added.has(partKey(interaction)) ? "new" : null;
 }
 
@@ -2508,15 +2516,16 @@ function nearestFlowchartLabel(path, labels) {
 }
 
 // Sequence diagrams emit messageText, then messageLine, as siblings. The text is how arrows are told apart.
+// A message written over two lines with <br> is one messageText per line, so its label joins them with a space.
 function sequenceMessages(svg) {
   const messages = [];
-  let text = null;
+  let texts = [];
   [...svg.children].forEach((el) => {
     const cls = el.getAttribute("class") || "";
-    if (cls.includes("messageText")) text = el;
+    if (cls.includes("messageText")) texts.push(el);
     else if (cls.includes("messageLine")) {
-      messages.push({ line: el, text, label: norm(text ? text.textContent : ""), wired: false });
-      text = null;
+      messages.push({ line: el, texts, label: norm(texts.map((text) => text.textContent).join(" ")), wired: false });
+      texts = [];
     }
   });
   return messages;
@@ -2702,6 +2711,7 @@ function wireArrow(interaction, arrowElements) {
   arrowElements.filter(Boolean).forEach((element) => {
     element.dataset.wired = "1";
     element.dataset.edgeId = interaction.edgeId;
+    if (typeIndex(interaction.type) >= 0) element.classList.add(`type-${typeIndex(interaction.type)}`);
     if (element.tagName === "path" || element.tagName === "line") {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);
@@ -2774,7 +2784,7 @@ function bindEdgeInteractions(svg) {
     });
   }
 
-  claimByText(sequenceMessages(svg), (message) => [message.line, message.text]);
+  claimByText(sequenceMessages(svg), (message) => [message.line, ...message.texts]);
   claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
 
   const paths = [...svg.querySelectorAll("path.transition")].filter((path) => !path.dataset.wired);
@@ -2918,8 +2928,9 @@ function checkStoryLinks(view, parts, before) {
 }
 
 // Whether the chart text has each shape and arrow a note names. A chartId can hold "-", so "api" must not match inside "api-gw".
+// A <br> in a message is a line break in the picture, and the page reads it as a space.
 function checkChartIds(view) {
-  const chart = view.chart || "";
+  const chart = (view.chart || "").replace(/<br\s*\/?>/gi, " ");
   const kind = chartKind(chart);
   const inChart = (id) => new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(chart);
   if (!kind) return [];

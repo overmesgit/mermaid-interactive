@@ -4,7 +4,7 @@ One explanation is one content file. It is a classic script that sets `window.DI
 
 This is the only description of the format. The repo docs link here.
 
-Each explanation is its own file. [`examples/starter.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/pr-checks.js) explains a real commit in four steps, with code from that commit.
+Each explanation is its own file. [`examples/starter.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/pr-checks.js) explains a real commit in four steps, with code from that commit. [`examples/oauth-pkce.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/oauth-pkce.js) explains a protocol with sequence charts, with each kind of value in its own color.
 
 ## Build and preview
 
@@ -63,9 +63,11 @@ The first line of `chart` picks the matcher. Only these four are clickable:
 
 Any other Mermaid type still draws. Nothing on it is clickable.
 
+In a sequence chart, `box` around participants, `rect` to shade a block of messages, `alt`, `loop`, `opt`, `par`, `critical`, notes, and `autonumber` all draw, and every participant and message stays clickable. A message can be written over two lines with `<br>`. Its `mermaidText` joins the lines with a space: `Authorize with challenge` for `Authorize<br>with challenge`. A stick-figure `actor` takes a click only on the figure and its name, so prefer `participant` for a part with a note.
+
 In a flowchart, an image node, `a@{ img: "...", label: "..." }`, is clickable like any other node. An image can be a `data:` URI, so it needs no file next to the page. Icon nodes, `a@{ icon: "fa:user" }`, need an icon pack, which this page does not load, so they draw as a `?` and are not clickable.
 
-Some ids are words Mermaid reserves, so the whole chart fails to draw. A state cannot be called `Note` in any case, because `note` starts a sticky note. A flowchart node cannot be called `end`. Give the shape another id and keep the word as its name: `state "Note" as Selected`.
+Some ids are words Mermaid reserves, so the whole chart fails to draw. A state cannot be called `Note` in any case, because `note` starts a sticky note. A flowchart node cannot be called `end` or `call`. Give the shape another id and keep the word as its name: `state "Note" as Selected`.
 
 ## Captions
 
@@ -114,6 +116,7 @@ window.DIAGRAMS = {
 ```
 
 - A shape takes `type: "route"`, and gets that type's border and tint.
+- An arrow takes a type the same way, and its line and label get the color. Use it for a message that carries one kind of thing, such as a login code in a sequence chart.
 - In a story or a note, `[GET /posts/{id}](~route)` shows the words in the same color. A [link to a part](#links-to-parts) that has a type has its color too.
 - The page gives the colors in order, from four fixed ones that are never a status color. A fifth type gets no color.
 - A `status` wins over a type, so a problem stays red.
@@ -137,7 +140,7 @@ The key is the chartId. Do not repeat it inside the object.
 
 Every part looking the same tells the reader nothing, so say what changed with `status` ([ADR-043](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/043-status-and-weight.md)). Leave most parts without one.
 
-The page adds two marks by itself. A shape whose note has a `body` or `facts` gets a small dot, so the reader can see what is worth opening. On a lesson step, a part the step adds gets `status: "new"` unless you gave it one, but only when the step shares a part with the step before.
+The page adds two marks by itself. A shape whose note has a `body` or `facts` gets a small dot, so the reader can see what is worth opening. On a lesson step, a part the step adds gets `status: "new"` unless you gave it a status or a type, but only when the step shares a part with the step before. So a part with a type keeps its color. To mark it New too, give it the status.
 
 ## Edge interaction
 
@@ -147,7 +150,7 @@ An entry is `[from, to]`, or the object `arrow()` returns:
 arrow(from, to, tooltip, body, facts, more)
 ```
 
-`from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, `opensView`, and `status`. Without a `label`, the panel title is `From → To`, made from the two node labels.
+`from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, `type`, `opensView`, and `status`. Without a `label`, the panel title is `From → To`, made from the two node labels.
 
 Say what an arrow means in its label on the picture, as in `api -- reads --> db`. Most arrows need nothing more. Write those as `[from, to]`, so hover still lights them. Give an arrow a `body` only when it has real detail, such as code. On a view with no story, the parts list leaves out arrows with no `body`, `facts`, `opensView`, or `status`.
 
@@ -207,7 +210,7 @@ The [API](#api) loads the session, which costs one query per call.
 - A link inside a sentence shows as a link.
 - Both open the part's note on click, and light the part in the picture on hover.
 - A view with a story has no list of its parts, so link every part that has a `body`, `facts`, or `opensView`. The checks name the ones a story misses. On a lesson step, a part the step before already showed does not need a link again.
-- The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first.
+- The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first. Two participants in a sequence chart often trade several messages, so put the detail a story links to on the first message between them, or on a participant.
 
 So a story can walk the picture: a sentence, the part it is about, the next sentence. On a lesson step, the arrows the step adds already flow in the picture, so the story can name them in the order they matter.
 

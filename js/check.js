@@ -132,8 +132,9 @@ function checkStoryLinks(view, parts, before) {
 }
 
 // Whether the chart text has each shape and arrow a note names. A chartId can hold "-", so "api" must not match inside "api-gw".
+// A <br> in a message is a line break in the picture, and the page reads it as a space.
 function checkChartIds(view) {
-  const chart = view.chart || "";
+  const chart = (view.chart || "").replace(/<br\s*\/?>/gi, " ");
   const kind = chartKind(chart);
   const inChart = (id) => new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(chart);
   if (!kind) return [];

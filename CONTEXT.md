@@ -11,7 +11,7 @@ The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
 - **The engine.** The page an explanation runs in: `page.html`, `styles.css`, and `js/`. The editor, `index.html`, shows a content file in it.
 - **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and the engine as one template page with a marker line where the content goes. With it an agent writes one content file, like `diagrams.js`, puts it in place of the marker, and hands over one HTML file, for example as a link in a PR.
 
-`examples/` holds sample content files. `bookshop.js` has one tab per kind of diagram, `go-router.js` is a full lesson, and `pr-checks.js` explains a real commit the way the skill would.
+`examples/` holds sample content files. `bookshop.js` has one tab per kind of diagram, `go-router.js` is a full lesson, `pr-checks.js` explains a real commit the way the skill would, and `oauth-pkce.js` explains a protocol with sequence charts.
 
 ## Who it is for
 

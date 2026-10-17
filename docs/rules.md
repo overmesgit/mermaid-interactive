@@ -1,6 +1,6 @@
 # Rules
 
-Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
+Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last two came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
 
 ### Color carries meaning
 **Context:** The page and the diagrams are almost all gray, so nothing tells the eye where to look.
@@ -199,3 +199,24 @@ route 2   GET /posts/{id}   with id = new
 **Context:** In "A letter to house 7 stops at 2" and "GET /posts/42 reaches route 2", the names of things ran together with the words around them, so the reader had to find where each name started and ended.
 **Rule:** Set every name the reader may need to spot again apart from the prose: code values, labels such as route 1, and the analogy's names such as house 12. Use the type's color where the thing has a type, and code style otherwise.
 **Example:** "A letter to `house 7` stops at 2", and "`GET /posts/42` is the letter to `house 7`: it reaches route 2", with the request and the routes in their type colors.
+
+### Color says what a thing is, not when it appeared
+**Context:** In the step on a stolen code, the attacker and every request it sends came out green and marked New, because the step added them. Green read as good news, and the requests lost the pink that every code has in the lesson.
+**Rule:** When the steps of a lesson are different runs or cases, not one picture that changes, color each part by what it is and how it ends, not by the step that adds it.
+**How:** a part with a `type` keeps its color on the step that adds it. `status: "problem"` marks what goes wrong, and `status: "new"` what the change adds.
+**Example:** the attacker was a green box marked New, and so were its requests. Now the attacker is red and marked Problem, the requests that carry the stolen code are pink like every code, and only the two refusals PKCE adds are green.
+
+### Group by place only when the flow stays straight
+**Context:** The step on who holds which value put each value in a box for where it is: only in the app, in addresses, and on the login server. The values move between those places in turn, so the arrows crossed back and forth, and the chart was shrunk to a third of its size to fit.
+**Rule:** When things move between places, draw them in the order they move, in one direction. Say where each one is in its caption, and keep groups for things that stay together.
+**How:** a top-to-bottom flowchart with no `subgraph`, and the place in each shape's caption. The story's table says who holds what.
+**Example:** the three boxes became one chain down the page. The verifier's arrow to the check runs beside the chain, so the picture shows that it skips the browser:
+
+```mermaid
+flowchart TB
+  verifier["Verifier<br><small>Only the app has it</small>"] -->|"1. SHA-256, in the app"| challenge["Challenge<br><small>Travels in an address</small>"]
+  challenge -->|"2. through the browser"| stored["Login server stores the challenge"]
+  stored -->|"3. back through the browser"| code["Code<br><small>Travels in an address</small>"]
+  code -->|"4. POST /token"| check["Login server checks"]
+  verifier -->|"4. straight to the login server"| check
+```

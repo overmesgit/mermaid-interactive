@@ -182,8 +182,10 @@ function addedInStep() {
 }
 
 // The status the content gives a part, or New when this lesson step adds it. `added` is addedInStep(), passed in when many parts ask at once.
+// A part with a type keeps its type's color, because the author chose it, and New is only the page's guess.
 function partStatus(interaction, added = addedInStep()) {
   if (STATUSES[interaction.status]) return interaction.status;
+  if (typeIndex(interaction.type) >= 0) return null;
   return added && added.has(partKey(interaction)) ? "new" : null;
 }
 

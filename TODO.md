@@ -5,7 +5,7 @@
 
 ## Next: diagram research
 
-Find out which kinds of diagram explain best, so the page learns the ones worth the work first. The list under "Mermaid features to consider" is where to start.
+Find out which kinds of diagram explain best, so the page learns the ones worth the work first. The list under "Mermaid features to consider" is where to start. Sequence `box`, `rect`, and `alt` are done: they draw and stay clickable ([ADR-056](docs/decisions/056-sequence-arrows-and-typed-arrows.md)), and `examples/oauth-pkce.js` uses them.
 
 ## Agent mode
 
@@ -23,6 +23,5 @@ Each new kind of diagram or shape needs the page to learn how Mermaid draws it, 
 3. Entity-relationship diagrams, for a data model. Each table and link could carry a note.
 4. Flowchart shapes that mean something, such as `@{ shape: cyl }` for a database or `doc` for a document. Check that the page finds each one, because some may be drawn without the `node` class, like image nodes were.
 5. ELK layout, for big diagrams with fewer crossing arrows. It is an extra script.
-6. Sequence `box` around participants, and `rect` to shade a block of steps, such as a retry.
-7. The hand-drawn look (`look: handDrawn`), so a proposal reads as a draft.
-8. Arrow ids. The page finds a flowchart arrow by its two ends and a counter, which is fragile when two arrows join the same shapes. Reading Mermaid's own arrow id (`e1@-->`) would be exact. Today the checks reject arrow ids, because Mermaid then drops the ends from the arrow's name.
+6. The hand-drawn look (`look: handDrawn`), so a proposal reads as a draft.
+7. Arrow ids. The page finds a flowchart arrow by its two ends and a counter, which is fragile when two arrows join the same shapes. Reading Mermaid's own arrow id (`e1@-->`) would be exact. Today the checks reject arrow ids, because Mermaid then drops the ends from the arrow's name.
