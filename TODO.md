@@ -3,6 +3,7 @@
 1. Make great examples
 2. Create a site
 3. Run from a file with no server. Export HTML may still need one.
+4. Clean up before the next stage, diagram research.
 
 ## Agent mode
 
