@@ -7,7 +7,6 @@ window.DIAGRAMS = {
   ],
   views: {
     start: {
-      viewId: "start",
       tab: "start",
       parent: null,
       title: "Start",

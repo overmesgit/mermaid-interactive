@@ -19,6 +19,6 @@ The repo's own page keeps its sample and the How tab as its content file.
 
 An agent writes one file and never touches the engine.
 
-A `~~~js source=name` fence ([ADR-024](024-notes-name-functions.md)) still prints a function the page has loaded. That only works for the engine's own code. A PR explanation pastes its code into the note.
+A `~~~js source=name` fence (ADR-024) still prints a function the page has loaded. That only works for the engine's own code. A PR explanation pastes its code into the note.
 
 How the page picks a content file while someone is authoring one is ADR-034.

@@ -36,9 +36,10 @@ An explanation is usually one tab with a lesson, whether it covers a concept, a 
 
 ## View
 
+A view's id is its key in `views`. The link names the view on screen by it, as in `#order/payment`.
+
 | Field | Meaning |
 | --- | --- |
-| `viewId` | The same string as its key in `views`. It is the hash segment in the link. |
 | `tab` | The tab id it belongs to. A drill view uses its tab's id too. |
 | `parent` | The viewId this view was drilled from, or `null`. It builds the breadcrumb. Escape and Backspace go up to it. A lesson step has `parent: null`. |
 | `title` | The breadcrumb text. The Next button shows the next step's title. |
@@ -62,7 +63,7 @@ The first line of `chart` picks the matcher. Only these four are clickable:
 
 Any other Mermaid type still draws. Nothing on it is clickable.
 
-In a flowchart, an image node, `a@{ img: "...", label: "..." }`, and an icon node, `a@{ icon: "fa:user", label: "..." }`, are clickable like any other node. An image can be a `data:` URI, so it needs no file next to the page. An icon only draws when the page has its icon pack, which this page does not load, so it shows a `?`.
+In a flowchart, an image node, `a@{ img: "...", label: "..." }`, is clickable like any other node. An image can be a `data:` URI, so it needs no file next to the page. Icon nodes, `a@{ icon: "fa:user" }`, need an icon pack, which this page does not load, so they draw as a `?` and are not clickable.
 
 Some ids are words Mermaid reserves, so the whole chart fails to draw. A state cannot be called `Note` in any case, because `note` starts a sticky note. A flowchart node cannot be called `end`. Give the shape another id and keep the word as its name: `state "Note" as Selected`.
 
@@ -102,7 +103,7 @@ Here `redis` would get `status: "new"` and `newApi` `status: "changed"`.
 
 ## Types
 
-An explanation keeps naming a few types of thing, such as requests, routes, and handlers. Give each its own color, in the diagram and in the text, so the reader can tell them apart at a glance. Name the types once, at the top of `DIAGRAMS`, with the word the legend shows:
+An explanation keeps naming a few types of thing, such as requests, routes, and handlers. Give each its own color, in the diagram and in the text, so the reader can tell them apart at a glance. Name the types once, at the top of `DIAGRAMS`. The order gives the colors, and each value is the type's name in words, for whoever reads the file:
 
 ```js
 window.DIAGRAMS = {
@@ -116,7 +117,6 @@ window.DIAGRAMS = {
 - In a story or a note, `[GET /posts/{id}](~route)` shows the words in the same color. A [link to a part](#links-to-parts) that has a type has its color too.
 - The page gives the colors in order, from four fixed ones that are never a status color. A fifth type gets no color.
 - A `status` wins over a type, so a problem stays red.
-- The legend under the summary names the types the diagram shows.
 
 Use the same type for the same thing in every step. Leave parts with no clear type untyped.
 
@@ -132,11 +132,10 @@ The key is the chartId. Do not repeat it inside the object.
 | `type` | Optional. One of the [types](#types) the file names, such as `route`. The shape takes that type's color. |
 | `body` | The panel note, in markdown. |
 | `facts` | Rows of `[term, value]` under the note. |
-| `opensView` | Optional. The viewId that double-click or the ↘ badge opens. |
-| `status` | Optional. `new`, `changed`, `removed`, or `problem`. The shape is colored green, amber, gray and dashed, or red, and the word shows in the panel, on its card, and in a legend under the summary. |
-| `weight` | Optional. `key` for a part that carries the point, which gets a heavy outline. `background` for a part that is only context, which gets a pale box. |
+| `opensView` | Optional. The view a double-click opens. The shape gets a ↘ badge to say it has one. |
+| `status` | Optional. `new`, `changed`, `removed`, or `problem`. The shape is colored green, amber, gray and dashed, or red, and the word shows in the panel and on its card. |
 
-Every part looking the same tells the reader nothing, so say which parts matter ([ADR-043](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/043-status-and-weight.md)). Mark the change with `status` and the point with `weight`. Leave most parts with neither.
+Every part looking the same tells the reader nothing, so say what changed with `status` ([ADR-043](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/043-status-and-weight.md)). Leave most parts without one.
 
 The page adds two marks by itself. A shape whose note has a `body` or `facts` gets a small dot, so the reader can see what is worth opening. On a lesson step, a part the step adds gets `status: "new"` unless you gave it one, but only when the step shares a part with the step before.
 
@@ -148,7 +147,7 @@ An entry is `[from, to]`, or the object `arrow()` returns:
 arrow(from, to, tooltip, body, facts, more)
 ```
 
-`from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, `opensView`, `status`, and `weight`. Without a `label`, the panel title is `From → To`, made from the two node labels.
+`from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, `opensView`, and `status`. Without a `label`, the panel title is `From → To`, made from the two node labels.
 
 Say what an arrow means in its label on the picture, as in `api -- reads --> db`. Most arrows need nothing more. Write those as `[from, to]`, so hover still lights them. Give an arrow a `body` only when it has real detail, such as code. On a view with no story, the parts list leaves out arrows with no `body`, `facts`, `opensView`, or `status`.
 
@@ -163,7 +162,7 @@ An arrow with `opensView` has no ↘ badge. Its tooltip should say to double-cli
 
 ## Notes
 
-`body` is markdown. The panel renders paragraphs, headings, lists, tables, blockquotes, code fences, inline code, bold, italic, `http`/`https` links, [links to parts](#links-to-parts) of the view, and words colored as a [type](#types). HTML and images are dropped.
+`body` is markdown. The panel renders paragraphs, headings, lists, tables, blockquotes, code fences, inline code, bold, italic, `http`/`https` links, [links to parts](#links-to-parts) of the view, and words colored as a [type](#types). HTML shows as text, and images are dropped.
 
 A table lines up things that are compared, so the difference stands out. Leave the header row empty to show no header:
 
@@ -189,8 +188,6 @@ body: md`
 ```
 
 Code that exists as a file is named with `file=`, as in [Code files](#code-files). Write it in the note only when it is a short sketch that is in no file.
-
-A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code. Code from the repo you explain is not loaded, so it would print `// name is not loaded`.
 
 ### Links to parts
 
@@ -268,7 +265,6 @@ window.DIAGRAMS = {
   ],
   views: {
     before: {
-      viewId: "before",
       tab: "before",
       parent: null,
       title: "Before",
@@ -290,7 +286,6 @@ window.DIAGRAMS = {
       ],
     },
     after: {
-      viewId: "after",
       tab: "before",
       parent: null,
       title: "After",
@@ -328,7 +323,6 @@ window.DIAGRAMS = {
       ],
     },
     "read-path": {
-      viewId: "read-path",
       tab: "before",
       parent: "after",
       title: "Read path",
@@ -367,15 +361,14 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 2. Every flowchart edge interaction matches an arrow drawn from `from` to `to`.
 3. Every sequence and C4 edge interaction has a `mermaidText` that appears in the chart.
 4. Both ends of every state edge interaction have a node interaction, or are `"*"`.
-5. Every `opensView`, `parent`, tab `id`, and `lesson` entry is a viewId in `views`.
-6. Every view's `viewId` equals its key.
-7. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it, because packing stores them as base64.
-8. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
-9. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
-10. No flowchart arrow has an id, like `e1@-->`.
-11. Every `status` and `weight` is one of the values above.
-12. Every `mark` is inside the lines its fence shows.
-13. Every `type`, and every `(~type)` in text, is named in `DIAGRAMS.types`, and there are at most four types.
-14. Every story links each part with a note that it adds, as above.
+5. Every `opensView`, `parent`, tab `id`, and `lesson` entry is a key in `views`.
+6. `diagrams.js` does not contain `</script`. It goes into the page as the body of a script tag. Code files named with `file=` may contain it, because packing stores them as base64.
+7. Every `file=` names a file in the repo, or a revision that has it, and its `lines` range ends inside that file.
+8. Every link to a part, like `[API](#api)`, names a shape or an arrow that has a note in the same view.
+9. No flowchart arrow has an id, like `e1@-->`.
+10. Every `status` is one of the values above.
+11. Every `mark` is inside the lines its fence shows.
+12. Every `type`, and every `(~type)` in text, is named in `DIAGRAMS.types`, and there are at most four types.
+13. Every story links each part with a note that it adds, as above.
 
-On load the page runs checks 1, 3 to 6, and 8 to 14 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 5, and 7 to 13 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).

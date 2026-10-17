@@ -1,4 +1,4 @@
-// Hover dimming and the search filter. Both write is-dim on the wired SVG.
+// Hover dimming, the tooltip, and the marks on the wired SVG: selected, flowing, and status.
 
 // The visible stroke and the label of a wired arrow. The wide hit stroke has only the edge-hit class.
 const EDGE_PIECES = ".is-edge, .is-edge-label";
@@ -35,7 +35,12 @@ function showTooltip(event, interaction) {
 
 function hideTooltip() {
   app.els.tooltip.hidden = true;
-  applySearch();
+  clearHighlight();
+}
+
+// Back to no highlight: every shape and arrow at full strength.
+function clearHighlight() {
+  app.els.camera.querySelectorAll(".is-dim, .is-hover, .is-hot").forEach((el) => el.classList.remove("is-dim", "is-hover", "is-hot"));
 }
 
 function highlightAround(interaction) {
@@ -59,7 +64,6 @@ function highlightAround(interaction) {
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {
     const on = litChartIds.has(el.dataset.chartId);
     el.classList.toggle("is-dim", !on);
-    el.classList.remove("is-hit");
     // The hovered shape gets an outline. The fade on the others is light, and colored fills hide it further.
     el.classList.toggle("is-hover", interaction.kind === "node" && el.dataset.chartId === interaction.chartId);
   });
@@ -83,7 +87,7 @@ function wiredElements(interaction) {
   );
 }
 
-// The shape or arrow the panel describes. Hover and search do not touch is-selected.
+// The shape or arrow the panel describes. Hover does not touch is-selected.
 function markSelected(interaction) {
   app.els.camera.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
   const elements = wiredElements(interaction);
@@ -103,34 +107,15 @@ function markStepFlow() {
 }
 
 // Each part's status colors it: the one the content gives, or New for a part this lesson step adds.
-// The legend under the summary lists only the statuses this picture uses.
 function markStatuses() {
-  const used = new Set();
-  // The legend names the types this diagram shows, then the statuses.
-  const types = [...new Set(nodeInteractions().map((interaction) => interaction.type).filter((name) => typeIndex(name) >= 0))];
+  const added = addedInStep();
   const byChartId = new Map(nodeInteractions().map((interaction) => [interaction.chartId, interaction]));
   const byEdgeId = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
   app.els.camera.querySelectorAll(`.is-node, ${EDGE_PIECES}`).forEach((el) => {
     const interaction = el.dataset.edgeId ? byEdgeId.get(el.dataset.edgeId) : byChartId.get(el.dataset.chartId);
-    const status = interaction && partStatus(interaction);
+    const status = interaction && partStatus(interaction, added);
     Object.keys(STATUSES).forEach((name) => el.classList.toggle(`status-${name}`, name === status));
-    if (status) used.add(status);
   });
-  const legend = app.els.legend;
-  legend.replaceChildren(
-    ...types.map((name) => typeChip(name)),
-    ...Object.keys(STATUSES)
-      .filter((name) => used.has(name))
-      .map((name) => statusChip(name)),
-  );
-  legend.hidden = !used.size && !types.length;
-}
-
-function typeChip(name) {
-  const chip = document.createElement("span");
-  chip.className = `type-chip type-${typeIndex(name)}`;
-  chip.textContent = typeLabel(name);
-  return chip;
 }
 
 function statusChip(name) {
@@ -138,28 +123,4 @@ function statusChip(name) {
   chip.className = `status-chip status-${name}`;
   chip.textContent = STATUSES[name];
   return chip;
-}
-
-function applySearch() {
-  const query = app.els.search.value.trim().toLowerCase();
-  const haystack = (interaction) =>
-    [interaction.label, interaction.tooltip, interaction.body, interaction.kicker, interaction.mermaidText, ...(interaction.facts || []).flat()]
-      .join(" ")
-      .toLowerCase();
-  app.els.camera.querySelectorAll(".is-node").forEach((el) => {
-    const interaction = nodeInteraction(el.dataset.chartId);
-    if (!interaction) return;
-    const hit = !query || haystack(interaction).includes(query);
-    el.classList.toggle("is-dim", Boolean(query) && !hit);
-    el.classList.toggle("is-hit", Boolean(query) && hit);
-    el.classList.remove("is-hover");
-  });
-  const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
-  app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
-    const interaction = edges.get(el.dataset.edgeId);
-    if (!interaction) return;
-    const hit = !query || haystack(interaction).includes(query);
-    el.classList.toggle("is-dim", Boolean(query) && !hit);
-    el.classList.toggle("is-hot", Boolean(query) && hit);
-  });
 }

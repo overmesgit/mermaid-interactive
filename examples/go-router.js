@@ -12,7 +12,6 @@ window.DIAGRAMS = {
   ],
   views: {
     overview: {
-      viewId: "overview",
       tab: "overview",
       parent: null,
       title: "What changed",
@@ -110,7 +109,6 @@ window.DIAGRAMS = {
           type: "router",
           kicker: "After",
           status: "changed",
-          weight: "key",
           tooltip: "Same type and API. Inside, a tree finds the route and an index checks new routes for conflicts.",
           body: md`
             The map and the sorted list are replaced by a tree, used to match requests, and an index, used to check each new route. The Go 1.21 router is kept for programs that need it.
@@ -149,7 +147,6 @@ window.DIAGRAMS = {
     },
 
     wins: {
-      viewId: "wins",
       tab: "overview",
       parent: null,
       title: "Two routes match: the more specific wins",
@@ -213,14 +210,13 @@ window.DIAGRAMS = {
   compare -.->|puts route 1 above route 2| pNew`,
       nodeInteractions: {
         req: { label: "Request GET /posts/new", kicker: "Request", type: "request", tooltip: "The request being routed." },
-        pNew: { label: "Route 1: GET /posts/new", kicker: "Route", type: "route", weight: "key", tooltip: "First in the order, and it matches, so it wins." },
+        pNew: { label: "Route 1: GET /posts/new", kicker: "Route", type: "route", tooltip: "First in the order, and it matches, so it wins." },
         pId: { label: "Route 2: GET /posts/{id}", kicker: "Route", type: "route", tooltip: "Would match, with id = new, but route 1 comes first." },
-        pComments: { label: "Route GET /posts/{id}/comments", kicker: "Route", type: "route", tooltip: "Needs a third segment, so it does not match.", weight: "background" },
-        pPost: { label: "Route POST /posts", kicker: "Route", type: "route", tooltip: "Different method and path, so it does not match.", weight: "background" },
+        pComments: { label: "Route GET /posts/{id}/comments", kicker: "Route", type: "route", tooltip: "Needs a third segment, so it does not match." },
+        pPost: { label: "Route POST /posts", kicker: "Route", type: "route", tooltip: "Different method and path, so it does not match." },
         compare: {
           label: "At startup: compare part by part",
           kicker: "The rule",
-          weight: "key",
           tooltip: "When a route is registered, it is compared with the routes it could clash with. This is what puts route 1 above route 2.",
           body: md`
             Two routes are compared with each other only at startup, when a route is registered. A request never triggers this comparison.
@@ -253,7 +249,6 @@ window.DIAGRAMS = {
           label: "newPostForm runs",
           kicker: "Result",
           type: "handler",
-          weight: "key",
           tooltip: "The handler of GET /posts/new, the first route in the order that matches.",
           body: md`
             Checked by running Go 1.22 with the four routes:
@@ -278,7 +273,6 @@ window.DIAGRAMS = {
     },
 
     conflict: {
-      viewId: "conflict",
       tab: "overview",
       parent: null,
       title: "Neither wins: refused at startup",
@@ -329,7 +323,6 @@ window.DIAGRAMS = {
         indexData: {
           label: "The index",
           kicker: "Data",
-          weight: "background",
           tooltip: "A map from a segment position and its literal to the routes that have it there.",
           body: md`
             For the four routes, the index holds these lists. A wildcard is stored under an empty literal. Routes ending in a slash or \`{name...}\` go in a separate list, which is empty here.
@@ -379,7 +372,6 @@ window.DIAGRAMS = {
           label: "panic at startup",
           kicker: "Result",
           status: "problem",
-          weight: "key",
           tooltip: "The message names both routes, where each was registered, and why they clash.",
           body: md`
             The message from Go 1.22, with the paths shortened and the lines wrapped:
@@ -411,7 +403,6 @@ window.DIAGRAMS = {
     },
 
     tree: {
-      viewId: "tree",
       tab: "overview",
       parent: null,
       title: "Finding the route quickly",
@@ -460,16 +451,15 @@ window.DIAGRAMS = {
         get: {
           label: "GET",
           kicker: "Level 2",
-          weight: "key",
           tooltip: "The exact method first, then GET for a HEAD request, then routes with no method.",
           body: md`
             ~~~go file=go1.22.0:src/net/http/routing_tree.go lines=130-146 mark=134,138-143,145
             ~~~
           `,
         },
-        post: { label: "POST", kicker: "Level 2", tooltip: "Only POST /posts lives here.", weight: "background" },
-        posts: { label: "posts", kicker: "Segment 1", weight: "key", tooltip: "Two children: the literal new, and a wildcard." },
-        postsPost: { label: "posts, under POST", kicker: "Leaf", tooltip: "The handler for POST /posts.", weight: "background" },
+        post: { label: "POST", kicker: "Level 2", tooltip: "Only POST /posts lives here." },
+        posts: { label: "posts", kicker: "Segment 1", tooltip: "Two children: the literal new, and a wildcard." },
+        postsPost: { label: "posts, under POST", kicker: "Leaf", tooltip: "The handler for POST /posts." },
         tNew: {
           label: "new",
           kicker: "Literal",
@@ -481,22 +471,21 @@ window.DIAGRAMS = {
             ~~~
           `,
         },
-        tId: { label: "{id}", kicker: "Wildcard", weight: "key", tooltip: "Tried after the literal fails. Takes new as the value of id." },
-        tComments: { label: "comments", kicker: "Leaf", weight: "key", tooltip: "The match: GET /posts/{id}/comments, with id = new." },
+        tId: { label: "{id}", kicker: "Wildcard", tooltip: "Tried after the literal fails. Takes new as the value of id." },
+        tComments: { label: "comments", kicker: "Leaf", tooltip: "The match: GET /posts/{id}/comments, with id = new." },
       },
       edgeInteractions: [
-        arrow("root", "get", "The request's method is GET.", "", [], { weight: "key" }),
+        arrow("root", "get", "The request's method is GET."),
         ["root", "post"],
-        arrow("get", "posts", "Segment 1 is posts.", "", [], { weight: "key" }),
+        arrow("get", "posts", "Segment 1 is posts."),
         ["post", "postsPost"],
         arrow("posts", "tNew", "Tried first: the literal new matches, but nothing below it matches comments."),
-        arrow("posts", "tId", "Tried second: the wildcard takes new.", "", [], { weight: "key" }),
-        arrow("tId", "tComments", "Segment 3 is comments: a match.", "", [], { weight: "key" }),
+        arrow("posts", "tId", "Tried second: the wildcard takes new."),
+        arrow("tId", "tComments", "Segment 3 is comments: a match."),
       ],
     },
 
     outcomes: {
-      viewId: "outcomes",
       tab: "overview",
       parent: null,
       title: "What a request gets",
@@ -562,7 +551,6 @@ window.DIAGRAMS = {
         compat: {
           label: "GODEBUG=httpmuxgo121=1",
           kicker: "Escape hatch",
-          weight: "background",
           tooltip: "Read once at startup. Every ServeMux method then runs the old code.",
           body: md`
             The doc comment lists what can break in old programs: a route like \`/{x}\` used to be a literal path, and some odd routes that used to be accepted now panic.
@@ -581,7 +569,6 @@ window.DIAGRAMS = {
     },
 
     basics: {
-      viewId: "basics",
       tab: "basics",
       parent: null,
       title: "An HTTP request in one minute",
@@ -617,12 +604,11 @@ window.DIAGRAMS = {
   router -->|"GET /posts/{id}"| handler
   handler --> response`,
       nodeInteractions: {
-        client: { label: "Browser or app", kicker: "Client", tooltip: "Anything that sends HTTP: a browser, a phone app, or another server.", weight: "background" },
+        client: { label: "Browser or app", kicker: "Client", tooltip: "Anything that sends HTTP: a browser, a phone app, or another server." },
         request: {
           label: "The request",
           kicker: "Data",
           type: "request",
-          weight: "key",
           tooltip: "A method, a host, and a path, plus headers and sometimes a body.",
           body: md`
             - **Method:** what to do. GET reads, POST creates, PUT replaces, DELETE removes. HEAD is GET without the body.
@@ -636,7 +622,6 @@ window.DIAGRAMS = {
           label: "Router",
           kicker: "This lesson",
           type: "router",
-          weight: "key",
           tooltip: "In Go it is http.ServeMux. You register routes, and it picks one handler per request.",
           body: md`
             In Go you register each route with a handler:
@@ -663,7 +648,7 @@ window.DIAGRAMS = {
             ~~~
           `,
         },
-        response: { label: "The response", kicker: "Data", tooltip: "A status code, such as 200 OK or 404 Not Found, then headers and a body.", weight: "background" },
+        response: { label: "The response", kicker: "Data", tooltip: "A status code, such as 200 OK or 404 Not Found, then headers and a body." },
       },
       edgeInteractions: [
         ["client", "request"],

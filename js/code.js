@@ -27,7 +27,7 @@ function isMarked(fence, number) {
   return fence.mark.some(([from, to]) => number >= from && number <= to);
 }
 
-// Every file= fence in every note and story, with where it was written, for the checks and for Export.
+// Every file= fence in every note and story, with where it was written, for the checks.
 function fileFences() {
   const found = [];
   const scan = (viewId, where, text) => {
@@ -39,9 +39,7 @@ function fileFences() {
   Object.entries(DIAGRAMS.views || {}).forEach(([viewId, view]) => {
     scan(viewId, `${viewId}: the story`, view.story);
     Object.entries(view.nodeInteractions || {}).forEach(([chartId, note]) => scan(viewId, `${viewId}: the note on ${chartId}`, note.body));
-    (view.edgeInteractions || []).forEach((edge) => {
-      if (!Array.isArray(edge)) scan(viewId, `${viewId}: the note on the arrow ${edge.from} → ${edge.to}`, edge.body);
-    });
+    view.edgeInteractions.forEach((edge) => scan(viewId, `${viewId}: the note on the arrow ${edge.from} → ${edge.to}`, edge.body));
   });
   return found;
 }

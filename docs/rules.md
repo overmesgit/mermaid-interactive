@@ -5,7 +5,7 @@ Rules that came from reading real explanations. Each says where it came from and
 ### Color carries meaning
 **Context:** The page and the diagrams are almost all gray, so nothing tells the eye where to look.
 **Rule:** Use a few colors, each with one meaning, in both the page and the diagrams. For example, new, changed, removed, and a problem such as a conflict, which is red. Color is never the only signal, so a label or icon goes with it.
-**How:** `status` on a note: `new`, `changed`, `removed`, or `problem`. The word shows in the panel, on the card, and in a legend.
+**How:** `status` on a note: `new`, `changed`, `removed`, or `problem`. The word shows in the note and on the part's card.
 **Example:** in the step "Neither wins: refused at startup", every box was gray, including the clash itself. Now the losing comparison and the panic are red and marked Problem, and the 405 answer in the last step is green and marked New.
 
 ### The reader knows how to read a view
@@ -35,8 +35,8 @@ Rules that came from reading real explanations. Each says where it came from and
 ### The diagram shows how much each part matters
 **Context:** Every shape looked the same, so the reader could not tell which ones were central and which ones had something worth opening.
 **Rule:** A diagram tells the reader how much each part is worth: what is central to the point, what is background, and what has more to open. Never leave every part looking equal.
-**How:** `weight: "key"` or `"background"` on a note. The page adds a dot to every part that has more to read.
-**Example:** in the tree step, the root, the method, and every segment were drawn alike. Now the path the request walks, GET → posts → {id} → comments, has a heavy outline, and a dot marks the parts with code to open.
+**How:** the story names what is central, and parts that are only background stay out of the picture. The page adds a dot to every part that has more to read.
+**Example:** in the tree step, the root, the method, and every segment were drawn alike. Now the story walks the path the request takes, GET → posts → {id} → comments, and a dot marks the parts with code to open.
 
 ### Show a change side by side
 **Context:** Before and after were two lesson steps. The reader had to keep the first in mind while looking at the second, so the change itself was hard to see.
@@ -58,14 +58,14 @@ flowchart TB
 ### Point at what matters
 **Context:** A note showed a 40-line function, and the reader could not tell which lines mattered.
 **Rule:** Whenever a piece of code, a list, or a diagram is bigger than its point, highlight the part that carries the point. The reader should never have to search for it.
-**How:** `mark=` on a code fence highlights lines inside the ones shown. `weight: "key"` does the same for a part of a diagram.
+**How:** `mark=` on a code fence highlights lines inside the ones shown. In a diagram, `status` marks the parts that changed.
 **Example:** the note on registering /posts/new showed lines 2737–2779 of server.go, and the reader could not find the conflict check in them. Now `mark=2764-2774` highlights the lines that check it against each candidate, and the panel scrolls to them.
 
 ### The diagram and the panel say what they each show
 **Context:** A call order was on the left and source code on the right, and the reader did not see how they connect.
 **Rule:** Make the link visible: the panel describes the selected part, and the view says what the diagram shows.
-**How:** a target icon on the note's header line, in the outline's color, lights the part in the diagram on hover and brings it into view on click. The story says what the diagram shows.
-**Example:** a step had the call order as boxes on the left and Go source in the panel on the right, with nothing saying they were the same function. Now the note's header has a blue target icon. Pointing at it lights the shape the note describes, which has an outline in the same blue.
+**How:** opening a note brings its part into view, outlined in the panel's blue, and a part's card or link lights it in the diagram on hover. The story says what the diagram shows.
+**Example:** a step had the call order as boxes on the left and Go source in the panel on the right, with nothing saying they were the same function. Now pointing at the function's card lights its box, and the open box has an outline in the same blue as the card.
 
 ### Start with an overview and a plan
 **Context:** The reader started without knowing what the lesson covers or where it goes.

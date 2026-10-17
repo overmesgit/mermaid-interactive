@@ -6,10 +6,11 @@ mermaid.initialize({
   // On a bad chart, show() writes the error where the diagram goes. Without this, Mermaid also leaves its own error picture at the bottom of the page.
   suppressErrorRendering: true,
   theme: "base",
-  fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
+  // The camera sizes the picture, so no chart type may shrink it to its container.
   flowchart: { htmlLabels: true, useMaxWidth: false, curve: "basis" },
   sequence: { useMaxWidth: false },
   c4: { useMaxWidth: false },
+  state: { useMaxWidth: false },
   themeVariables: {
     fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
     fontSize: "15px",
@@ -72,18 +73,12 @@ moreMenu.addEventListener("click", (event) => {
   if (event.target.closest("button, a")) moreMenu.hidePopover();
 });
 document.getElementById("fit").addEventListener("click", fit);
-// Story is a switch: it shows the story, or hides it. An open note stays either way.
-app.els.storyOpen.addEventListener("click", () => {
-  app.storyHidden = !app.storyHidden;
-  layoutPanel();
-  recordHistory();
-});
+// Story is a switch: it shows the story, or hides it.
+app.els.storyOpen.addEventListener("click", () => setStoryHidden(!app.storyHidden));
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
 document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));
 document.getElementById("lesson-prev").addEventListener("click", () => showLesson(-1));
 document.getElementById("lesson-next").addEventListener("click", () => showLesson(1));
-
-app.els.search.addEventListener("input", applySearch);
 
 document.addEventListener("keydown", (event) => {
   const typing = event.target.closest("input, textarea");
@@ -93,10 +88,6 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") popup.hidePopover();
     return;
   }
-  if (event.key === "/" && !typing) {
-    event.preventDefault();
-    app.els.search.focus();
-  }
   if (event.key === "?" && !typing) {
     event.preventDefault();
     app.els.help.showPopover();
@@ -104,10 +95,8 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     hideTooltip();
     // An open note closes first. The story itself stays open while stepping up.
-    if (app.selectedInteraction) {
-      closeNote();
-      recordHistory();
-    } else showParent();
+    if (app.selectedInteraction) closeNote();
+    else showParent();
   }
   if (event.key === "Backspace" && !typing && showParent()) {
     event.preventDefault();

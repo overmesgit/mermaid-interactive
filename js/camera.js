@@ -119,7 +119,7 @@ function wireCamera() {
   els.viewport.addEventListener("selectstart", (event) => event.preventDefault());
 
   els.viewport.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit, #lesson") || event.button !== 0) return;
+    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit") || event.button !== 0) return;
     app.drag = { x: event.clientX, y: event.clientY, cx: app.cam.x, cy: app.cam.y };
     els.viewport.classList.add("is-dragging");
     els.viewport.setPointerCapture(event.pointerId);

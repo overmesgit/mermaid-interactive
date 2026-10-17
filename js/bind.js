@@ -44,7 +44,6 @@ function addMoreDot(shape) {
 function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
-  if (WEIGHTS.includes(interaction.weight)) shape.classList.add(`weight-${interaction.weight}`);
   if (typeIndex(interaction.type) >= 0) shape.classList.add(`type-${typeIndex(interaction.type)}`);
   makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
@@ -97,7 +96,6 @@ function wireArrow(interaction, arrowElements) {
   arrowElements.filter(Boolean).forEach((element) => {
     element.dataset.wired = "1";
     element.dataset.edgeId = interaction.edgeId;
-    if (WEIGHTS.includes(interaction.weight)) element.classList.add(`weight-${interaction.weight}`);
     if (element.tagName === "path" || element.tagName === "line") {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);

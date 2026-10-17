@@ -16,10 +16,10 @@ The decisions are under Agent mode in the [decision index](docs/decisions/README
 
 ## Mermaid features to consider
 
-Each new kind of diagram or shape needs the page to learn how Mermaid draws it, the way image and icon nodes did. Until then it draws, but nothing on it is clickable.
+Each new kind of diagram or shape needs the page to learn how Mermaid draws it, the way image nodes did. Until then it draws, but nothing on it is clickable.
 
 1. Architecture diagrams (`architecture-beta`). Groups such as a VPC or a cluster, with service icons, so "what runs where" reads better than a flowchart.
-2. Icon packs. Register one, such as `logos`, so icon nodes and architecture diagrams show real logos instead of a `?`. It is another pinned script to load.
+2. Icon packs. Register one, such as `logos`, so icon nodes and architecture diagrams show real logos instead of a `?`. It is another pinned script to load, and the page must learn to find icon nodes again ([ADR-055](docs/decisions/055-fewer-features.md) dropped that).
 3. Entity-relationship diagrams, for a data model. Each table and link could carry a note.
 4. Flowchart shapes that mean something, such as `@{ shape: cyl }` for a database or `doc` for a document. Check that the page finds each one, because some may be drawn without the `node` class, like image nodes were.
 5. ELK layout, for big diagrams with fewer crossing arrows. It is an extra script.

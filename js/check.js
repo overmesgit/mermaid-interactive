@@ -4,141 +4,151 @@
 
 const checks = {
   content: [],
-  // viewId → problems from its last draw. A drawn view's result replaces its content check on shapes and arrows.
+  // viewId → the shapes and arrows its chart text seems to lack. Once the view is drawn, its draw check says the same from the picture, so it replaces these.
+  chartIds: {},
+  // viewId → problems from its last draw.
   drawn: {},
   warned: new Set(),
 };
 
-function edgeEnds(edge) {
-  return Array.isArray(edge) ? [edge[0], edge[1]] : [edge.from, edge.to];
+const isView = (id) => Object.hasOwn(DIAGRAMS.views, id);
+const isType = (name) => Object.hasOwn(DIAGRAMS.types || {}, name);
+
+// Text without its code, because code can show link syntax without being a link.
+function prose(text) {
+  return String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
 }
 
-// `match` marks a problem the draw check also finds, so it is not listed twice once the view is drawn.
+// A link's title says how its note opens: "inline", "peek", or "peek" and a place.
+function isNoteHowTitle(title) {
+  const [mode, place, extra] = title.trim().toLowerCase().split(/\s+/);
+  return mode === "inline" ? !place : mode === "peek" && (!place || PEEK_PLACES.includes(place)) && !extra;
+}
+
+// Each part of a view with its note, the key a link uses, and the name a problem uses.
+function viewParts(view) {
+  return [
+    ...Object.entries(view.nodeInteractions || {}).map(([chartId, note]) => ({ note, key: chartId, name: `the shape ${chartId}` })),
+    ...view.edgeInteractions.map((edge) => ({ note: edge, key: `${edge.from}->${edge.to}`, name: `the arrow ${edge.from} → ${edge.to}` })),
+  ];
+}
+
 function checkContent() {
   const found = [];
-  const views = DIAGRAMS.views || {};
   const tabs = DIAGRAMS.tabs || [];
-  const isView = (id) => Object.hasOwn(views, id);
-  const tabIds = new Set(tabs.map((tab) => tab.id));
-  if (!tabs.length) found.push({ text: "There are no tabs, so nothing opens." });
   const types = Object.keys(DIAGRAMS.types || {});
+  if (!tabs.length) found.push({ text: "There are no tabs, so nothing opens." });
   if (types.length > TYPE_COLORS) found.push({ text: `DIAGRAMS.types names ${types.length} types, but there are only ${TYPE_COLORS} type colors, so ${types.slice(TYPE_COLORS).join(", ")} stay uncolored.` });
-  const knownType = (name) => types.includes(name);
-  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
-  const stepBefore = new Map();
-  tabs.forEach((tab) => (tab.lesson || []).forEach((id, index) => index && stepBefore.set(id, tab.lesson[index - 1])));
-  const partKeys = (view) => new Set([
-    ...Object.keys(view?.nodeInteractions || {}),
-    ...(view?.edgeInteractions || []).map((edge) => edgeEnds(edge).join("->")),
-  ]);
-  tabs.forEach((tab) => {
-    if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
-    (tab.lesson || []).forEach((id) => {
-      if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
-    });
-  });
-  // A link's title says how its note opens.
-  const isNoteHow = (title) => {
-    const words = title.trim().toLowerCase().split(/\s+/);
-    return words[0] === "inline" ? words.length === 1 : words[0] === "peek" && (words.length === 1 || (words.length === 2 && ["beside", "below", "corner"].includes(words[1])));
-  };
-  if (DIAGRAMS.notePlace !== undefined && !["beside", "below", "corner"].includes(DIAGRAMS.notePlace)) {
+  if (DIAGRAMS.notePlace !== undefined && !PEEK_PLACES.includes(DIAGRAMS.notePlace)) {
     found.push({ text: `notePlace is "${DIAGRAMS.notePlace}". It takes "beside", "below", or "corner", so notes open beside their shapes instead.` });
   }
-  Object.entries(views).forEach(([viewId, view]) => {
-    const say = (text, match) => found.push({ viewId, text: `${viewId}: ${text}`, match });
-    if (view.viewId !== viewId) say(`its viewId is ${view.viewId}. It must equal its key.`);
-    if (view.parent && !isView(view.parent)) say(`its parent ${view.parent} is not a view.`);
-    if (!tabIds.has(view.tab)) say(`its tab ${view.tab} is not a tab id.`);
-    const chart = view.chart || "";
-    const kind = chartKind(chart);
-    const notes = view.nodeInteractions || {};
-    const edges = view.edgeInteractions || [];
-    // A chartId can hold "-", so "api" must not match inside "api-gw".
-    const inChart = (id) => new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(chart);
-    if (!kind && (Object.keys(notes).length || edges.length)) {
-      say("the page wires only flowchart, C4, sequence, and state charts, so these notes do nothing.");
-      return;
-    }
-    // A misspelt status or weight changes nothing in the picture, so it would go unnoticed.
-    const checkMarks = (name, note) => {
-      if (note.type !== undefined && !knownType(note.type)) say(`${name} has type "${note.type}", which DIAGRAMS.types does not name, so it has no color.`);
-      if (note.status !== undefined && !STATUSES[note.status]) say(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
-      if (note.weight !== undefined && !WEIGHTS.includes(note.weight)) say(`${name} has weight "${note.weight}". It must be ${WEIGHTS.join(" or ")}.`);
-    };
-    Object.entries(notes).forEach(([chartId, note]) => checkMarks(`the shape ${chartId}`, note));
-    edges.forEach((edge) => {
-      if (!Array.isArray(edge)) checkMarks(`the arrow ${edge.from} → ${edge.to}`, edge);
+  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
+  const stepBefore = new Map();
+  tabs.forEach((tab) => {
+    if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
+    (tab.lesson || []).forEach((id, index) => {
+      if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
+      else if (index && isView(tab.lesson[index - 1])) stepBefore.set(id, DIAGRAMS.views[tab.lesson[index - 1]]);
     });
-    Object.entries(notes).forEach(([chartId, note]) => {
-      if (!inChart(chartId)) say(`the shape ${chartId} has a note, but the chart has no ${chartId}.`, true);
-      if (note.opensView && !isView(note.opensView)) say(`the shape ${chartId} opens ${note.opensView}, which is not a view.`);
-    });
-    edges.forEach((edge) => {
-      const [from, to] = edgeEnds(edge);
-      const name = `the arrow ${from} → ${to}`;
-      if (edge.opensView && !isView(edge.opensView)) say(`${name} opens ${edge.opensView}, which is not a view.`);
-      if (kind === "sequence" || kind === "c4") {
-        if (!edge.mermaidText) say(`${name} has no mermaidText. In a ${kind === "c4" ? "C4" : "sequence"} chart an arrow is found by its text.`);
-        else if (!norm(chart).toLowerCase().includes(norm(edge.mermaidText).toLowerCase())) say(`${name}: the chart has no message "${edge.mermaidText}".`, true);
-      } else if (kind === "state") {
-        [from, to].forEach((end) => {
-          if (end !== "*" && !notes[end]) say(`${name}: ${end} needs a shape note, because a state arrow is found by the shapes at its ends.`);
-        });
-      } else {
-        [from, to].forEach((end) => {
-          if (!inChart(end)) say(`${name}: the chart has no ${end}.`, true);
-        });
-      }
-    });
-    // Mermaid names an arrow written as `a e1@--> b` after its id instead of its ends, so the page cannot find it.
-    if (kind === "flowchart") {
-      for (const [, id] of chart.matchAll(/\b([\w-]+)@(?=[-=.~])/g)) {
-        say(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
-      }
-    }
-    if (view.notePlace !== undefined && !["beside", "below", "corner"].includes(view.notePlace)) {
-      say(`notePlace is "${view.notePlace}". It takes "beside", "below", or "corner", so the note opens beside its shape instead.`);
-    }
-    // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
-    const texts = [
-      ["the story", view.story],
-      ...Object.entries(notes).map(([id, note]) => [`the note on ${id}`, note.body]),
-      ...edges.map((edge) => [`the note on ${edgeEnds(edge).join(" → ")}`, edge.body]),
-    ];
-    texts.forEach(([where, text]) => {
-      // Code can show the link syntax without being a link.
-      const prose = String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
-      for (const [, name] of prose.matchAll(/\]\(~([^)\s]+)\)/g)) {
-        if (!knownType(name)) say(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
-      }
-      for (const [, key, title] of prose.matchAll(/\]\(#([^)\s]+)(?:\s+"([^"]*)")?\)/g)) {
-        if (title !== undefined && !isNoteHow(title)) {
-          say(`${where} links to #${key} with "${title}". A link's title is "inline", "peek", or "peek" with a place: "peek beside", "peek below", "peek corner".`);
-        }
-        const isArrow = key.includes("->");
-        const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
-        if (known) continue;
-        const missing = isArrow ? `arrow note from ${key.replace("->", " to ")}` : `shape note for ${key}`;
-        say(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
-      }
-    });
-    // A story has no parts list, so a part with something to open must be linked where the story talks about it.
-    // On a lesson step, only the parts the step adds.
-    if (view.story) {
-      const seen = partKeys(views[stepBefore.get(viewId)]);
-      const story = String(view.story).replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
-      // A link can carry a title that says how its note opens, like [API](#api "peek").
-      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)(?:\s+"[^"]*")?\)/g)].map(([, key]) => key));
-      const hasDetail = (note) => Boolean(note.body || (note.facts && note.facts.length) || note.opensView);
-      const left = [
-        ...Object.entries(notes).filter(([id, note]) => hasDetail(note)).map(([id]) => id),
-        ...edges.filter((edge) => !Array.isArray(edge) && hasDetail(edge)).map((edge) => `${edge.from}->${edge.to}`),
-      ].filter((key) => !linked.has(key) && !seen.has(key));
-      if (left.length) say(`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`);
-    }
+  });
+  Object.entries(DIAGRAMS.views).forEach(([viewId, view]) => {
+    const say = (text) => ({ viewId, text: `${viewId}: ${text}` });
+    found.push(...checkView(view, stepBefore.get(viewId)).map(say));
+    checks.chartIds[viewId] = checkChartIds(view).map(say);
   });
   return found;
+}
+
+// Everything about one view except whether its chart has each shape and arrow. `before` is the lesson step before it, if any.
+function checkView(view, before) {
+  const problems = [];
+  const parts = viewParts(view);
+  const kind = chartKind(view.chart);
+  if (view.parent && !isView(view.parent)) problems.push(`its parent ${view.parent} is not a view.`);
+  if (!(DIAGRAMS.tabs || []).some((tab) => tab.id === view.tab)) problems.push(`its tab ${view.tab} is not a tab id.`);
+  if (view.notePlace !== undefined && !PEEK_PLACES.includes(view.notePlace)) {
+    problems.push(`notePlace is "${view.notePlace}". It takes "beside", "below", or "corner", so the note opens beside its shape instead.`);
+  }
+  if (!kind) {
+    if (parts.length) problems.push("the page wires only flowchart, C4, sequence, and state charts, so these notes do nothing.");
+    return problems;
+  }
+  parts.forEach(({ note, name }) => {
+    // A misspelt type or status changes nothing in the picture, so it would go unnoticed.
+    if (note.type !== undefined && !isType(note.type)) problems.push(`${name} has type "${note.type}", which DIAGRAMS.types does not name, so it has no color.`);
+    if (note.status !== undefined && !STATUSES[note.status]) problems.push(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
+    if (note.opensView && !isView(note.opensView)) problems.push(`${name} opens ${note.opensView}, which is not a view.`);
+  });
+  view.edgeInteractions.forEach((edge) => {
+    const name = `the arrow ${edge.from} → ${edge.to}`;
+    if ((kind === "sequence" || kind === "c4") && !edge.mermaidText) {
+      problems.push(`${name} has no mermaidText. In a ${kind === "c4" ? "C4" : "sequence"} chart an arrow is found by its text.`);
+    }
+    if (kind === "state") {
+      [edge.from, edge.to].forEach((end) => {
+        if (end !== "*" && !view.nodeInteractions?.[end]) problems.push(`${name}: ${end} needs a shape note, because a state arrow is found by the shapes at its ends.`);
+      });
+    }
+  });
+  // Mermaid names an arrow written as `a e1@--> b` after its id instead of its ends, so the page cannot find it.
+  if (kind === "flowchart") {
+    for (const [, id] of view.chart.matchAll(/\b([\w-]+)@(?=[-=.~])/g)) {
+      problems.push(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
+    }
+  }
+  problems.push(...checkLinks(view, parts), ...checkStoryLinks(view, parts, before));
+  return problems;
+}
+
+// A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
+function checkLinks(view, parts) {
+  const problems = [];
+  const keys = new Set(parts.map((part) => part.key));
+  const texts = [["the story", view.story], ...parts.map(({ note, name }) => [`the note on ${name.replace(/^the (shape|arrow) /, "")}`, note.body])];
+  texts.forEach(([where, text]) => {
+    for (const [, name] of prose(text).matchAll(/\]\(~([^)\s]+)\)/g)) {
+      if (!isType(name)) problems.push(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
+    }
+    for (const [, key, title] of prose(text).matchAll(/\]\(#([^)\s]+)(?:\s+"([^"]*)")?\)/g)) {
+      if (title !== undefined && !isNoteHowTitle(title)) {
+        problems.push(`${where} links to #${key} with "${title}". A link's title is "inline", "peek", or "peek" with a place: "peek beside", "peek below", "peek corner".`);
+      }
+      if (keys.has(key)) continue;
+      const missing = key.includes("->") ? `arrow note from ${key.replace("->", " to ")}` : `shape note for ${key}`;
+      problems.push(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
+    }
+  });
+  return problems;
+}
+
+// A story has no parts list, so a part with something to open must be linked where the story talks about it.
+// On a lesson step, only the parts the step adds.
+function checkStoryLinks(view, parts, before) {
+  if (!view.story) return [];
+  const seen = before ? partKeysOf(before) : new Set();
+  const linked = new Set([...prose(view.story).matchAll(/\]\(#([^)\s]+)/g)].map(([, key]) => key));
+  const left = [...new Set(parts.filter(({ note, key }) => hasMore(note) && !linked.has(key) && !seen.has(key)).map(({ key }) => key))];
+  return left.length ? [`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`] : [];
+}
+
+// Whether the chart text has each shape and arrow a note names. A chartId can hold "-", so "api" must not match inside "api-gw".
+function checkChartIds(view) {
+  const chart = view.chart || "";
+  const kind = chartKind(chart);
+  const inChart = (id) => new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(chart);
+  if (!kind) return [];
+  const problems = Object.keys(view.nodeInteractions || {}).filter((id) => !inChart(id)).map((id) => `the shape ${id} has a note, but the chart has no ${id}.`);
+  view.edgeInteractions.forEach((edge) => {
+    const name = `the arrow ${edge.from} → ${edge.to}`;
+    if (kind === "sequence" || kind === "c4") {
+      if (edge.mermaidText && !norm(chart).toLowerCase().includes(norm(edge.mermaidText).toLowerCase())) problems.push(`${name}: the chart has no message "${edge.mermaidText}".`);
+    } else if (kind === "flowchart") {
+      [edge.from, edge.to].forEach((end) => {
+        if (!inChart(end)) problems.push(`${name}: the chart has no ${end}.`);
+      });
+    }
+  });
+  return problems;
 }
 
 // Mermaid's message is several lines: where it failed, a caret, and what it expected. The first and last say enough.
@@ -222,7 +232,8 @@ function reportDrawn(viewId, missed) {
 
 function renderChecks() {
   const problems = [
-    ...checks.content.filter((problem) => !(problem.match && checks.drawn[problem.viewId])),
+    ...checks.content,
+    ...Object.entries(checks.chartIds).flatMap(([viewId, list]) => (checks.drawn[viewId] ? [] : list)),
     ...Object.values(checks.drawn).flat(),
   ];
   const open = document.getElementById("checks-open");

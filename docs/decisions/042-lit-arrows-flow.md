@@ -1,6 +1,6 @@
 # ADR-042 A lit arrow flows from its start to its end
 
-- Status: accepted, partly superseded by [ADR-043](043-status-and-weight.md): a step marks what it adds only when it shares a part with the step before, and in green
+- Status: accepted, partly superseded by [ADR-043](043-status-and-weight.md): a step marks what it adds only when it shares a part with the step before, and in green. Nothing lights by search since [ADR-055](055-fewer-features.md)
 - Date: 2026-10-15
 
 ## Context

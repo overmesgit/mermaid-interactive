@@ -40,6 +40,6 @@ There is no Python, Node, or other script in the skill.
 
 Everyone who opens the file sees a mistake, instead of a shape that does nothing on click. An agent that cannot open a browser does not see it. It follows the checklist in `format.md`. An agent that can open a browser reads the warning.
 
-`head.html` and `tail.html` are rebuilt when the engine changes. How they are made is decided with the code. The engine scripts are inlined as written, not minified. A `source=` fence ([ADR-024](024-notes-name-functions.md)) prints a function with `toString()`, so minified engine code would show minified code in the How tab.
+`head.html` and `tail.html` are rebuilt when the engine changes. How they are made is decided with the code. The engine scripts are inlined as written, not minified. A `source=` fence (ADR-024) prints a function with `toString()`, so minified engine code would show minified code in the How tab.
 
 The one-file deliverable, the Export button, and publishing as a separate step still hold from ADR-027.

@@ -34,34 +34,8 @@ function renderChrome() {
   });
   els.summary.textContent = app.view.summary;
   renderLesson();
-  recordHistory();
-}
-
-// Every move the reader makes is a history entry, so Back undoes it: a step, a drill, a tab, and opening a part.
-// The hash is the view path, then the open part: #tab/inner@api, or @web->api for an arrow.
-function historyHash() {
-  const part = app.selectedInteraction;
-  const key = !part ? "" : part.kind === "edge" ? `@${part.from}->${part.to}` : `@${part.chartId}`;
-  return "#" + app.stack.map((view) => view.viewId).join("/") + key;
-}
-
-function currentHash() {
-  try {
-    return decodeURIComponent(location.hash);
-  } catch {
-    return location.hash;
-  }
-}
-
-// While the page follows the history, or on first load, it replaces the entry instead of adding one.
-function recordHistory() {
-  const next = historyHash();
-  if (currentHash() === next) return;
-  // The entry keeps how the note was opened, so Back reopens it the same way. The hash alone opens it as a peek.
-  const how = app.noteHow;
-  const state = how ? { note: { mode: how.mode, place: how.place } } : null;
-  if (app.replaying || !location.hash) history.replaceState(state, "", next);
-  else history.pushState(state, "", next);
+  // The link names the diagram on screen, so it can be shared. It replaces the entry, so Back leaves the page instead of walking through diagrams.
+  history.replaceState(null, "", "#" + stack.map((view) => view.viewId).join("/"));
 }
 
 // `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
@@ -87,7 +61,6 @@ async function show(viewId, fromInteraction) {
     if (token !== app.renderToken) return;
     app.els.camera.innerHTML = svg;
     const svgEl = app.els.camera.querySelector("svg");
-    svgEl.style.maxWidth = "none";
     const box = svgEl.viewBox.baseVal;
     if (box && box.width) {
       svgEl.setAttribute("width", String(box.width));
@@ -99,7 +72,6 @@ async function show(viewId, fromInteraction) {
     relaxLabels(svgEl);
     markStatuses();
     markStepFlow();
-    applySearch();
   } catch (error) {
     if (token !== app.renderToken) return;
     app.els.camera.classList.remove("is-leaving");
@@ -107,21 +79,16 @@ async function show(viewId, fromInteraction) {
   }
 }
 
-// On load, and on Back and Forward. The view is drawn again only when it changed, so going back from a note to its story does not redraw.
-async function openFromHash() {
-  const [path, partId] = currentHash().replace(/^#/, "").split("@");
-  const ids = path.split("/").filter(Boolean);
+// On load, and when the link changes. The hash is the view path, like #tab/inner. It opens its last view, or the first tab.
+function openFromHash() {
+  let hash = location.hash;
+  try {
+    hash = decodeURIComponent(hash);
+  } catch {}
+  const ids = hash.replace(/^#/, "").split("/").filter(Boolean);
   const last = ids[ids.length - 1];
   const viewId = app.views[last] ? last : DIAGRAMS.tabs[0].id;
-  app.replaying = true;
-  try {
-    if (!app.view || app.view.viewId !== viewId) await show(viewId);
-    const part = partId ? linkedPart("#" + partId) : null;
-    if (part) openPanel(part, history.state?.note);
-    else if (app.selectedInteraction) closeNote();
-  } finally {
-    app.replaying = false;
-  }
+  if (!app.view || app.view.viewId !== viewId) show(viewId);
 }
 
 // Escape and Backspace go one level up. Returns false at a tab's root.
@@ -165,8 +132,6 @@ function showLesson(delta) {
 }
 
 function wireTabs() {
-  // An exported file already holds the buttons drawn when it was saved, without their listeners.
-  app.els.tabs.replaceChildren();
   DIAGRAMS.tabs.forEach((tab) => {
     const button = document.createElement("button");
     button.type = "button";

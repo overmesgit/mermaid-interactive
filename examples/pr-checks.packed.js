@@ -8,7 +8,6 @@ window.DIAGRAMS = {
   ],
   views: {
     problem: {
-      viewId: "problem",
       tab: "problem",
       parent: null,
       title: "A dead shape says nothing",
@@ -74,7 +73,6 @@ window.DIAGRAMS = {
     },
 
     "two-checks": {
-      viewId: "two-checks",
       tab: "problem",
       parent: null,
       title: "Why there are two checks",
@@ -156,7 +154,6 @@ window.DIAGRAMS = {
     },
 
     run: {
-      viewId: "run",
       tab: "problem",
       parent: null,
       title: "What runs, in order",
@@ -218,7 +215,6 @@ window.DIAGRAMS = {
     },
 
     answer: {
-      viewId: "answer",
       tab: "problem",
       parent: null,
       title: "The mistake is listed",

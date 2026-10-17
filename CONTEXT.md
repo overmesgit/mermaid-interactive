@@ -26,9 +26,9 @@ The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
 - An explanation can name a few types of thing, such as requests and routes. Each type has one color, in the diagram and in the text ([ADR-052](docs/decisions/052-one-color-per-type.md)).
 - The side panel shows the view's story. A view with no story lists its shapes and arrows instead. Close hides it until the Story button ([ADR-033](docs/decisions/033-story-panel.md)). A part's note opens inline in the story, under the card or link that was clicked, or as a peek card on the canvas by its shape. Each link chooses with its title. Either way the story keeps its place, so the reader sees the detail and the whole picture together. Escape, ×, or a second click on the link closes the note ([ADR-053](docs/decisions/053-inline-and-peek-notes.md)).
 - The story can show a part's card between its paragraphs, where the text talks about that part. A story links every part that has a body, facts, or an inner diagram, because there is no list under it ([ADR-041](docs/decisions/041-story-links-to-parts.md), [ADR-052](docs/decisions/052-one-color-per-type.md)).
-- A lit arrow flows from its start to its end: selected, hovered, found by search, or new on this lesson step ([ADR-042](docs/decisions/042-lit-arrows-flow.md)).
+- A lit arrow flows from its start to its end: selected, hovered, or new on this lesson step ([ADR-042](docs/decisions/042-lit-arrows-flow.md)).
 - Hover shows a tooltip.
-- If a shape has its own diagram, a double-click or the ↘ badge opens that diagram.
+- If a shape has its own diagram, a ↘ badge marks it, and a double-click opens that diagram.
 - Arrows work the same way as nodes: tooltip, panel, highlight, and drill-down when `opensView` is set.
 - Hover may dim unrelated shapes. The dim stays light.
 - Double-click drills in without selecting the label. Text in the panel stays selectable.
@@ -49,7 +49,7 @@ There is no build and no framework, so a change shows up on reload.
 - **Libraries.** Mermaid 11 and marked 15 load from jsDelivr.
 - **Drawing.** Mermaid draws the SVG. `securityLevel` is `strict`, so Mermaid's own click handlers are off, and this page adds its own to the finished SVG.
 - **Changing the diagram.** `show()` in `js/nav.js` is the only way.
-- **Notes.** A panel note is markdown. `marked.lexer` splits it into pieces, and the page sets the text with `textContent`, so a note cannot inject HTML.
+- **Notes.** A panel note is markdown. marked renders it, and HTML written in a note shows as text. Part cards, part links, and code files start as empty placeholders that the page fills in ([ADR-055](docs/decisions/055-fewer-features.md)).
 
 Open the editor through a local server, because it reads `page.html` and `js/`, and a browser blocks that on `file://`. [README](README.md#run-it) has the command. A finished page needs no server.
 
@@ -87,11 +87,11 @@ Three sides meet on the page. A name should say which side it belongs to.
 - **Edge interaction**. The same kind of data for an arrow: `from` and `to` are chartIds, `mermaidText` is the label Mermaid rendered, `edgeId` is the key this page makes (`from-to-index`). Stored on `view.edgeInteractions`.
 - **Interaction**. Either kind at runtime, with `kind: "node"` or `kind: "edge"`.
 - **opensView**. The viewId a double-click opens. This is not camera zoom.
-- **view**. One diagram in `DIAGRAMS.views`. Its `viewId` is the hash segment and the `app.views` key.
+- **view**. One diagram in `DIAGRAMS.views`. Its key is its `viewId`, the hash segment in the link, and the `app.views` key.
 - **engine**. The page an explanation runs in: `page.html`, `styles.css`, and `js/`. It is the same for every explanation.
 - **content file**. One explanation: a script that sets `window.DIAGRAMS`. The editor shows the one you open. `arrow()`, `md`, and `packFile()` come from `js/helpers.js`. The format is `skill/references/format.md`.
-- **code file**. A file a note shows with `~~~lang file=path lines=a-b`. The path starts at the root of the repo the explanation is about, and `rev:path` names an older version. Not the engine's `js/`, which `source=` reads.
-- **inner diagram**. The view a shape or arrow opens with double-click or the ↘ badge. Opening one is called drill-down, or a drill.
+- **code file**. A file a note shows with `~~~lang file=path lines=a-b`. The path starts at the root of the repo the explanation is about, and `rev:path` names an older version.
+- **inner diagram**. The view a shape or arrow opens with a double-click. A ↘ badge marks a shape that has one. Opening one is called drill-down, or a drill.
 - **claim**. When an arrow matcher takes an edge interaction, so no later matcher can use it.
 - **inline note**. A part's note opened inside the story, right under the card or link that opened it.
 - **peek**. A part's note as a card on the canvas, held against its shape: beside it, below it, or in the corner.

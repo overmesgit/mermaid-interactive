@@ -1,6 +1,6 @@
 # ADR-052 One color per type of thing, tables, a one-line note header, and no parts list under a story
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-055](055-fewer-features.md): no target icon
 - Date: 2026-10-17
 - Supersedes: the parts list under a story, from [ADR-033](033-story-panel.md) and [ADR-041](041-story-links-to-parts.md); the note's header from ADR-051
 

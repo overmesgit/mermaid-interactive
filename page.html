@@ -24,10 +24,6 @@
             <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2Z" /><path d="M8 6.5v3M8 11.25v.1" /></svg>
             <span id="checks-count"></span>
           </button>
-          <label class="search">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
-            <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off" />
-          </label>
           <button id="more-open" class="icon" type="button" popovertarget="more-menu" aria-label="More actions" title="More actions">
             <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="0.75" /><circle cx="8" cy="8" r="0.75" /><circle cx="12.5" cy="8" r="0.75" /></svg>
           </button>
@@ -42,8 +38,6 @@
             <nav id="crumbs" aria-label="Zoom path"></nav>
           </div>
           <p id="summary"></p>
-          <!-- What the colors in this picture mean. Only the statuses it uses are listed. -->
-          <p id="legend" hidden></p>
         </div>
       </div>
 
@@ -74,7 +68,7 @@
       <div id="peek-caret" hidden></div>
     </section>
 
-    <aside id="panel" hidden aria-hidden="true" aria-label="Details">
+    <aside id="panel" hidden aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
       <!-- A part's note opens inline in the story or as a peek card on the canvas, so opening a detail never hides the whole picture. -->
       <section id="story-pane" class="panel-scroll" aria-label="Story">
@@ -83,7 +77,8 @@
           <button id="panel-close" class="panel-close" type="button">Close</button>
         </div>
         <h2 id="panel-title" class="panel-title"></h2>
-        <p id="panel-lead" class="panel-lead"></p>
+        <!-- The summary is already in the bar above the diagram, so the lead says how to read the story instead. -->
+        <p id="panel-lead" class="panel-lead">Read top to bottom. Click a part only when you want more detail.</p>
         <div id="panel-body" class="panel-body"></div>
         <section id="panel-parts" hidden>
           <h3>Parts, to open for detail</h3>
@@ -92,19 +87,15 @@
       </section>
       <!-- It waits here hidden. Under a card in the story it shows only its text, because the card names the part. -->
       <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden>
-        <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
+        <!-- One header line: the part's name and status, what kind of part it is, where a peek card sits, and close. -->
         <div class="panel-top note-top">
           <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
           <span id="peek-places" role="group" aria-label="Where the card sits"></span>
-          <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"/></svg>
-          </button>
           <button id="note-close" class="panel-close" type="button" aria-label="Close the note" title="Close the note (Esc)">×</button>
         </div>
         <p id="note-lead" class="note-lead"></p>
         <div id="note-body" class="panel-body"></div>
         <dl id="panel-facts"></dl>
-        <dl id="panel-links" aria-label="Connections"></dl>
         <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
       </section>
     </aside>
@@ -116,10 +107,9 @@
       <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
       <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
       <dt>Dot</dt><dd>The part has more to read than its tooltip</dd>
-      <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
+      <dt>Double-click</dt><dd>Open the inner diagram of a shape marked ↘</dd>
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>
-      <dt><kbd>/</kbd></dt><dd>Find</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close the note, then step up</dd>
       <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
       <dt>Prev, Next</dt><dd>Move through the lesson</dd>

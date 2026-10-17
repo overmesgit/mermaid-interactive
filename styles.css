@@ -14,13 +14,9 @@
   --accent-ink: #ffffff;
   --warn: #b45309;
   --warn-soft: #fef3c7;
-  /* Status colors. Each ink passes 4.5:1 on its soft fill, so the status word stays readable on a chip. */
+  /* Status colors. Each ink passes 4.5:1 on its soft fill, so the status word stays readable on a chip. Changed is --warn, and removed is --muted on --tint. */
   --new: #15803d;
   --new-soft: #dcfce7;
-  --changed: #b45309;
-  --changed-soft: #fef3c7;
-  --removed: #475569;
-  --removed-soft: #f1f5f9;
   --problem: #b91c1c;
   --problem-soft: #fee2e2;
   /* Type colors, given in order to the types a content file names. None is a status color or the selection blue, and each ink passes 4.5:1 on its soft fill. */
@@ -56,7 +52,7 @@ body {
   grid-template-rows: minmax(0, 1fr);
 }
 
-h1, h2, p { margin: 0; }
+h2, p { margin: 0; }
 
 /* Author display rules, such as the one on button, beat the browser's own [hidden] rule. */
 [hidden] { display: none !important; }
@@ -203,33 +199,6 @@ button.icon:hover { color: var(--ink); }
   color: var(--accent);
 }
 
-.search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  color: var(--muted);
-}
-
-.search svg {
-  position: absolute;
-  left: 8px;
-  pointer-events: none;
-}
-
-.search input {
-  width: 240px;
-  height: var(--control);
-  padding: 0 8px 0 32px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--tint);
-  color: var(--ink);
-}
-
-.search input::placeholder { color: var(--muted); }
-
-.search input:focus-visible { outline-offset: 0; }
-
 .stage-meta {
   grid-column: 1 / -1;
   max-width: 64ch;
@@ -296,13 +265,6 @@ button.icon:hover { color: var(--ink); }
   white-space: nowrap;
 }
 
-#legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
 /* A status written as a word on its own color, so the color is never the only signal. */
 .status-chip {
   display: inline-block;
@@ -316,28 +278,29 @@ button.icon:hover { color: var(--ink); }
   vertical-align: 1px;
 }
 
-.status-chip.status-new { background: var(--new-soft); color: var(--new); }
-.status-chip.status-changed { background: var(--changed-soft); color: var(--changed); }
-.status-chip.status-removed { background: var(--removed-soft); color: var(--removed); }
-.status-chip.status-problem { background: var(--problem-soft); color: var(--problem); }
-
-.panel-kicker .status-chip { margin-right: 8px; letter-spacing: 0.04em; }
 .part-card .status-chip { margin-left: 8px; }
 
+/* Each type and status sets one ink and one fill. Chips, text, shapes, and arrows all read these two, so each color is written once.
+   The statuses come after the types, so a part with both takes its status color: a problem stays red whatever its type. */
+.type-0 { --c: var(--type-0); --c-soft: var(--type-0-soft); }
+.type-1 { --c: var(--type-1); --c-soft: var(--type-1-soft); }
+.type-2 { --c: var(--type-2); --c-soft: var(--type-2-soft); }
+.type-3 { --c: var(--type-3); --c-soft: var(--type-3-soft); }
+.status-new { --c: var(--new); --c-soft: var(--new-soft); }
+.status-changed { --c: var(--warn); --c-soft: var(--warn-soft); }
+.status-removed { --c: var(--muted); --c-soft: var(--tint); }
+.status-problem { --c: var(--problem); --c-soft: var(--problem-soft); }
+
+/* Two classes each, so the color beats a part link's blue and a card's gray text. */
+.status-chip:is(.status-new, .status-changed, .status-removed, .status-problem),
+.type-text:is(.type-0, .type-1, .type-2, .type-3) { background: var(--c-soft); color: var(--c); }
+
 /* Words in the text written as a type, in that type's color, so the text and the diagram use one color language. */
-.type-text,
-.type-chip {
+.type-text {
   padding: 0 4px;
   border-radius: 4px;
   font-weight: 600;
 }
-
-.type-chip { font-size: 12px; }
-
-.type-0:is(.type-text, .type-chip) { background: var(--type-0-soft); color: var(--type-0); }
-.type-1:is(.type-text, .type-chip) { background: var(--type-1-soft); color: var(--type-1); }
-.type-2:is(.type-text, .type-chip) { background: var(--type-2-soft); color: var(--type-2); }
-.type-3:is(.type-text, .type-chip) { background: var(--type-3-soft); color: var(--type-3); }
 
 .type-text code { color: inherit; }
 
@@ -609,8 +572,6 @@ html.is-resizing * {
 
 #note-pane:focus { outline: none; }
 
-#note-pane .panel-top { margin-top: 0; }
-
 #note-pane .panel-body { margin-top: 6px; }
 
 /* The note has one header line. What kind of part it is follows the name in small gray text, and wraps under it on a narrow panel. */
@@ -647,42 +608,11 @@ html.is-resizing * {
   line-height: 1.5;
 }
 
-/* Finds the part in the picture: hover lights it, click brings it into view. Its square is the outline's color. */
-.note-locate {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 6px;
-  color: var(--accent);
-}
-
-.note-locate:hover { background: var(--accent-soft); }
-
 #note-pane .panel-close { height: 28px; }
 
-/* Thin scrollbars with no arrows, so they take little room. They darken while the pointer is over them.
-   Chrome drops its own scrollbar styles when the standard properties are set, and its thin standard bar keeps the arrows on Windows. So Chrome gets only its own styles. */
-.panel-scroll::-webkit-scrollbar,
-.panel-body pre::-webkit-scrollbar { width: 6px; height: 6px; }
-
-.panel-scroll::-webkit-scrollbar-track,
-.panel-body pre::-webkit-scrollbar-track,
-.panel-scroll::-webkit-scrollbar-corner,
-.panel-body pre::-webkit-scrollbar-corner { background: transparent; }
-
-.panel-scroll::-webkit-scrollbar-thumb { border-radius: 3px; background: #cbd5e1; }
-.panel-scroll:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
-.panel-body pre::-webkit-scrollbar-thumb { border-radius: 3px; background: #475569; }
-.panel-body pre:hover::-webkit-scrollbar-thumb { background: #64748b; }
-
-@supports not selector(::-webkit-scrollbar) {
-  .panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
-  .panel-scroll:hover { scrollbar-color: #94a3b8 transparent; }
-  .panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
-}
+/* Thin scrollbars, so they take little room. A code block's is darker, on its dark background. */
+.panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
 
 /* The note's close is a cross, because Close on the story above it means something else. */
 #note-close {
@@ -704,7 +634,6 @@ html.is-resizing * {
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  margin-top: 0;
 }
 
 .panel-kicker {
@@ -732,10 +661,8 @@ html.is-resizing * {
   letter-spacing: -0.01em;
 }
 
-.panel-lead { font-weight: 600; }
-
 /* On a story, the lead tells the reader how to read it. */
-.panel-lead.is-hint {
+.panel-lead {
   color: var(--muted);
   font-size: 13px;
   font-weight: 400;
@@ -870,31 +797,16 @@ button.code-file-head:hover { background: #475569; }
 
 .part-link:hover { background: transparent; text-decoration: underline; }
 
-#panel-facts,
-#panel-links {
+#panel-facts {
   display: grid;
   grid-template-columns: 96px 1fr;
   gap: 8px 16px;
   margin: 16px 0 0;
 }
 
-#panel-facts dt,
-#panel-links dt { color: var(--muted); }
+#panel-facts dt { color: var(--muted); }
 
-#panel-facts dd,
-#panel-links dd { margin: 0; }
-
-#panel-links:empty { display: none; }
-
-#panel-links button {
-  height: auto;
-  padding: 0;
-  color: var(--accent);
-  text-align: left;
-  white-space: normal;
-}
-
-#panel-links button:hover { background: transparent; text-decoration: underline; }
+#panel-facts dd { margin: 0; }
 
 #panel-parts { margin-top: 24px; }
 
@@ -974,8 +886,8 @@ button.code-file-head:hover { background: #475569; }
 .panel-body .part-card:hover { border-left-color: var(--accent); }
 
 /* The part whose note is open, in the outline's color, so the reader sees where the note belongs in the story. */
-#panel-parts li.is-open .part-card,
-.panel-body li.is-open .part-card {
+#panel-parts li[aria-current] .part-card,
+.panel-body li[aria-current] .part-card {
   border-left: 3px solid var(--accent);
   padding-left: 11px;
   background: var(--accent-soft);
@@ -1037,37 +949,16 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
   to { stroke-dashoffset: -13; }
 }
 
-/* ---- Type, status, and weight on the SVG. Before selection, so a selected part still shows as selected. ---- */
+/* ---- Type and status on the SVG. Before selection, so a selected part still shows as selected. ---- */
 
-/* A type colors the shape's border and tint. A status comes after, so it wins: a problem stays red whatever its type. */
-.type-0 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-0-soft) !important; stroke: var(--type-0) !important; }
-.type-1 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-1-soft) !important; stroke: var(--type-1) !important; }
-.type-2 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-2-soft) !important; stroke: var(--type-2) !important; }
-.type-3 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-3-soft) !important; stroke: var(--type-3) !important; }
-
+/* A type or a status colors the shape's border and tint, from its --c and --c-soft. */
+:is(.type-0, .type-1, .type-2, .type-3, .status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { fill: var(--c-soft) !important; stroke: var(--c) !important; }
 :is(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke-width: 2px !important; }
-.status-new > :is(rect, polygon, circle, path, ellipse) { fill: var(--new-soft) !important; stroke: var(--new) !important; }
-.status-changed > :is(rect, polygon, circle, path, ellipse) { fill: var(--changed-soft) !important; stroke: var(--changed) !important; }
-.status-problem > :is(rect, polygon, circle, path, ellipse) { fill: var(--problem-soft) !important; stroke: var(--problem) !important; }
-.status-removed > :is(rect, polygon, circle, path, ellipse) {
-  fill: var(--removed-soft) !important;
-  stroke: var(--removed) !important;
-  stroke-dasharray: 5 4;
-}
+.status-removed > :is(rect, polygon, circle, path, ellipse) { stroke-dasharray: 5 4; }
 .status-removed .nodeLabel { text-decoration: line-through; }
 
-:is(path, line).is-edge.status-new:not(.edge-hit) { stroke: var(--new) !important; stroke-width: 2px !important; }
-:is(path, line).is-edge.status-changed:not(.edge-hit) { stroke: var(--changed) !important; stroke-width: 2px !important; }
-:is(path, line).is-edge.status-problem:not(.edge-hit) { stroke: var(--problem) !important; stroke-width: 2px !important; }
-:is(path, line).is-edge.status-removed:not(.edge-hit) { stroke: var(--removed) !important; stroke-dasharray: 5 4; }
-
-/* A key part has a heavy outline. A background part steps back: a pale box and quieter text. */
-.weight-key > :is(rect, polygon, circle, path, ellipse) { stroke-width: 3px !important; }
-.weight-key:not(.status-new, .status-changed, .status-removed, .status-problem, .type-0, .type-1, .type-2, .type-3) > :is(rect, polygon, circle, path, ellipse) { stroke: var(--ink) !important; }
-.weight-background > :is(rect, polygon, circle, path, ellipse) { fill: var(--canvas) !important; stroke: #94a3b8 !important; }
-.weight-background .nodeLabel,
-.weight-background .nodeLabel small { color: var(--muted) !important; }
-:is(path, line).is-edge.weight-key:not(.edge-hit) { stroke-width: 2.5px !important; }
+:is(path, line).is-edge:is(.status-new, .status-changed, .status-removed, .status-problem):not(.edge-hit) { stroke: var(--c) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-removed:not(.edge-hit) { stroke-dasharray: 5 4; }
 
 .more-dot circle {
   fill: var(--accent) !important;
@@ -1078,40 +969,20 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 
 .is-dim { opacity: 0.72; }
 
-/* A search hit, and the shape under the pointer, or under a hovered part card. */
-:is(.is-hit, .is-hover) > rect,
-:is(.is-hit, .is-hover) > polygon,
-:is(.is-hit, .is-hover) > circle,
-:is(.is-hit, .is-hover) > path,
-:is(.is-hit, .is-hover) > ellipse {
+/* The shape under the pointer, or under a hovered part card. */
+.is-hover > :is(rect, polygon, circle, path, ellipse) {
   stroke: var(--accent) !important;
   stroke-width: 2.5px !important;
 }
 
-.is-selected > rect,
-.is-selected > polygon,
-.is-selected > circle,
-.is-selected > path,
-.is-selected > ellipse {
-  fill: var(--accent-soft) !important;
-  stroke: var(--accent) !important;
-  stroke-width: 3px !important;
-}
-
-/* An icon shape keeps its background one group deeper, behind the icon. The last group is a transparent hit area in front of it, so only the first is styled. */
-:is(.is-hit, .is-hover).icon-shape > g:first-child > path {
-  stroke: var(--accent) !important;
-  stroke-width: 2.5px !important;
-}
-
-.is-selected.icon-shape > g:first-child > path {
+.is-selected > :is(rect, polygon, circle, path, ellipse) {
   fill: var(--accent-soft) !important;
   stroke: var(--accent) !important;
   stroke-width: 3px !important;
 }
 
 /* An image shape's picture covers its whole box, so a stroke on the box would be hidden. A ring just outside the picture shows instead. */
-:is(.is-hit, .is-hover).image-shape > image {
+.is-hover.image-shape > image {
   outline: 2.5px solid var(--accent);
   outline-offset: 3px;
 }
@@ -1138,26 +1009,23 @@ line.is-edge.is-selected:not(.edge-hit) {
   stroke-linejoin: round;
   fill: none !important;
 }
-.zoom-badge { cursor: pointer; }
 
 /* ---- Narrow canvas: a phone, or a wide panel. Islands stack instead of sharing a row. ---- */
 
 /* On a mid-width canvas the lesson gives up the empty left column, so Next keeps more of its title. */
 @container stage (max-width: 760px) {
-  .search input { width: 160px; }
   .float-bottom { grid-template-columns: minmax(0, 1fr) auto; }
   .float-bottom > #lesson { grid-column: 1; }
   .float-bottom > .camera-controls { grid-column: 2; }
 }
 
 @container stage (max-width: 640px) {
-  .float-top { grid-template-columns: minmax(0, 1fr); }
-  .float-top > .tools { grid-column: 1; }
+  /* The tabs take the room left by the menu, and wrap inside it. */
+  .float-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .float-top > .tools { grid-column: 2; }
   /* Tighter tabs fit one row at phone width; a longer tab list wraps instead of hiding. */
   #tabs { flex-wrap: wrap; gap: 0; }
   #tabs button { padding: 0 8px; font-size: 13px; }
-  .search { flex: 1; }
-  .search input { width: 100%; }
   .float-bottom { grid-template-columns: minmax(0, 1fr); }
   .float-bottom > .camera-controls { grid-row: 1; grid-column: 1; }
   .float-bottom > #lesson { grid-row: 2; grid-column: 1; width: auto; justify-self: stretch; }
@@ -1177,7 +1045,6 @@ line.is-edge.is-selected:not(.edge-hit) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { scroll-behavior: auto; }
   #camera { transition: none; }
 }
 
@@ -1200,7 +1067,7 @@ line.is-edge.is-selected:not(.edge-hit) {
    and the picture shows the connections, so the header, facts and links are left out. */
 #note-pane.under-card { padding-top: 2px; border-radius: 0 0 6px 0; }
 #note-pane.under-card > :is(.note-top, #note-lead) { display: none; }
-#note-pane[data-mode="inline"] > :is(#panel-facts, #panel-links, #panel-zoom) { display: none; }
+#note-pane[data-mode="inline"] > :is(#panel-facts, #panel-zoom) { display: none; }
 
 #note-pane[data-mode="inline"] #note-body {
   margin-top: 4px;
@@ -1210,10 +1077,10 @@ line.is-edge.is-selected:not(.edge-hit) {
 
 #note-pane[data-mode="inline"] #note-body pre { font-size: 12px; }
 
-.panel-body li.is-open .part-card:has(+ #note-pane) { border-radius: 0 6px 0 0; }
+.panel-body li[aria-current] .part-card:has(+ #note-pane) { border-radius: 0 6px 0 0; }
 
 /* The open card's chevron turns down, like a section that is open. */
-.panel-body li.is-open .part-card:has(+ #note-pane)::after {
+.panel-body li[aria-current] .part-card:has(+ #note-pane)::after {
   color: var(--accent);
   transform: translateY(-50%) rotate(90deg);
 }

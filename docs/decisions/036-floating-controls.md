@@ -1,6 +1,6 @@
 # ADR-036 Controls float over a full-window diagram
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-055](055-fewer-features.md): Find is gone
 - Date: 2026-10-14
 - Supersedes: the header from [ADR-017](017-compact-chrome.md), and the top-left place of Prev and Next from [ADR-022](022-lesson-on-diagram.md). The ? help and the one font from ADR-017 stay.
 

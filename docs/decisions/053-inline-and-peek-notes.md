@@ -1,6 +1,6 @@
 # ADR-053 A note opens inline under its link, or as a peek card by its shape
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-055](055-fewer-features.md): Back no longer reopens a note, and the note has no target icon
 - Date: 2026-10-17
 - Supersedes: ADR-050, and what is left of ADR-051 apart from its thin scrollbars
 

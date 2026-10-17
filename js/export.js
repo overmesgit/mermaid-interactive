@@ -1,6 +1,9 @@
 // Export saves this page as one HTML file. The page already holds every script and its style inline, because the editor built it that way, so Export copies them.
 // That needs no server, so Export works from disk and inside the editor's frame. The CDN scripts stay links.
 
+// The markup as it was before anything was drawn, so an export holds no picture, tabs, or open note from this visit. The scripts that run next fill it in.
+const pristineBody = document.body.cloneNode(true);
+
 function exportHtml() {
   const css = document.querySelector("head > style").textContent;
   // The script that opens the start view is written fresh below, so an export of an export opens where the reader was.
@@ -8,7 +11,7 @@ function exportHtml() {
   const cdn = [...document.querySelectorAll("script[src]")].map((script) => script.outerHTML);
   const hash = app.stack.map((view) => view.viewId).join("/");
   const safe = (source) => source.replace(/<\/script/gi, "<\\/script");
-  const body = document.body.cloneNode(true);
+  const body = pristineBody.cloneNode(true);
   body.querySelectorAll("script").forEach((script) => script.remove());
   const html = `<!DOCTYPE html>
 <html lang="en">

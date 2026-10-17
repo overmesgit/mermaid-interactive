@@ -17,16 +17,6 @@ function chartKind(chart) {
   return "";
 }
 
-function shapeGroup(el) {
-  return (
-    el.closest(
-      "g.node, g.image-shape, g.icon-shape, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
-    ) ||
-    el.closest("g") ||
-    el
-  );
-}
-
 // One pattern per chart. Every hit is the shape group Mermaid drew for that chartId.
 function findMermaidShapes(svg, chartId) {
   const kind = chartKind(app.view.chart);
@@ -34,9 +24,9 @@ function findMermaidShapes(svg, chartId) {
   const groups = new Set();
   if (kind === "flowchart") {
     // diagram-<n>-flowchart-<chartId>-<number>
-    // Image and icon shapes are drawn without the node class, so a lookup for g.node alone never finds them.
+    // Image shapes are drawn without the node class, so a lookup for g.node alone never finds them.
     const pattern = new RegExp(`(?:^|-)flowchart-${id}-\\d+$`);
-    svg.querySelectorAll("g.node, g.image-shape, g.icon-shape").forEach((el) => {
+    svg.querySelectorAll("g.node, g.image-shape").forEach((el) => {
       if (pattern.test(el.id)) groups.add(el);
     });
   } else if (kind === "c4") {
@@ -46,9 +36,9 @@ function findMermaidShapes(svg, chartId) {
       if (pattern.test(el.id)) groups.add(el);
     });
   } else if (kind === "sequence") {
-    // Top and bottom actor boxes share the name. Lifelines have it too, and are not boxes.
+    // Top and bottom actor boxes share the name. Lifelines have it too, and are not boxes. The group around a box holds its text too.
     svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
-      if (el.getAttribute("name") === chartId) groups.add(shapeGroup(el));
+      if (el.getAttribute("name") === chartId) groups.add(el.closest("g") || el);
     });
   } else if (kind === "state") {
     // diagram-<n>-state-<name>-<number>

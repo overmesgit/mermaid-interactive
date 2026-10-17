@@ -194,21 +194,9 @@
       notice: document.getElementById("notice"),
     };
     let template = null;
+    // Why the template could not be built, shown again on every Preview so a click never does nothing.
+    let startError = "";
     let frameUrl = null;
-
-    // Whether the editor is open, and its width, are kept for the next visit. Storage can be off, so each use is guarded.
-    const saved = (() => {
-      try {
-        return JSON.parse(localStorage.getItem("preview-editor")) || {};
-      } catch {
-        return {};
-      }
-    })();
-    function save() {
-      try {
-        localStorage.setItem("preview-editor", JSON.stringify({ closed: els.drawer.hidden, width: saved.width }));
-      } catch {}
-    }
 
     function setStatus(text, error) {
       els.status.textContent = text;
@@ -229,7 +217,6 @@
       els.drawer.hidden = !open;
       els.toggle.setAttribute("aria-expanded", String(open));
       els.toggle.title = open ? "Close the editor" : "Edit the content file";
-      save();
     }
 
     async function readText(path) {
@@ -273,14 +260,17 @@
     }
 
     function preview() {
-      if (!template) return;
+      if (!template) {
+        setStatus(startError || "The page is still loading.", true);
+        return;
+      }
       const content = els.content.value;
       if (!content.trim()) {
         setStatus("Paste a content file first.", true);
         return;
       }
-      // The page writes each move into the link's #, so Back undoes it. A srcdoc frame refuses that, and a blob URL allows it.
-      // Each preview gets a new frame, so the browser's Back does not step into the previous one.
+      // The page writes the diagram on screen into the link's #. A srcdoc frame refuses that, and a blob URL allows it.
+      // Each preview gets a new frame, because changing a frame's address adds a history entry, and Back would step into the previous preview.
       const frame = els.frame.cloneNode(false);
       if (frameUrl) URL.revokeObjectURL(frameUrl);
       frameUrl = URL.createObjectURL(new Blob([fill(content)], { type: "text/html" }));
@@ -323,40 +313,35 @@
       document.body.classList.add("resizing");
       const left = els.drawer.getBoundingClientRect().left;
       const move = (moveEvent) => {
-        saved.width = Math.round(Math.min(Math.max(moveEvent.clientX - left, 240), window.innerWidth * 0.7));
-        document.documentElement.style.setProperty("--drawer", `${saved.width}px`);
+        const width = Math.round(Math.min(Math.max(moveEvent.clientX - left, 240), window.innerWidth * 0.7));
+        document.documentElement.style.setProperty("--drawer", `${width}px`);
       };
       const stop = () => {
         document.body.classList.remove("resizing");
         removeEventListener("pointermove", move);
         removeEventListener("pointerup", stop);
-        save();
       };
       addEventListener("pointermove", move);
       addEventListener("pointerup", stop);
     });
 
     // A drop anywhere on the page opens the file. dragover must be cancelled, or the browser opens the file itself.
-    let depth = 0;
-    document.addEventListener("dragenter", (event) => {
+    // A drag that leaves the window has no element to go to, so that is when the drop hint goes.
+    document.addEventListener("dragover", (event) => {
       event.preventDefault();
-      depth++;
       document.body.classList.add("dragging");
     });
-    document.addEventListener("dragleave", () => {
-      if (--depth === 0) document.body.classList.remove("dragging");
+    document.addEventListener("dragleave", (event) => {
+      if (!event.relatedTarget) document.body.classList.remove("dragging");
     });
-    document.addEventListener("dragover", (event) => event.preventDefault());
     document.addEventListener("drop", (event) => {
       event.preventDefault();
-      depth = 0;
       document.body.classList.remove("dragging");
       openFile(event.dataTransfer.files[0]);
     });
 
-    if (saved.width) document.documentElement.style.setProperty("--drawer", `${saved.width}px`);
-    // On a phone the open editor covers the explanation, so a first visit there starts with it closed.
-    setOpen(saved.closed === undefined ? !matchMedia("(max-width: 720px)").matches : !saved.closed);
+    // On a phone the open editor covers the explanation, so it starts closed there.
+    setOpen(!matchMedia("(max-width: 720px)").matches);
 
     // The page starts empty, with where to begin in place of the explanation.
     // It also says when the skill's template is older than the engine here, because an agent would then make pages with the old engine.
@@ -380,8 +365,12 @@
               "<p>Then open <code>http://127.0.0.1:8765/</code>.</p>",
             true,
           );
-        } else showNotice("The editor could not start", error.message);
-        setStatus("Nothing can be shown until the page loads.", true);
+          startError = "Opened from disk, the editor cannot read page.html and js/, so it cannot show anything. Start a server in the repo folder, as the note on the right says.";
+        } else {
+          showNotice("The editor could not start", error.message);
+          startError = `The editor could not start: ${error.message}`;
+        }
+        setStatus(startError, true);
       }
     })();
   </script>

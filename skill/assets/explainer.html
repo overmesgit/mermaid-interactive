@@ -20,13 +20,9 @@
   --accent-ink: #ffffff;
   --warn: #b45309;
   --warn-soft: #fef3c7;
-  /* Status colors. Each ink passes 4.5:1 on its soft fill, so the status word stays readable on a chip. */
+  /* Status colors. Each ink passes 4.5:1 on its soft fill, so the status word stays readable on a chip. Changed is --warn, and removed is --muted on --tint. */
   --new: #15803d;
   --new-soft: #dcfce7;
-  --changed: #b45309;
-  --changed-soft: #fef3c7;
-  --removed: #475569;
-  --removed-soft: #f1f5f9;
   --problem: #b91c1c;
   --problem-soft: #fee2e2;
   /* Type colors, given in order to the types a content file names. None is a status color or the selection blue, and each ink passes 4.5:1 on its soft fill. */
@@ -62,7 +58,7 @@ body {
   grid-template-rows: minmax(0, 1fr);
 }
 
-h1, h2, p { margin: 0; }
+h2, p { margin: 0; }
 
 /* Author display rules, such as the one on button, beat the browser's own [hidden] rule. */
 [hidden] { display: none !important; }
@@ -209,33 +205,6 @@ button.icon:hover { color: var(--ink); }
   color: var(--accent);
 }
 
-.search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  color: var(--muted);
-}
-
-.search svg {
-  position: absolute;
-  left: 8px;
-  pointer-events: none;
-}
-
-.search input {
-  width: 240px;
-  height: var(--control);
-  padding: 0 8px 0 32px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--tint);
-  color: var(--ink);
-}
-
-.search input::placeholder { color: var(--muted); }
-
-.search input:focus-visible { outline-offset: 0; }
-
 .stage-meta {
   grid-column: 1 / -1;
   max-width: 64ch;
@@ -302,13 +271,6 @@ button.icon:hover { color: var(--ink); }
   white-space: nowrap;
 }
 
-#legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
 /* A status written as a word on its own color, so the color is never the only signal. */
 .status-chip {
   display: inline-block;
@@ -322,28 +284,29 @@ button.icon:hover { color: var(--ink); }
   vertical-align: 1px;
 }
 
-.status-chip.status-new { background: var(--new-soft); color: var(--new); }
-.status-chip.status-changed { background: var(--changed-soft); color: var(--changed); }
-.status-chip.status-removed { background: var(--removed-soft); color: var(--removed); }
-.status-chip.status-problem { background: var(--problem-soft); color: var(--problem); }
-
-.panel-kicker .status-chip { margin-right: 8px; letter-spacing: 0.04em; }
 .part-card .status-chip { margin-left: 8px; }
 
+/* Each type and status sets one ink and one fill. Chips, text, shapes, and arrows all read these two, so each color is written once.
+   The statuses come after the types, so a part with both takes its status color: a problem stays red whatever its type. */
+.type-0 { --c: var(--type-0); --c-soft: var(--type-0-soft); }
+.type-1 { --c: var(--type-1); --c-soft: var(--type-1-soft); }
+.type-2 { --c: var(--type-2); --c-soft: var(--type-2-soft); }
+.type-3 { --c: var(--type-3); --c-soft: var(--type-3-soft); }
+.status-new { --c: var(--new); --c-soft: var(--new-soft); }
+.status-changed { --c: var(--warn); --c-soft: var(--warn-soft); }
+.status-removed { --c: var(--muted); --c-soft: var(--tint); }
+.status-problem { --c: var(--problem); --c-soft: var(--problem-soft); }
+
+/* Two classes each, so the color beats a part link's blue and a card's gray text. */
+.status-chip:is(.status-new, .status-changed, .status-removed, .status-problem),
+.type-text:is(.type-0, .type-1, .type-2, .type-3) { background: var(--c-soft); color: var(--c); }
+
 /* Words in the text written as a type, in that type's color, so the text and the diagram use one color language. */
-.type-text,
-.type-chip {
+.type-text {
   padding: 0 4px;
   border-radius: 4px;
   font-weight: 600;
 }
-
-.type-chip { font-size: 12px; }
-
-.type-0:is(.type-text, .type-chip) { background: var(--type-0-soft); color: var(--type-0); }
-.type-1:is(.type-text, .type-chip) { background: var(--type-1-soft); color: var(--type-1); }
-.type-2:is(.type-text, .type-chip) { background: var(--type-2-soft); color: var(--type-2); }
-.type-3:is(.type-text, .type-chip) { background: var(--type-3-soft); color: var(--type-3); }
 
 .type-text code { color: inherit; }
 
@@ -615,8 +578,6 @@ html.is-resizing * {
 
 #note-pane:focus { outline: none; }
 
-#note-pane .panel-top { margin-top: 0; }
-
 #note-pane .panel-body { margin-top: 6px; }
 
 /* The note has one header line. What kind of part it is follows the name in small gray text, and wraps under it on a narrow panel. */
@@ -653,42 +614,11 @@ html.is-resizing * {
   line-height: 1.5;
 }
 
-/* Finds the part in the picture: hover lights it, click brings it into view. Its square is the outline's color. */
-.note-locate {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 6px;
-  color: var(--accent);
-}
-
-.note-locate:hover { background: var(--accent-soft); }
-
 #note-pane .panel-close { height: 28px; }
 
-/* Thin scrollbars with no arrows, so they take little room. They darken while the pointer is over them.
-   Chrome drops its own scrollbar styles when the standard properties are set, and its thin standard bar keeps the arrows on Windows. So Chrome gets only its own styles. */
-.panel-scroll::-webkit-scrollbar,
-.panel-body pre::-webkit-scrollbar { width: 6px; height: 6px; }
-
-.panel-scroll::-webkit-scrollbar-track,
-.panel-body pre::-webkit-scrollbar-track,
-.panel-scroll::-webkit-scrollbar-corner,
-.panel-body pre::-webkit-scrollbar-corner { background: transparent; }
-
-.panel-scroll::-webkit-scrollbar-thumb { border-radius: 3px; background: #cbd5e1; }
-.panel-scroll:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
-.panel-body pre::-webkit-scrollbar-thumb { border-radius: 3px; background: #475569; }
-.panel-body pre:hover::-webkit-scrollbar-thumb { background: #64748b; }
-
-@supports not selector(::-webkit-scrollbar) {
-  .panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
-  .panel-scroll:hover { scrollbar-color: #94a3b8 transparent; }
-  .panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
-}
+/* Thin scrollbars, so they take little room. A code block's is darker, on its dark background. */
+.panel-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.panel-body pre { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
 
 /* The note's close is a cross, because Close on the story above it means something else. */
 #note-close {
@@ -710,7 +640,6 @@ html.is-resizing * {
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  margin-top: 0;
 }
 
 .panel-kicker {
@@ -738,10 +667,8 @@ html.is-resizing * {
   letter-spacing: -0.01em;
 }
 
-.panel-lead { font-weight: 600; }
-
 /* On a story, the lead tells the reader how to read it. */
-.panel-lead.is-hint {
+.panel-lead {
   color: var(--muted);
   font-size: 13px;
   font-weight: 400;
@@ -876,31 +803,16 @@ button.code-file-head:hover { background: #475569; }
 
 .part-link:hover { background: transparent; text-decoration: underline; }
 
-#panel-facts,
-#panel-links {
+#panel-facts {
   display: grid;
   grid-template-columns: 96px 1fr;
   gap: 8px 16px;
   margin: 16px 0 0;
 }
 
-#panel-facts dt,
-#panel-links dt { color: var(--muted); }
+#panel-facts dt { color: var(--muted); }
 
-#panel-facts dd,
-#panel-links dd { margin: 0; }
-
-#panel-links:empty { display: none; }
-
-#panel-links button {
-  height: auto;
-  padding: 0;
-  color: var(--accent);
-  text-align: left;
-  white-space: normal;
-}
-
-#panel-links button:hover { background: transparent; text-decoration: underline; }
+#panel-facts dd { margin: 0; }
 
 #panel-parts { margin-top: 24px; }
 
@@ -980,8 +892,8 @@ button.code-file-head:hover { background: #475569; }
 .panel-body .part-card:hover { border-left-color: var(--accent); }
 
 /* The part whose note is open, in the outline's color, so the reader sees where the note belongs in the story. */
-#panel-parts li.is-open .part-card,
-.panel-body li.is-open .part-card {
+#panel-parts li[aria-current] .part-card,
+.panel-body li[aria-current] .part-card {
   border-left: 3px solid var(--accent);
   padding-left: 11px;
   background: var(--accent-soft);
@@ -1043,37 +955,16 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
   to { stroke-dashoffset: -13; }
 }
 
-/* ---- Type, status, and weight on the SVG. Before selection, so a selected part still shows as selected. ---- */
+/* ---- Type and status on the SVG. Before selection, so a selected part still shows as selected. ---- */
 
-/* A type colors the shape's border and tint. A status comes after, so it wins: a problem stays red whatever its type. */
-.type-0 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-0-soft) !important; stroke: var(--type-0) !important; }
-.type-1 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-1-soft) !important; stroke: var(--type-1) !important; }
-.type-2 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-2-soft) !important; stroke: var(--type-2) !important; }
-.type-3 > :is(rect, polygon, circle, path, ellipse) { fill: var(--type-3-soft) !important; stroke: var(--type-3) !important; }
-
+/* A type or a status colors the shape's border and tint, from its --c and --c-soft. */
+:is(.type-0, .type-1, .type-2, .type-3, .status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { fill: var(--c-soft) !important; stroke: var(--c) !important; }
 :is(.status-new, .status-changed, .status-removed, .status-problem) > :is(rect, polygon, circle, path, ellipse) { stroke-width: 2px !important; }
-.status-new > :is(rect, polygon, circle, path, ellipse) { fill: var(--new-soft) !important; stroke: var(--new) !important; }
-.status-changed > :is(rect, polygon, circle, path, ellipse) { fill: var(--changed-soft) !important; stroke: var(--changed) !important; }
-.status-problem > :is(rect, polygon, circle, path, ellipse) { fill: var(--problem-soft) !important; stroke: var(--problem) !important; }
-.status-removed > :is(rect, polygon, circle, path, ellipse) {
-  fill: var(--removed-soft) !important;
-  stroke: var(--removed) !important;
-  stroke-dasharray: 5 4;
-}
+.status-removed > :is(rect, polygon, circle, path, ellipse) { stroke-dasharray: 5 4; }
 .status-removed .nodeLabel { text-decoration: line-through; }
 
-:is(path, line).is-edge.status-new:not(.edge-hit) { stroke: var(--new) !important; stroke-width: 2px !important; }
-:is(path, line).is-edge.status-changed:not(.edge-hit) { stroke: var(--changed) !important; stroke-width: 2px !important; }
-:is(path, line).is-edge.status-problem:not(.edge-hit) { stroke: var(--problem) !important; stroke-width: 2px !important; }
-:is(path, line).is-edge.status-removed:not(.edge-hit) { stroke: var(--removed) !important; stroke-dasharray: 5 4; }
-
-/* A key part has a heavy outline. A background part steps back: a pale box and quieter text. */
-.weight-key > :is(rect, polygon, circle, path, ellipse) { stroke-width: 3px !important; }
-.weight-key:not(.status-new, .status-changed, .status-removed, .status-problem, .type-0, .type-1, .type-2, .type-3) > :is(rect, polygon, circle, path, ellipse) { stroke: var(--ink) !important; }
-.weight-background > :is(rect, polygon, circle, path, ellipse) { fill: var(--canvas) !important; stroke: #94a3b8 !important; }
-.weight-background .nodeLabel,
-.weight-background .nodeLabel small { color: var(--muted) !important; }
-:is(path, line).is-edge.weight-key:not(.edge-hit) { stroke-width: 2.5px !important; }
+:is(path, line).is-edge:is(.status-new, .status-changed, .status-removed, .status-problem):not(.edge-hit) { stroke: var(--c) !important; stroke-width: 2px !important; }
+:is(path, line).is-edge.status-removed:not(.edge-hit) { stroke-dasharray: 5 4; }
 
 .more-dot circle {
   fill: var(--accent) !important;
@@ -1084,40 +975,20 @@ line.is-edge.is-flow:not(.edge-hit, .is-dim) { stroke: var(--accent) !important;
 
 .is-dim { opacity: 0.72; }
 
-/* A search hit, and the shape under the pointer, or under a hovered part card. */
-:is(.is-hit, .is-hover) > rect,
-:is(.is-hit, .is-hover) > polygon,
-:is(.is-hit, .is-hover) > circle,
-:is(.is-hit, .is-hover) > path,
-:is(.is-hit, .is-hover) > ellipse {
+/* The shape under the pointer, or under a hovered part card. */
+.is-hover > :is(rect, polygon, circle, path, ellipse) {
   stroke: var(--accent) !important;
   stroke-width: 2.5px !important;
 }
 
-.is-selected > rect,
-.is-selected > polygon,
-.is-selected > circle,
-.is-selected > path,
-.is-selected > ellipse {
-  fill: var(--accent-soft) !important;
-  stroke: var(--accent) !important;
-  stroke-width: 3px !important;
-}
-
-/* An icon shape keeps its background one group deeper, behind the icon. The last group is a transparent hit area in front of it, so only the first is styled. */
-:is(.is-hit, .is-hover).icon-shape > g:first-child > path {
-  stroke: var(--accent) !important;
-  stroke-width: 2.5px !important;
-}
-
-.is-selected.icon-shape > g:first-child > path {
+.is-selected > :is(rect, polygon, circle, path, ellipse) {
   fill: var(--accent-soft) !important;
   stroke: var(--accent) !important;
   stroke-width: 3px !important;
 }
 
 /* An image shape's picture covers its whole box, so a stroke on the box would be hidden. A ring just outside the picture shows instead. */
-:is(.is-hit, .is-hover).image-shape > image {
+.is-hover.image-shape > image {
   outline: 2.5px solid var(--accent);
   outline-offset: 3px;
 }
@@ -1144,26 +1015,23 @@ line.is-edge.is-selected:not(.edge-hit) {
   stroke-linejoin: round;
   fill: none !important;
 }
-.zoom-badge { cursor: pointer; }
 
 /* ---- Narrow canvas: a phone, or a wide panel. Islands stack instead of sharing a row. ---- */
 
 /* On a mid-width canvas the lesson gives up the empty left column, so Next keeps more of its title. */
 @container stage (max-width: 760px) {
-  .search input { width: 160px; }
   .float-bottom { grid-template-columns: minmax(0, 1fr) auto; }
   .float-bottom > #lesson { grid-column: 1; }
   .float-bottom > .camera-controls { grid-column: 2; }
 }
 
 @container stage (max-width: 640px) {
-  .float-top { grid-template-columns: minmax(0, 1fr); }
-  .float-top > .tools { grid-column: 1; }
+  /* The tabs take the room left by the menu, and wrap inside it. */
+  .float-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .float-top > .tools { grid-column: 2; }
   /* Tighter tabs fit one row at phone width; a longer tab list wraps instead of hiding. */
   #tabs { flex-wrap: wrap; gap: 0; }
   #tabs button { padding: 0 8px; font-size: 13px; }
-  .search { flex: 1; }
-  .search input { width: 100%; }
   .float-bottom { grid-template-columns: minmax(0, 1fr); }
   .float-bottom > .camera-controls { grid-row: 1; grid-column: 1; }
   .float-bottom > #lesson { grid-row: 2; grid-column: 1; width: auto; justify-self: stretch; }
@@ -1183,7 +1051,6 @@ line.is-edge.is-selected:not(.edge-hit) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { scroll-behavior: auto; }
   #camera { transition: none; }
 }
 
@@ -1206,7 +1073,7 @@ line.is-edge.is-selected:not(.edge-hit) {
    and the picture shows the connections, so the header, facts and links are left out. */
 #note-pane.under-card { padding-top: 2px; border-radius: 0 0 6px 0; }
 #note-pane.under-card > :is(.note-top, #note-lead) { display: none; }
-#note-pane[data-mode="inline"] > :is(#panel-facts, #panel-links, #panel-zoom) { display: none; }
+#note-pane[data-mode="inline"] > :is(#panel-facts, #panel-zoom) { display: none; }
 
 #note-pane[data-mode="inline"] #note-body {
   margin-top: 4px;
@@ -1216,10 +1083,10 @@ line.is-edge.is-selected:not(.edge-hit) {
 
 #note-pane[data-mode="inline"] #note-body pre { font-size: 12px; }
 
-.panel-body li.is-open .part-card:has(+ #note-pane) { border-radius: 0 6px 0 0; }
+.panel-body li[aria-current] .part-card:has(+ #note-pane) { border-radius: 0 6px 0 0; }
 
 /* The open card's chevron turns down, like a section that is open. */
-.panel-body li.is-open .part-card:has(+ #note-pane)::after {
+.panel-body li[aria-current] .part-card:has(+ #note-pane)::after {
   color: var(--accent);
   transform: translateY(-50%) rotate(90deg);
 }
@@ -1304,10 +1171,6 @@ line.is-edge.is-selected:not(.edge-hit) {
             <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2Z" /><path d="M8 6.5v3M8 11.25v.1" /></svg>
             <span id="checks-count"></span>
           </button>
-          <label class="search">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
-            <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off" />
-          </label>
           <button id="more-open" class="icon" type="button" popovertarget="more-menu" aria-label="More actions" title="More actions">
             <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="0.75" /><circle cx="8" cy="8" r="0.75" /><circle cx="12.5" cy="8" r="0.75" /></svg>
           </button>
@@ -1322,8 +1185,6 @@ line.is-edge.is-selected:not(.edge-hit) {
             <nav id="crumbs" aria-label="Zoom path"></nav>
           </div>
           <p id="summary"></p>
-          <!-- What the colors in this picture mean. Only the statuses it uses are listed. -->
-          <p id="legend" hidden></p>
         </div>
       </div>
 
@@ -1354,7 +1215,7 @@ line.is-edge.is-selected:not(.edge-hit) {
       <div id="peek-caret" hidden></div>
     </section>
 
-    <aside id="panel" hidden aria-hidden="true" aria-label="Details">
+    <aside id="panel" hidden aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
       <!-- A part's note opens inline in the story or as a peek card on the canvas, so opening a detail never hides the whole picture. -->
       <section id="story-pane" class="panel-scroll" aria-label="Story">
@@ -1363,7 +1224,8 @@ line.is-edge.is-selected:not(.edge-hit) {
           <button id="panel-close" class="panel-close" type="button">Close</button>
         </div>
         <h2 id="panel-title" class="panel-title"></h2>
-        <p id="panel-lead" class="panel-lead"></p>
+        <!-- The summary is already in the bar above the diagram, so the lead says how to read the story instead. -->
+        <p id="panel-lead" class="panel-lead">Read top to bottom. Click a part only when you want more detail.</p>
         <div id="panel-body" class="panel-body"></div>
         <section id="panel-parts" hidden>
           <h3>Parts, to open for detail</h3>
@@ -1372,19 +1234,15 @@ line.is-edge.is-selected:not(.edge-hit) {
       </section>
       <!-- It waits here hidden. Under a card in the story it shows only its text, because the card names the part. -->
       <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden>
-        <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
+        <!-- One header line: the part's name and status, what kind of part it is, where a peek card sits, and close. -->
         <div class="panel-top note-top">
           <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
           <span id="peek-places" role="group" aria-label="Where the card sits"></span>
-          <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"/></svg>
-          </button>
           <button id="note-close" class="panel-close" type="button" aria-label="Close the note" title="Close the note (Esc)">×</button>
         </div>
         <p id="note-lead" class="note-lead"></p>
         <div id="note-body" class="panel-body"></div>
         <dl id="panel-facts"></dl>
-        <dl id="panel-links" aria-label="Connections"></dl>
         <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
       </section>
     </aside>
@@ -1396,10 +1254,9 @@ line.is-edge.is-selected:not(.edge-hit) {
       <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
       <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
       <dt>Dot</dt><dd>The part has more to read than its tooltip</dd>
-      <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
+      <dt>Double-click</dt><dd>Open the inner diagram of a shape marked ↘</dd>
       <dt>Drag</dt><dd>Pan empty space</dd>
       <dt>Scroll</dt><dd>Zoom the camera</dd>
-      <dt><kbd>/</kbd></dt><dd>Find</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close the note, then step up</dd>
       <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
       <dt>Prev, Next</dt><dd>Move through the lesson</dd>
@@ -1460,6 +1317,13 @@ function packFile(path, base64) {
   <!-- The engine, in load order. js/state.js reads DIAGRAMS at once, so it comes after the content. The editor inlines these to make the page one file. -->
   <script>// Shared view, camera, and element refs. The other scripts read and write this object.
 
+// The content is put into one shape on load, so the rest of the page reads one form.
+// A view's id is its key, and every arrow is an object, also one written short as [from, to].
+Object.entries(DIAGRAMS.views).forEach(([viewId, view]) => {
+  view.viewId = viewId;
+  view.edgeInteractions = (view.edgeInteractions || []).map((edge) => (Array.isArray(edge) ? { from: edge[0], to: edge[1] } : edge));
+});
+
 const app = {
   views: DIAGRAMS.views,
   els: {
@@ -1476,14 +1340,12 @@ const app = {
     panel: document.getElementById("panel"),
     tooltip: document.getElementById("tooltip"),
     status: document.getElementById("status"),
-    search: document.getElementById("search"),
     panelResize: document.getElementById("panel-resize"),
     stage: document.querySelector(".stage-wrap"),
     peekCaret: document.getElementById("peek-caret"),
     peekPlaces: document.getElementById("peek-places"),
     help: document.getElementById("help"),
     storyOpen: document.getElementById("story-open"),
-    legend: document.getElementById("legend"),
   },
   // The story pane, on top of the panel.
   panel: {
@@ -1499,12 +1361,10 @@ const app = {
   note: {
     pane: document.getElementById("note-pane"),
     kicker: document.getElementById("note-kicker"),
-    locate: document.getElementById("note-locate"),
     title: document.getElementById("note-title"),
     lead: document.getElementById("note-lead"),
     body: document.getElementById("note-body"),
     facts: document.getElementById("panel-facts"),
-    links: document.getElementById("panel-links"),
     zoom: document.getElementById("panel-zoom"),
     close: document.getElementById("note-close"),
   },
@@ -1517,8 +1377,6 @@ const app = {
   // The reader closed the story, so the next diagram does not open it again.
   storyHidden: false,
   renderToken: 0,
-  // True while the page follows Back or Forward, so it does not add a history entry of its own.
-  replaying: false,
   cam: { x: 40, y: 32, s: 1 },
   cams: {},
   drag: null,
@@ -1526,9 +1384,6 @@ const app = {
 
 // What a part's status means. The page colors the part and also writes the word, so color is never the only signal.
 const STATUSES = { new: "New", changed: "Changed", removed: "Removed", problem: "Problem" };
-
-// How much a part matters to the point: key parts stand out, background parts step back.
-const WEIGHTS = ["key", "background"];
 
 // The types of thing an explanation names in DIAGRAMS.types, such as request, route, and handler, each keep one color in the diagram and in the text.
 // The colors are fixed and given in order, so every explanation reads the same and none is confused with a status.
@@ -1539,13 +1394,19 @@ function typeIndex(name) {
   return index < TYPE_COLORS ? index : -1;
 }
 
-function typeLabel(name) {
-  return (DIAGRAMS.types || {})[name] || name;
-}
-
 // A part whose note says more than its tooltip is worth opening, and the page marks it.
 function hasMore(interaction) {
   return Boolean(interaction.body || (interaction.facts && interaction.facts.length) || interaction.opensView);
+}
+
+// A part's key is the way a link names it: api for a shape, web->api for an arrow. Two arrows between the same shapes are one part.
+function partKey(interaction) {
+  return interaction.kind === "edge" ? `${interaction.from}->${interaction.to}` : interaction.chartId;
+}
+
+// The keys of every part a view has a note for.
+function partKeysOf(view) {
+  return new Set([...Object.keys(view.nodeInteractions || {}), ...view.edgeInteractions.map((edge) => `${edge.from}->${edge.to}`)]);
 }
 
 // The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
@@ -1569,19 +1430,15 @@ function edgeInteractions() {
   const view = app.view;
   if (!view) return [];
   const interactions = view.nodeInteractions || {};
-  return (view.edgeInteractions || []).map((edge, index) => {
-    const from = Array.isArray(edge) ? edge[0] : edge.from;
-    const to = Array.isArray(edge) ? edge[1] : edge.to;
-    const fromLabel = interactions[from]?.label || from;
-    const toLabel = interactions[to]?.label || to;
+  return view.edgeInteractions.map((edge, index) => {
+    const fromLabel = interactions[edge.from]?.label || edge.from;
+    const toLabel = interactions[edge.to]?.label || edge.to;
     return {
       kicker: "Arrow",
       label: `${fromLabel} → ${toLabel}`,
       tooltip: `${fromLabel} to ${toLabel}`,
-      ...(Array.isArray(edge) ? {} : edge),
-      from,
-      to,
-      edgeId: `${from}-${to}-${index}`,
+      ...edge,
+      edgeId: `${edge.from}-${edge.to}-${index}`,
       kind: "edge",
     };
   });
@@ -1708,7 +1565,7 @@ function wireCamera() {
   els.viewport.addEventListener("selectstart", (event) => event.preventDefault());
 
   els.viewport.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit, #lesson") || event.button !== 0) return;
+    if (event.target.closest(".is-node, .is-edge, .is-edge-label, .edge-hit") || event.button !== 0) return;
     app.drag = { x: event.clientX, y: event.clientY, cx: app.cam.x, cy: app.cam.y };
     els.viewport.classList.add("is-dragging");
     els.viewport.setPointerCapture(event.pointerId);
@@ -1740,7 +1597,7 @@ function wireCamera() {
   );
 }
 </script>
-  <script>// Hover dimming and the search filter. Both write is-dim on the wired SVG.
+  <script>// Hover dimming, the tooltip, and the marks on the wired SVG: selected, flowing, and status.
 
 // The visible stroke and the label of a wired arrow. The wide hit stroke has only the edge-hit class.
 const EDGE_PIECES = ".is-edge, .is-edge-label";
@@ -1777,7 +1634,12 @@ function showTooltip(event, interaction) {
 
 function hideTooltip() {
   app.els.tooltip.hidden = true;
-  applySearch();
+  clearHighlight();
+}
+
+// Back to no highlight: every shape and arrow at full strength.
+function clearHighlight() {
+  app.els.camera.querySelectorAll(".is-dim, .is-hover, .is-hot").forEach((el) => el.classList.remove("is-dim", "is-hover", "is-hot"));
 }
 
 function highlightAround(interaction) {
@@ -1801,7 +1663,6 @@ function highlightAround(interaction) {
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {
     const on = litChartIds.has(el.dataset.chartId);
     el.classList.toggle("is-dim", !on);
-    el.classList.remove("is-hit");
     // The hovered shape gets an outline. The fade on the others is light, and colored fills hide it further.
     el.classList.toggle("is-hover", interaction.kind === "node" && el.dataset.chartId === interaction.chartId);
   });
@@ -1825,7 +1686,7 @@ function wiredElements(interaction) {
   );
 }
 
-// The shape or arrow the panel describes. Hover and search do not touch is-selected.
+// The shape or arrow the panel describes. Hover does not touch is-selected.
 function markSelected(interaction) {
   app.els.camera.querySelectorAll(".is-selected").forEach((el) => el.classList.remove("is-selected"));
   const elements = wiredElements(interaction);
@@ -1845,34 +1706,15 @@ function markStepFlow() {
 }
 
 // Each part's status colors it: the one the content gives, or New for a part this lesson step adds.
-// The legend under the summary lists only the statuses this picture uses.
 function markStatuses() {
-  const used = new Set();
-  // The legend names the types this diagram shows, then the statuses.
-  const types = [...new Set(nodeInteractions().map((interaction) => interaction.type).filter((name) => typeIndex(name) >= 0))];
+  const added = addedInStep();
   const byChartId = new Map(nodeInteractions().map((interaction) => [interaction.chartId, interaction]));
   const byEdgeId = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
   app.els.camera.querySelectorAll(`.is-node, ${EDGE_PIECES}`).forEach((el) => {
     const interaction = el.dataset.edgeId ? byEdgeId.get(el.dataset.edgeId) : byChartId.get(el.dataset.chartId);
-    const status = interaction && partStatus(interaction);
+    const status = interaction && partStatus(interaction, added);
     Object.keys(STATUSES).forEach((name) => el.classList.toggle(`status-${name}`, name === status));
-    if (status) used.add(status);
   });
-  const legend = app.els.legend;
-  legend.replaceChildren(
-    ...types.map((name) => typeChip(name)),
-    ...Object.keys(STATUSES)
-      .filter((name) => used.has(name))
-      .map((name) => statusChip(name)),
-  );
-  legend.hidden = !used.size && !types.length;
-}
-
-function typeChip(name) {
-  const chip = document.createElement("span");
-  chip.className = `type-chip type-${typeIndex(name)}`;
-  chip.textContent = typeLabel(name);
-  return chip;
 }
 
 function statusChip(name) {
@@ -1881,30 +1723,6 @@ function statusChip(name) {
   chip.textContent = STATUSES[name];
   return chip;
 }
-
-function applySearch() {
-  const query = app.els.search.value.trim().toLowerCase();
-  const haystack = (interaction) =>
-    [interaction.label, interaction.tooltip, interaction.body, interaction.kicker, interaction.mermaidText, ...(interaction.facts || []).flat()]
-      .join(" ")
-      .toLowerCase();
-  app.els.camera.querySelectorAll(".is-node").forEach((el) => {
-    const interaction = nodeInteraction(el.dataset.chartId);
-    if (!interaction) return;
-    const hit = !query || haystack(interaction).includes(query);
-    el.classList.toggle("is-dim", Boolean(query) && !hit);
-    el.classList.toggle("is-hit", Boolean(query) && hit);
-    el.classList.remove("is-hover");
-  });
-  const edges = new Map(edgeInteractions().map((edge) => [edge.edgeId, edge]));
-  app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
-    const interaction = edges.get(el.dataset.edgeId);
-    if (!interaction) return;
-    const hit = !query || haystack(interaction).includes(query);
-    el.classList.toggle("is-dim", Boolean(query) && !hit);
-    el.classList.toggle("is-hot", Boolean(query) && hit);
-  });
-}
 </script>
   <script>// The details aside. A click on a shape or an arrow fills it.
 
@@ -1912,211 +1730,76 @@ const PANEL_MIN = 240;
 const PANEL_GAP = 280;
 let panelWidth = 340;
 
-function safeHref(href) {
-  try {
-    const url = new URL(href);
-    if (url.protocol === "http:" || url.protocol === "https:") return url.href;
-  } catch {
-    return "";
-  }
-  return "";
-}
+const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
 
-function appendInline(parent, tokens) {
-  (tokens || []).forEach((token) => {
-    if (token.type === "html" || token.type === "image") return;
-    if (token.type === "escape" || (token.type === "text" && !token.tokens)) {
-      parent.append(token.text);
-      return;
-    }
-    if (token.type === "text") {
-      appendInline(parent, token.tokens);
-      return;
-    }
-    if (token.type === "codespan") {
-      const code = document.createElement("code");
-      code.textContent = token.text;
-      parent.append(code);
-      return;
-    }
-    if (token.type === "strong" || token.type === "em") {
-      const el = document.createElement(token.type === "strong" ? "strong" : "em");
-      appendInline(el, token.tokens);
-      parent.append(el);
-      return;
-    }
-    if (token.type === "br") {
-      parent.append(document.createElement("br"));
-      return;
-    }
-    if (token.type === "link") {
+// marked renders a note's markdown. What needs a live element, a part or a code file, is left as an empty placeholder that renderNote fills in.
+// HTML written in a note shows as text, images are dropped, and only http and https links leave the page.
+const noteMarked = new marked.Marked({
+  renderer: {
+    html: ({ text }) => escapeHtml(text),
+    image: () => "",
+    heading({ tokens, depth }) {
+      const tag = `h${Math.min(6, depth + 2)}`;
+      return `<${tag}>${this.parser.parseInline(tokens)}</${tag}>\n`;
+    },
+    code({ lang }) {
+      return fileFence(lang) ? `<figure data-fence="${escapeHtml(lang)}"></figure>\n` : false;
+    },
+    link({ href, title, tokens }) {
+      const text = this.parser.parseInline(tokens);
       // [GET /posts/new](~route) colors the words as that type, the same color as its shapes.
-      if (token.href.startsWith("~")) {
-        const span = document.createElement("span");
-        const index = typeIndex(token.href.slice(1));
-        if (index >= 0) span.className = `type-text type-${index}`;
-        appendInline(span, token.tokens);
-        parent.append(span);
-        return;
+      if (href.startsWith("~")) {
+        const index = typeIndex(href.slice(1));
+        return index >= 0 ? `<span class="type-text type-${index}">${text}</span>` : text;
       }
-      const part = linkedPart(token.href);
-      if (part) {
-        const button = partButton(part, "part-link", noteHow(token.title));
+      if (href.startsWith("#")) {
+        const part = linkedPart(href);
+        if (!part) return text;
         // A link to a part with a type has that type's color, like the part in the picture.
-        if (typeIndex(part.type) >= 0) button.classList.add("type-text", `type-${typeIndex(part.type)}`);
-        appendInline(button, token.tokens);
-        parent.append(button);
-        return;
+        const type = typeIndex(part.type) >= 0 ? ` type-text type-${typeIndex(part.type)}` : "";
+        return `<button type="button" class="part-link${type}" data-href="${escapeHtml(href)}" data-title="${escapeHtml(title || "")}">${text}</button>`;
       }
-      const href = safeHref(token.href);
-      if (!href) {
-        appendInline(parent, token.tokens);
-        return;
-      }
-      const link = document.createElement("a");
-      link.href = href;
-      link.rel = "noreferrer";
-      link.target = "_blank";
-      appendInline(link, token.tokens);
-      parent.append(link);
-      return;
-    }
-    if (["paragraph", "list", "code", "heading", "blockquote", "space", "table"].includes(token.type)) {
-      appendBlock(parent, token);
-      return;
-    }
-    if (token.tokens) appendInline(parent, token.tokens);
-    else if (typeof token.text === "string") parent.append(token.text);
-  });
-}
+      return /^https?:\/\//i.test(href) ? `<a href="${escapeHtml(href)}" rel="noreferrer" target="_blank">${text}</a>` : text;
+    },
+    // A paragraph that is only links to parts becomes their cards, so the text can walk the reader through the picture.
+    paragraph(token) {
+      const links = cardLinks(token);
+      if (!links) return false;
+      const items = links.map((link) => `<li data-href="${escapeHtml(link.href)}" data-title="${escapeHtml(link.title || "")}"></li>`);
+      return `<ol class="parts">${items.join("")}</ol>\n`;
+    },
+    // A table lines up values that are compared, so the difference stands out. With an empty header row, it has no header.
+    table(token) {
+      let html = marked.Renderer.prototype.table.call(this, token);
+      if (!token.header.some((cell) => cell.text.trim())) html = html.replace(/<thead>[\s\S]*?<\/thead>\n?/, "");
+      return `<div class="table-wrap">${html}</div>\n`;
+    },
+  },
+});
 
-// A fence written as ~~~js source=show,openPanel shows those functions as the page loaded them, so a note cannot drift from the code.
-function codeText(token) {
-  const names = /^\w+ source=([\w,]+)$/.exec(token.lang || "");
-  if (!names) return token.text;
-  return names[1]
-    .split(",")
-    .map((name) => (typeof globalThis[name] === "function" ? globalThis[name].toString().replace(/\r/g, "") : `// ${name} is not loaded`))
-    .join("\n\n");
-}
-
-function appendBlock(parent, token) {
-  if (token.type === "space" || token.type === "html" || token.type === "def" || token.type === "image") return;
-  if (token.type === "code") {
-    const fence = fileFence(token.lang);
-    if (fence) {
-      parent.append(codeFileView(fence));
-      return;
-    }
-    const pre = document.createElement("pre");
-    const code = document.createElement("code");
-    code.textContent = codeText(token);
-    pre.append(code);
-    parent.append(pre);
-    return;
-  }
-  if (token.type === "heading") {
-    const heading = document.createElement(`h${Math.min(6, token.depth + 2)}`);
-    appendInline(heading, token.tokens);
-    parent.append(heading);
-    return;
-  }
-  if (token.type === "paragraph") {
-    const parts = cardParts(token);
-    if (parts) {
-      parts.forEach(({ part, how }) => appendPartCard(parent, part, how));
-      return;
-    }
-    const p = document.createElement("p");
-    appendInline(p, token.tokens);
-    parent.append(p);
-    return;
-  }
-  if (token.type === "text") {
-    if (token.tokens) appendInline(parent, token.tokens);
-    else parent.append(token.text);
-    return;
-  }
-  if (token.type === "list") {
-    const list = document.createElement(token.ordered ? "ol" : "ul");
-    token.items.forEach((item) => {
-      const li = document.createElement("li");
-      (item.tokens || []).forEach((child) => appendBlock(li, child));
-      list.append(li);
-    });
-    parent.append(list);
-    return;
-  }
-  // A table lines up values that are compared, so the difference stands out. With an empty header row, it has no header.
-  if (token.type === "table") {
-    const row = (cells, tag) => {
-      const tr = document.createElement("tr");
-      cells.forEach((cell, index) => {
-        const td = document.createElement(tag);
-        if (token.align[index]) td.style.textAlign = token.align[index];
-        appendInline(td, cell.tokens);
-        tr.append(td);
-      });
-      return tr;
-    };
-    const table = document.createElement("table");
-    if (token.header.some((cell) => cell.text.trim())) {
-      const head = document.createElement("thead");
-      head.append(row(token.header, "th"));
-      table.append(head);
-    }
-    const body = document.createElement("tbody");
-    token.rows.forEach((cells) => body.append(row(cells, "td")));
-    table.append(body);
-    const wrap = document.createElement("div");
-    wrap.className = "table-wrap";
-    wrap.append(table);
-    parent.append(wrap);
-    return;
-  }
-  if (token.type === "blockquote") {
-    const quote = document.createElement("blockquote");
-    (token.tokens || []).forEach((child) => appendBlock(quote, child));
-    parent.append(quote);
-  }
+// The links of a paragraph that is only links to parts, or null. Links on lines next to each other are one paragraph in markdown, so each still gets its own card.
+function cardLinks(paragraph) {
+  const tokens = (paragraph.tokens || []).filter((token) => !((token.type === "text" && !token.text.trim()) || token.type === "br"));
+  return tokens.length && tokens.every((token) => token.type === "link" && linkedPart(token.href)) ? tokens : null;
 }
 
 function renderNote(el, source) {
-  el.replaceChildren();
-  if (!source) return;
-  marked.lexer(source).forEach((token) => appendBlock(el, token));
-}
-
-// An edge interaction links to its two ends. A node interaction links to every arrow that touches it.
-function renderLinks(interaction) {
-  const rows = [];
-  if (interaction.kind === "edge") {
-    const from = nodeInteraction(interaction.from);
-    const to = nodeInteraction(interaction.to);
-    if (from) rows.push({ term: "From", target: from, text: from.label });
-    if (to) rows.push({ term: "To", target: to, text: to.label });
-  } else {
-    edgeInteractions().forEach((edge) => {
-      const suffix = edge.label.includes("→") ? "" : ` (${edge.label})`;
-      if (edge.from === interaction.chartId) {
-        rows.push({ term: "Out", target: edge, text: `→ ${nodeInteraction(edge.to)?.label || "end"}${suffix}` });
-      }
-      if (edge.to === interaction.chartId) {
-        rows.push({ term: "In", target: edge, text: `← ${nodeInteraction(edge.from)?.label || "start"}${suffix}` });
-      }
-    });
-  }
-  app.note.links.replaceChildren();
-  rows.forEach(({ term, target, text }) => {
-    const dt = document.createElement("dt");
-    const dd = document.createElement("dd");
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = text;
-    button.addEventListener("click", () => openPanel(target));
-    dt.textContent = term;
-    dd.append(button);
-    app.note.links.append(dt, dd);
+  el.innerHTML = source ? noteMarked.parse(source) : "";
+  // Cards in paragraphs next to each other share one list, so they sit as close as they do in the parts list.
+  el.querySelectorAll("ol.parts").forEach((list) => {
+    const before = list.previousElementSibling;
+    if (before && before.matches("ol.parts")) {
+      before.append(...list.children);
+      list.remove();
+    }
+  });
+  el.querySelectorAll("li[data-href]").forEach((li) => li.replaceWith(partItem(linkedPart(li.dataset.href), noteHow(li.dataset.title))));
+  el.querySelectorAll("button.part-link").forEach((button) => wirePart(button, linkedPart(button.dataset.href), noteHow(button.dataset.title)));
+  el.querySelectorAll("figure[data-fence]").forEach((figure) => figure.replaceWith(codeFileView(fileFence(figure.dataset.fence))));
+  // The panel's table style sets text-align, which beats the align attribute marked writes.
+  el.querySelectorAll("[align]").forEach((cell) => {
+    cell.style.textAlign = cell.getAttribute("align");
+    cell.removeAttribute("align");
   });
 }
 
@@ -2129,12 +1812,17 @@ function layoutPanel() {
   placeNote(how);
   app.panel.pane.hidden = !story;
   app.els.panel.hidden = !story;
-  app.els.panel.setAttribute("aria-hidden", String(!story));
   app.els.workspace.classList.toggle("panel-open", story);
   app.els.storyOpen.setAttribute("aria-pressed", String(story));
   if (!how) return;
   if (inline) requestAnimationFrame(scrollInlineNote);
   else openPeek(how.place);
+}
+
+// Close on the story, and the Story button, hide or show it. An open note stays either way.
+function setStoryHidden(hidden) {
+  app.storyHidden = hidden;
+  layoutPanel();
 }
 
 // Inline puts the note right under what was clicked: in a card's list item, or after the paragraph with the link.
@@ -2159,12 +1847,6 @@ function anchorOf(button) {
   return button.closest("li[data-part]") || button.closest("p, li, blockquote, h3, h4, h5, h6");
 }
 
-// The part's card in the story, or in the list under it. Back and Forward reopen an inline note there.
-function cardFor(interaction) {
-  const key = partKey(interaction);
-  return [...app.panel.pane.querySelectorAll("li[data-part]")].find((li) => li.dataset.part === key && !li.closest("#note-pane")) || null;
-}
-
 // A link's title says how its note opens: "inline", "peek", or "peek below". With no title the place the link sits decides.
 function noteHow(title) {
   const words = String(title || "").trim().toLowerCase().split(/\s+/);
@@ -2173,7 +1855,13 @@ function noteHow(title) {
   return { mode, place };
 }
 
-// A link in the story opens inline under itself. A link in a note, a click on the picture, and a part reopened from history with no card open as a peek.
+// The part's card in the story, or in the list under it. A link elsewhere titled "inline" opens the note there.
+function cardFor(interaction) {
+  const key = partKey(interaction);
+  return [...app.panel.pane.querySelectorAll("li[data-part]")].find((li) => li.dataset.part === key && !li.closest("#note-pane")) || null;
+}
+
+// A link in the story opens inline under itself. A link in a note, and a click on the picture, open a peek.
 function resolveHow(interaction, how = {}) {
   const from = how.from;
   const inStory = from && from.closest("#story-pane") && !from.closest("#note-pane");
@@ -2203,37 +1891,25 @@ function scrollInlineNote() {
 function markOpenCard() {
   const key = app.selectedInteraction ? partKey(app.selectedInteraction) : null;
   app.panel.pane.querySelectorAll("li[data-part]").forEach((li) => {
-    const open = li.dataset.part === key;
-    li.classList.toggle("is-open", open);
-    if (open) li.setAttribute("aria-current", "true");
+    if (li.dataset.part === key) li.setAttribute("aria-current", "true");
     else li.removeAttribute("aria-current");
   });
-}
-
-// A part is a shape or an arrow. Two arrows between the same shapes count as one part.
-function partKey(interaction) {
-  return interaction.kind === "edge" ? `edge:${interaction.from}>${interaction.to}` : `node:${interaction.chartId}`;
 }
 
 // What a lesson step adds to the step before it, as part keys. Null outside a lesson step, and on the first step.
 function addedInStep() {
   const step = lessonStep();
   if (!step || !step.index || step.lesson[step.index] !== app.view.viewId) return null;
-  const before = app.views[step.lesson[step.index - 1]];
-  const seen = new Set([
-    ...Object.keys(before.nodeInteractions || {}).map((chartId) => `node:${chartId}`),
-    ...(before.edgeInteractions || []).map((edge) => (Array.isArray(edge) ? `edge:${edge[0]}>${edge[1]}` : `edge:${edge.from}>${edge.to}`)),
-  ]);
-  const keys = [...nodeInteractions(), ...edgeInteractions()].map(partKey);
+  const seen = partKeysOf(app.views[step.lesson[step.index - 1]]);
+  const keys = [...partKeysOf(app.view)];
   // A step with a new picture shares nothing with the step before. Marking all of it New would say nothing.
   if (!keys.some((key) => seen.has(key))) return null;
   return new Set(keys.filter((key) => !seen.has(key)));
 }
 
-// The status the content gives a part, or New when this lesson step adds it.
-function partStatus(interaction) {
+// The status the content gives a part, or New when this lesson step adds it. `added` is addedInStep(), passed in when many parts ask at once.
+function partStatus(interaction, added = addedInStep()) {
   if (STATUSES[interaction.status]) return interaction.status;
-  const added = addedInStep();
   return added && added.has(partKey(interaction)) ? "new" : null;
 }
 
@@ -2247,42 +1923,29 @@ function linkedPart(href) {
   } catch {
     return null;
   }
-  const [from, to] = key.split("->");
-  if (to === undefined) return nodeInteraction(key) || null;
-  return edgeInteractions().find((edge) => edge.from === from && edge.to === to) || null;
-}
-
-// A paragraph that is only links to parts becomes their cards, so the text can walk the reader through the picture.
-// Links on lines next to each other are one paragraph in markdown, so each still gets its own card.
-function cardParts(paragraph) {
-  const tokens = (paragraph.tokens || []).filter((token) => !((token.type === "text" && !token.text.trim()) || token.type === "br"));
-  const parts = tokens.map((token) => (token.type === "link" ? linkedPart(token.href) : null));
-  return parts.length && parts.every(Boolean) ? parts.map((part, i) => ({ part, how: noteHow(tokens[i].title) })) : null;
+  return [...nodeInteractions(), ...edgeInteractions()].find((part) => partKey(part) === key) || null;
 }
 
 // Every way to a part opens its note on click and lights it in the picture on hover.
 // A second click on the link or card whose note is open closes it, so the story can be read alone again.
-function partButton(interaction, className, how = {}) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
+function wirePart(button, interaction, how) {
   button.addEventListener("click", () => {
     const open = app.selectedInteraction && partKey(app.selectedInteraction) === partKey(interaction);
-    if (open && app.noteHow?.anchor && app.noteHow.anchor === anchorOf(button)) {
-      closeNote();
-      recordHistory();
-    } else openPanel(interaction, { ...how, from: button });
+    if (open && app.noteHow?.anchor && app.noteHow.anchor === anchorOf(button)) closeNote();
+    else openPanel(interaction, { ...how, from: button });
   });
   button.addEventListener("pointerenter", () => highlightAround(interaction));
-  button.addEventListener("pointerleave", applySearch);
-  return button;
+  button.addEventListener("pointerleave", clearHighlight);
 }
 
 // The part's name, its status, and its tooltip. A part with more to read has the same dot as in the picture.
-function partItem(interaction, how) {
+function partItem(interaction, how = {}) {
   const li = document.createElement("li");
   li.dataset.part = partKey(interaction);
-  const button = partButton(interaction, "part-card", how);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "part-card";
+  wirePart(button, interaction, how);
   if (hasMore(interaction)) button.classList.add("has-more");
   const name = document.createElement("strong");
   name.textContent = interaction.label;
@@ -2293,17 +1956,6 @@ function partItem(interaction, how) {
   button.append(name, line);
   li.append(button);
   return li;
-}
-
-// Cards on lines next to each other share one list, so they sit as close as they do in the parts list.
-function appendPartCard(parent, interaction, how) {
-  let list = parent.lastElementChild;
-  if (!list || !list.matches("ol.parts")) {
-    list = document.createElement("ol");
-    list.className = "parts";
-    parent.append(list);
-  }
-  list.append(partItem(interaction, how));
 }
 
 // A view with no story lists its shapes, then its arrows, in the order the content file lists them.
@@ -2326,9 +1978,8 @@ function openStory() {
   const onStep = step && step.lesson[step.index] === view.viewId;
   panel.kicker.textContent = onStep ? `Step ${step.index + 1} of ${step.lesson.length}` : "Diagram";
   panel.title.textContent = view.title;
-  // The summary is already in the bar above the diagram. The lead says how to read the story instead.
-  panel.lead.textContent = view.story ? "Read top to bottom. Click a part only when you want more detail." : "";
-  panel.lead.classList.add("is-hint");
+  // The lead says how to read a story, so a view with only a parts list has none.
+  panel.lead.hidden = !view.story;
   renderNote(panel.body, view.story || "");
   panel.pane.scrollTop = 0;
   renderParts();
@@ -2356,7 +2007,6 @@ function openPanel(interaction, how) {
     dd.textContent = detail;
     note.facts.append(dt, dd);
   });
-  renderLinks(interaction);
   note.zoom.hidden = !interaction.opensView;
   layoutPanel();
   note.pane.scrollTop = 0;
@@ -2364,7 +2014,6 @@ function openPanel(interaction, how) {
   note.pane.focus({ preventScroll: true });
   const selected = markSelected(interaction);
   markStepFlow();
-  recordHistory();
   requestAnimationFrame(() => reveal(selected));
 }
 
@@ -2378,31 +2027,20 @@ function closeNote() {
   layoutPanel();
 }
 
-// Close on the story hides it until the Story button. A peek note stays on the canvas.
-function closeStory() {
-  app.storyHidden = true;
-  layoutPanel();
-  recordHistory();
-}
-
 // Shapes and arrows share this. `interaction` is the node or edge interaction.
 // The panel opens at once. A double-click that drills in closes it again through show().
 function onInteractionClick(event, interaction) {
   event.stopPropagation();
   hideTooltip();
-  if (event.target.closest(".zoom-badge")) {
-    if (interaction.opensView) show(interaction.opensView, interaction);
-    return;
-  }
   openPanel(interaction);
 }
 
+// A double-click opens the inner diagram, if the part has one. The click before it already opened the note.
 function onInteractionDblClick(event, interaction) {
   event.preventDefault();
   event.stopPropagation();
   window.getSelection()?.removeAllRanges();
   if (interaction.opensView) show(interaction.opensView, interaction);
-  else openPanel(interaction);
 }
 
 function setPanelWidth(width) {
@@ -2440,20 +2078,8 @@ function wirePanel() {
     handle.addEventListener("pointercancel", end);
   });
 
-  app.panel.close.addEventListener("click", closeStory);
-  app.note.close.addEventListener("click", () => {
-    closeNote();
-    recordHistory();
-  });
-  // The icon by the title lights the part in the picture on hover, and brings it into view on click.
-  const locate = app.note.locate;
-  locate.addEventListener("pointerenter", () => {
-    if (app.selectedInteraction) highlightAround(app.selectedInteraction);
-  });
-  locate.addEventListener("pointerleave", applySearch);
-  locate.addEventListener("click", () => {
-    if (app.selectedInteraction) reveal(markSelected(app.selectedInteraction));
-  });
+  app.panel.close.addEventListener("click", () => setStoryHidden(true));
+  app.note.close.addEventListener("click", closeNote);
   app.note.zoom.addEventListener("click", () => {
     if (app.selectedInteraction && app.selectedInteraction.opensView) {
       show(app.selectedInteraction.opensView, app.selectedInteraction);
@@ -2661,7 +2287,7 @@ function isMarked(fence, number) {
   return fence.mark.some(([from, to]) => number >= from && number <= to);
 }
 
-// Every file= fence in every note and story, with where it was written, for the checks and for Export.
+// Every file= fence in every note and story, with where it was written, for the checks.
 function fileFences() {
   const found = [];
   const scan = (viewId, where, text) => {
@@ -2673,9 +2299,7 @@ function fileFences() {
   Object.entries(DIAGRAMS.views || {}).forEach(([viewId, view]) => {
     scan(viewId, `${viewId}: the story`, view.story);
     Object.entries(view.nodeInteractions || {}).forEach(([chartId, note]) => scan(viewId, `${viewId}: the note on ${chartId}`, note.body));
-    (view.edgeInteractions || []).forEach((edge) => {
-      if (!Array.isArray(edge)) scan(viewId, `${viewId}: the note on the arrow ${edge.from} → ${edge.to}`, edge.body);
-    });
+    view.edgeInteractions.forEach((edge) => scan(viewId, `${viewId}: the note on the arrow ${edge.from} → ${edge.to}`, edge.body));
   });
   return found;
 }
@@ -2790,16 +2414,6 @@ function chartKind(chart) {
   return "";
 }
 
-function shapeGroup(el) {
-  return (
-    el.closest(
-      "g.node, g.image-shape, g.icon-shape, g.actor, g.person, g.system, g.container, g.component, g.external, g.external_person, g.boundary"
-    ) ||
-    el.closest("g") ||
-    el
-  );
-}
-
 // One pattern per chart. Every hit is the shape group Mermaid drew for that chartId.
 function findMermaidShapes(svg, chartId) {
   const kind = chartKind(app.view.chart);
@@ -2807,9 +2421,9 @@ function findMermaidShapes(svg, chartId) {
   const groups = new Set();
   if (kind === "flowchart") {
     // diagram-<n>-flowchart-<chartId>-<number>
-    // Image and icon shapes are drawn without the node class, so a lookup for g.node alone never finds them.
+    // Image shapes are drawn without the node class, so a lookup for g.node alone never finds them.
     const pattern = new RegExp(`(?:^|-)flowchart-${id}-\\d+$`);
-    svg.querySelectorAll("g.node, g.image-shape, g.icon-shape").forEach((el) => {
+    svg.querySelectorAll("g.node, g.image-shape").forEach((el) => {
       if (pattern.test(el.id)) groups.add(el);
     });
   } else if (kind === "c4") {
@@ -2819,9 +2433,9 @@ function findMermaidShapes(svg, chartId) {
       if (pattern.test(el.id)) groups.add(el);
     });
   } else if (kind === "sequence") {
-    // Top and bottom actor boxes share the name. Lifelines have it too, and are not boxes.
+    // Top and bottom actor boxes share the name. Lifelines have it too, and are not boxes. The group around a box holds its text too.
     svg.querySelectorAll("rect.actor, g.actor-man").forEach((el) => {
-      if (el.getAttribute("name") === chartId) groups.add(shapeGroup(el));
+      if (el.getAttribute("name") === chartId) groups.add(el.closest("g") || el);
     });
   } else if (kind === "state") {
     // diagram-<n>-state-<name>-<number>
@@ -3036,7 +2650,6 @@ function addMoreDot(shape) {
 function wireShape(shape, interaction) {
   shape.classList.add("is-node");
   shape.dataset.chartId = interaction.chartId;
-  if (WEIGHTS.includes(interaction.weight)) shape.classList.add(`weight-${interaction.weight}`);
   if (typeIndex(interaction.type) >= 0) shape.classList.add(`type-${typeIndex(interaction.type)}`);
   makeInteractive(shape, interaction, true);
   if (interaction.opensView) addBadge(shape);
@@ -3089,7 +2702,6 @@ function wireArrow(interaction, arrowElements) {
   arrowElements.filter(Boolean).forEach((element) => {
     element.dataset.wired = "1";
     element.dataset.edgeId = interaction.edgeId;
-    if (WEIGHTS.includes(interaction.weight)) element.classList.add(`weight-${interaction.weight}`);
     if (element.tagName === "path" || element.tagName === "line") {
       element.classList.add("is-edge");
       const hit = addWideHitStroke(element);
@@ -3178,141 +2790,151 @@ function bindEdgeInteractions(svg) {
 
 const checks = {
   content: [],
-  // viewId → problems from its last draw. A drawn view's result replaces its content check on shapes and arrows.
+  // viewId → the shapes and arrows its chart text seems to lack. Once the view is drawn, its draw check says the same from the picture, so it replaces these.
+  chartIds: {},
+  // viewId → problems from its last draw.
   drawn: {},
   warned: new Set(),
 };
 
-function edgeEnds(edge) {
-  return Array.isArray(edge) ? [edge[0], edge[1]] : [edge.from, edge.to];
+const isView = (id) => Object.hasOwn(DIAGRAMS.views, id);
+const isType = (name) => Object.hasOwn(DIAGRAMS.types || {}, name);
+
+// Text without its code, because code can show link syntax without being a link.
+function prose(text) {
+  return String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
 }
 
-// `match` marks a problem the draw check also finds, so it is not listed twice once the view is drawn.
+// A link's title says how its note opens: "inline", "peek", or "peek" and a place.
+function isNoteHowTitle(title) {
+  const [mode, place, extra] = title.trim().toLowerCase().split(/\s+/);
+  return mode === "inline" ? !place : mode === "peek" && (!place || PEEK_PLACES.includes(place)) && !extra;
+}
+
+// Each part of a view with its note, the key a link uses, and the name a problem uses.
+function viewParts(view) {
+  return [
+    ...Object.entries(view.nodeInteractions || {}).map(([chartId, note]) => ({ note, key: chartId, name: `the shape ${chartId}` })),
+    ...view.edgeInteractions.map((edge) => ({ note: edge, key: `${edge.from}->${edge.to}`, name: `the arrow ${edge.from} → ${edge.to}` })),
+  ];
+}
+
 function checkContent() {
   const found = [];
-  const views = DIAGRAMS.views || {};
   const tabs = DIAGRAMS.tabs || [];
-  const isView = (id) => Object.hasOwn(views, id);
-  const tabIds = new Set(tabs.map((tab) => tab.id));
-  if (!tabs.length) found.push({ text: "There are no tabs, so nothing opens." });
   const types = Object.keys(DIAGRAMS.types || {});
+  if (!tabs.length) found.push({ text: "There are no tabs, so nothing opens." });
   if (types.length > TYPE_COLORS) found.push({ text: `DIAGRAMS.types names ${types.length} types, but there are only ${TYPE_COLORS} type colors, so ${types.slice(TYPE_COLORS).join(", ")} stay uncolored.` });
-  const knownType = (name) => types.includes(name);
-  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
-  const stepBefore = new Map();
-  tabs.forEach((tab) => (tab.lesson || []).forEach((id, index) => index && stepBefore.set(id, tab.lesson[index - 1])));
-  const partKeys = (view) => new Set([
-    ...Object.keys(view?.nodeInteractions || {}),
-    ...(view?.edgeInteractions || []).map((edge) => edgeEnds(edge).join("->")),
-  ]);
-  tabs.forEach((tab) => {
-    if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
-    (tab.lesson || []).forEach((id) => {
-      if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
-    });
-  });
-  // A link's title says how its note opens.
-  const isNoteHow = (title) => {
-    const words = title.trim().toLowerCase().split(/\s+/);
-    return words[0] === "inline" ? words.length === 1 : words[0] === "peek" && (words.length === 1 || (words.length === 2 && ["beside", "below", "corner"].includes(words[1])));
-  };
-  if (DIAGRAMS.notePlace !== undefined && !["beside", "below", "corner"].includes(DIAGRAMS.notePlace)) {
+  if (DIAGRAMS.notePlace !== undefined && !PEEK_PLACES.includes(DIAGRAMS.notePlace)) {
     found.push({ text: `notePlace is "${DIAGRAMS.notePlace}". It takes "beside", "below", or "corner", so notes open beside their shapes instead.` });
   }
-  Object.entries(views).forEach(([viewId, view]) => {
-    const say = (text, match) => found.push({ viewId, text: `${viewId}: ${text}`, match });
-    if (view.viewId !== viewId) say(`its viewId is ${view.viewId}. It must equal its key.`);
-    if (view.parent && !isView(view.parent)) say(`its parent ${view.parent} is not a view.`);
-    if (!tabIds.has(view.tab)) say(`its tab ${view.tab} is not a tab id.`);
-    const chart = view.chart || "";
-    const kind = chartKind(chart);
-    const notes = view.nodeInteractions || {};
-    const edges = view.edgeInteractions || [];
-    // A chartId can hold "-", so "api" must not match inside "api-gw".
-    const inChart = (id) => new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(chart);
-    if (!kind && (Object.keys(notes).length || edges.length)) {
-      say("the page wires only flowchart, C4, sequence, and state charts, so these notes do nothing.");
-      return;
-    }
-    // A misspelt status or weight changes nothing in the picture, so it would go unnoticed.
-    const checkMarks = (name, note) => {
-      if (note.type !== undefined && !knownType(note.type)) say(`${name} has type "${note.type}", which DIAGRAMS.types does not name, so it has no color.`);
-      if (note.status !== undefined && !STATUSES[note.status]) say(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
-      if (note.weight !== undefined && !WEIGHTS.includes(note.weight)) say(`${name} has weight "${note.weight}". It must be ${WEIGHTS.join(" or ")}.`);
-    };
-    Object.entries(notes).forEach(([chartId, note]) => checkMarks(`the shape ${chartId}`, note));
-    edges.forEach((edge) => {
-      if (!Array.isArray(edge)) checkMarks(`the arrow ${edge.from} → ${edge.to}`, edge);
+  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
+  const stepBefore = new Map();
+  tabs.forEach((tab) => {
+    if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
+    (tab.lesson || []).forEach((id, index) => {
+      if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
+      else if (index && isView(tab.lesson[index - 1])) stepBefore.set(id, DIAGRAMS.views[tab.lesson[index - 1]]);
     });
-    Object.entries(notes).forEach(([chartId, note]) => {
-      if (!inChart(chartId)) say(`the shape ${chartId} has a note, but the chart has no ${chartId}.`, true);
-      if (note.opensView && !isView(note.opensView)) say(`the shape ${chartId} opens ${note.opensView}, which is not a view.`);
-    });
-    edges.forEach((edge) => {
-      const [from, to] = edgeEnds(edge);
-      const name = `the arrow ${from} → ${to}`;
-      if (edge.opensView && !isView(edge.opensView)) say(`${name} opens ${edge.opensView}, which is not a view.`);
-      if (kind === "sequence" || kind === "c4") {
-        if (!edge.mermaidText) say(`${name} has no mermaidText. In a ${kind === "c4" ? "C4" : "sequence"} chart an arrow is found by its text.`);
-        else if (!norm(chart).toLowerCase().includes(norm(edge.mermaidText).toLowerCase())) say(`${name}: the chart has no message "${edge.mermaidText}".`, true);
-      } else if (kind === "state") {
-        [from, to].forEach((end) => {
-          if (end !== "*" && !notes[end]) say(`${name}: ${end} needs a shape note, because a state arrow is found by the shapes at its ends.`);
-        });
-      } else {
-        [from, to].forEach((end) => {
-          if (!inChart(end)) say(`${name}: the chart has no ${end}.`, true);
-        });
-      }
-    });
-    // Mermaid names an arrow written as `a e1@--> b` after its id instead of its ends, so the page cannot find it.
-    if (kind === "flowchart") {
-      for (const [, id] of chart.matchAll(/\b([\w-]+)@(?=[-=.~])/g)) {
-        say(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
-      }
-    }
-    if (view.notePlace !== undefined && !["beside", "below", "corner"].includes(view.notePlace)) {
-      say(`notePlace is "${view.notePlace}". It takes "beside", "below", or "corner", so the note opens beside its shape instead.`);
-    }
-    // A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
-    const texts = [
-      ["the story", view.story],
-      ...Object.entries(notes).map(([id, note]) => [`the note on ${id}`, note.body]),
-      ...edges.map((edge) => [`the note on ${edgeEnds(edge).join(" → ")}`, edge.body]),
-    ];
-    texts.forEach(([where, text]) => {
-      // Code can show the link syntax without being a link.
-      const prose = String(text || "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
-      for (const [, name] of prose.matchAll(/\]\(~([^)\s]+)\)/g)) {
-        if (!knownType(name)) say(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
-      }
-      for (const [, key, title] of prose.matchAll(/\]\(#([^)\s]+)(?:\s+"([^"]*)")?\)/g)) {
-        if (title !== undefined && !isNoteHow(title)) {
-          say(`${where} links to #${key} with "${title}". A link's title is "inline", "peek", or "peek" with a place: "peek beside", "peek below", "peek corner".`);
-        }
-        const isArrow = key.includes("->");
-        const known = isArrow ? edges.some((edge) => edgeEnds(edge).join("->") === key) : Object.hasOwn(notes, key);
-        if (known) continue;
-        const missing = isArrow ? `arrow note from ${key.replace("->", " to ")}` : `shape note for ${key}`;
-        say(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
-      }
-    });
-    // A story has no parts list, so a part with something to open must be linked where the story talks about it.
-    // On a lesson step, only the parts the step adds.
-    if (view.story) {
-      const seen = partKeys(views[stepBefore.get(viewId)]);
-      const story = String(view.story).replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`]*`/g, "");
-      // A link can carry a title that says how its note opens, like [API](#api "peek").
-      const linked = new Set([...story.matchAll(/\]\(#([^)\s]+)(?:\s+"[^"]*")?\)/g)].map(([, key]) => key));
-      const hasDetail = (note) => Boolean(note.body || (note.facts && note.facts.length) || note.opensView);
-      const left = [
-        ...Object.entries(notes).filter(([id, note]) => hasDetail(note)).map(([id]) => id),
-        ...edges.filter((edge) => !Array.isArray(edge) && hasDetail(edge)).map((edge) => `${edge.from}->${edge.to}`),
-      ].filter((key) => !linked.has(key) && !seen.has(key));
-      if (left.length) say(`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`);
-    }
+  });
+  Object.entries(DIAGRAMS.views).forEach(([viewId, view]) => {
+    const say = (text) => ({ viewId, text: `${viewId}: ${text}` });
+    found.push(...checkView(view, stepBefore.get(viewId)).map(say));
+    checks.chartIds[viewId] = checkChartIds(view).map(say);
   });
   return found;
+}
+
+// Everything about one view except whether its chart has each shape and arrow. `before` is the lesson step before it, if any.
+function checkView(view, before) {
+  const problems = [];
+  const parts = viewParts(view);
+  const kind = chartKind(view.chart);
+  if (view.parent && !isView(view.parent)) problems.push(`its parent ${view.parent} is not a view.`);
+  if (!(DIAGRAMS.tabs || []).some((tab) => tab.id === view.tab)) problems.push(`its tab ${view.tab} is not a tab id.`);
+  if (view.notePlace !== undefined && !PEEK_PLACES.includes(view.notePlace)) {
+    problems.push(`notePlace is "${view.notePlace}". It takes "beside", "below", or "corner", so the note opens beside its shape instead.`);
+  }
+  if (!kind) {
+    if (parts.length) problems.push("the page wires only flowchart, C4, sequence, and state charts, so these notes do nothing.");
+    return problems;
+  }
+  parts.forEach(({ note, name }) => {
+    // A misspelt type or status changes nothing in the picture, so it would go unnoticed.
+    if (note.type !== undefined && !isType(note.type)) problems.push(`${name} has type "${note.type}", which DIAGRAMS.types does not name, so it has no color.`);
+    if (note.status !== undefined && !STATUSES[note.status]) problems.push(`${name} has status "${note.status}". It must be one of ${Object.keys(STATUSES).join(", ")}.`);
+    if (note.opensView && !isView(note.opensView)) problems.push(`${name} opens ${note.opensView}, which is not a view.`);
+  });
+  view.edgeInteractions.forEach((edge) => {
+    const name = `the arrow ${edge.from} → ${edge.to}`;
+    if ((kind === "sequence" || kind === "c4") && !edge.mermaidText) {
+      problems.push(`${name} has no mermaidText. In a ${kind === "c4" ? "C4" : "sequence"} chart an arrow is found by its text.`);
+    }
+    if (kind === "state") {
+      [edge.from, edge.to].forEach((end) => {
+        if (end !== "*" && !view.nodeInteractions?.[end]) problems.push(`${name}: ${end} needs a shape note, because a state arrow is found by the shapes at its ends.`);
+      });
+    }
+  });
+  // Mermaid names an arrow written as `a e1@--> b` after its id instead of its ends, so the page cannot find it.
+  if (kind === "flowchart") {
+    for (const [, id] of view.chart.matchAll(/\b([\w-]+)@(?=[-=.~])/g)) {
+      problems.push(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
+    }
+  }
+  problems.push(...checkLinks(view, parts), ...checkStoryLinks(view, parts, before));
+  return problems;
+}
+
+// A link to a part, like [API](#api), only works when this view has a note for that part. Otherwise it shows as plain text.
+function checkLinks(view, parts) {
+  const problems = [];
+  const keys = new Set(parts.map((part) => part.key));
+  const texts = [["the story", view.story], ...parts.map(({ note, name }) => [`the note on ${name.replace(/^the (shape|arrow) /, "")}`, note.body])];
+  texts.forEach(([where, text]) => {
+    for (const [, name] of prose(text).matchAll(/\]\(~([^)\s]+)\)/g)) {
+      if (!isType(name)) problems.push(`${where} writes text as the type ~${name}, which DIAGRAMS.types does not name, so it has no color.`);
+    }
+    for (const [, key, title] of prose(text).matchAll(/\]\(#([^)\s]+)(?:\s+"([^"]*)")?\)/g)) {
+      if (title !== undefined && !isNoteHowTitle(title)) {
+        problems.push(`${where} links to #${key} with "${title}". A link's title is "inline", "peek", or "peek" with a place: "peek beside", "peek below", "peek corner".`);
+      }
+      if (keys.has(key)) continue;
+      const missing = key.includes("->") ? `arrow note from ${key.replace("->", " to ")}` : `shape note for ${key}`;
+      problems.push(`${where} links to #${key}, but this view has no ${missing}, so the link shows as plain text.`);
+    }
+  });
+  return problems;
+}
+
+// A story has no parts list, so a part with something to open must be linked where the story talks about it.
+// On a lesson step, only the parts the step adds.
+function checkStoryLinks(view, parts, before) {
+  if (!view.story) return [];
+  const seen = before ? partKeysOf(before) : new Set();
+  const linked = new Set([...prose(view.story).matchAll(/\]\(#([^)\s]+)/g)].map(([, key]) => key));
+  const left = [...new Set(parts.filter(({ note, key }) => hasMore(note) && !linked.has(key) && !seen.has(key)).map(({ key }) => key))];
+  return left.length ? [`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`] : [];
+}
+
+// Whether the chart text has each shape and arrow a note names. A chartId can hold "-", so "api" must not match inside "api-gw".
+function checkChartIds(view) {
+  const chart = view.chart || "";
+  const kind = chartKind(chart);
+  const inChart = (id) => new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(chart);
+  if (!kind) return [];
+  const problems = Object.keys(view.nodeInteractions || {}).filter((id) => !inChart(id)).map((id) => `the shape ${id} has a note, but the chart has no ${id}.`);
+  view.edgeInteractions.forEach((edge) => {
+    const name = `the arrow ${edge.from} → ${edge.to}`;
+    if (kind === "sequence" || kind === "c4") {
+      if (edge.mermaidText && !norm(chart).toLowerCase().includes(norm(edge.mermaidText).toLowerCase())) problems.push(`${name}: the chart has no message "${edge.mermaidText}".`);
+    } else if (kind === "flowchart") {
+      [edge.from, edge.to].forEach((end) => {
+        if (!inChart(end)) problems.push(`${name}: the chart has no ${end}.`);
+      });
+    }
+  });
+  return problems;
 }
 
 // Mermaid's message is several lines: where it failed, a caret, and what it expected. The first and last say enough.
@@ -3396,7 +3018,8 @@ function reportDrawn(viewId, missed) {
 
 function renderChecks() {
   const problems = [
-    ...checks.content.filter((problem) => !(problem.match && checks.drawn[problem.viewId])),
+    ...checks.content,
+    ...Object.entries(checks.chartIds).flatMap(([viewId, list]) => (checks.drawn[viewId] ? [] : list)),
     ...Object.values(checks.drawn).flat(),
   ];
   const open = document.getElementById("checks-open");
@@ -3453,34 +3076,8 @@ function renderChrome() {
   });
   els.summary.textContent = app.view.summary;
   renderLesson();
-  recordHistory();
-}
-
-// Every move the reader makes is a history entry, so Back undoes it: a step, a drill, a tab, and opening a part.
-// The hash is the view path, then the open part: #tab/inner@api, or @web->api for an arrow.
-function historyHash() {
-  const part = app.selectedInteraction;
-  const key = !part ? "" : part.kind === "edge" ? `@${part.from}->${part.to}` : `@${part.chartId}`;
-  return "#" + app.stack.map((view) => view.viewId).join("/") + key;
-}
-
-function currentHash() {
-  try {
-    return decodeURIComponent(location.hash);
-  } catch {
-    return location.hash;
-  }
-}
-
-// While the page follows the history, or on first load, it replaces the entry instead of adding one.
-function recordHistory() {
-  const next = historyHash();
-  if (currentHash() === next) return;
-  // The entry keeps how the note was opened, so Back reopens it the same way. The hash alone opens it as a peek.
-  const how = app.noteHow;
-  const state = how ? { note: { mode: how.mode, place: how.place } } : null;
-  if (app.replaying || !location.hash) history.replaceState(state, "", next);
-  else history.pushState(state, "", next);
+  // The link names the diagram on screen, so it can be shared. It replaces the entry, so Back leaves the page instead of walking through diagrams.
+  history.replaceState(null, "", "#" + stack.map((view) => view.viewId).join("/"));
 }
 
 // `fromInteraction` is the shape or arrow that was drilled through. The old picture zooms toward it before the swap.
@@ -3506,7 +3103,6 @@ async function show(viewId, fromInteraction) {
     if (token !== app.renderToken) return;
     app.els.camera.innerHTML = svg;
     const svgEl = app.els.camera.querySelector("svg");
-    svgEl.style.maxWidth = "none";
     const box = svgEl.viewBox.baseVal;
     if (box && box.width) {
       svgEl.setAttribute("width", String(box.width));
@@ -3518,7 +3114,6 @@ async function show(viewId, fromInteraction) {
     relaxLabels(svgEl);
     markStatuses();
     markStepFlow();
-    applySearch();
   } catch (error) {
     if (token !== app.renderToken) return;
     app.els.camera.classList.remove("is-leaving");
@@ -3526,21 +3121,16 @@ async function show(viewId, fromInteraction) {
   }
 }
 
-// On load, and on Back and Forward. The view is drawn again only when it changed, so going back from a note to its story does not redraw.
-async function openFromHash() {
-  const [path, partId] = currentHash().replace(/^#/, "").split("@");
-  const ids = path.split("/").filter(Boolean);
+// On load, and when the link changes. The hash is the view path, like #tab/inner. It opens its last view, or the first tab.
+function openFromHash() {
+  let hash = location.hash;
+  try {
+    hash = decodeURIComponent(hash);
+  } catch {}
+  const ids = hash.replace(/^#/, "").split("/").filter(Boolean);
   const last = ids[ids.length - 1];
   const viewId = app.views[last] ? last : DIAGRAMS.tabs[0].id;
-  app.replaying = true;
-  try {
-    if (!app.view || app.view.viewId !== viewId) await show(viewId);
-    const part = partId ? linkedPart("#" + partId) : null;
-    if (part) openPanel(part, history.state?.note);
-    else if (app.selectedInteraction) closeNote();
-  } finally {
-    app.replaying = false;
-  }
+  if (!app.view || app.view.viewId !== viewId) show(viewId);
 }
 
 // Escape and Backspace go one level up. Returns false at a tab's root.
@@ -3584,8 +3174,6 @@ function showLesson(delta) {
 }
 
 function wireTabs() {
-  // An exported file already holds the buttons drawn when it was saved, without their listeners.
-  app.els.tabs.replaceChildren();
   DIAGRAMS.tabs.forEach((tab) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -3599,6 +3187,9 @@ function wireTabs() {
   <script>// Export saves this page as one HTML file. The page already holds every script and its style inline, because the editor built it that way, so Export copies them.
 // That needs no server, so Export works from disk and inside the editor's frame. The CDN scripts stay links.
 
+// The markup as it was before anything was drawn, so an export holds no picture, tabs, or open note from this visit. The scripts that run next fill it in.
+const pristineBody = document.body.cloneNode(true);
+
 function exportHtml() {
   const css = document.querySelector("head > style").textContent;
   // The script that opens the start view is written fresh below, so an export of an export opens where the reader was.
@@ -3606,7 +3197,7 @@ function exportHtml() {
   const cdn = [...document.querySelectorAll("script[src]")].map((script) => script.outerHTML);
   const hash = app.stack.map((view) => view.viewId).join("/");
   const safe = (source) => source.replace(/<\/script/gi, "<\\/script");
-  const body = document.body.cloneNode(true);
+  const body = pristineBody.cloneNode(true);
   body.querySelectorAll("script").forEach((script) => script.remove());
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -3643,10 +3234,11 @@ mermaid.initialize({
   // On a bad chart, show() writes the error where the diagram goes. Without this, Mermaid also leaves its own error picture at the bottom of the page.
   suppressErrorRendering: true,
   theme: "base",
-  fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
+  // The camera sizes the picture, so no chart type may shrink it to its container.
   flowchart: { htmlLabels: true, useMaxWidth: false, curve: "basis" },
   sequence: { useMaxWidth: false },
   c4: { useMaxWidth: false },
+  state: { useMaxWidth: false },
   themeVariables: {
     fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
     fontSize: "15px",
@@ -3709,18 +3301,12 @@ moreMenu.addEventListener("click", (event) => {
   if (event.target.closest("button, a")) moreMenu.hidePopover();
 });
 document.getElementById("fit").addEventListener("click", fit);
-// Story is a switch: it shows the story, or hides it. An open note stays either way.
-app.els.storyOpen.addEventListener("click", () => {
-  app.storyHidden = !app.storyHidden;
-  layoutPanel();
-  recordHistory();
-});
+// Story is a switch: it shows the story, or hides it.
+app.els.storyOpen.addEventListener("click", () => setStoryHidden(!app.storyHidden));
 document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1.15));
 document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1 / 1.15));
 document.getElementById("lesson-prev").addEventListener("click", () => showLesson(-1));
 document.getElementById("lesson-next").addEventListener("click", () => showLesson(1));
-
-app.els.search.addEventListener("input", applySearch);
 
 document.addEventListener("keydown", (event) => {
   const typing = event.target.closest("input, textarea");
@@ -3730,10 +3316,6 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") popup.hidePopover();
     return;
   }
-  if (event.key === "/" && !typing) {
-    event.preventDefault();
-    app.els.search.focus();
-  }
   if (event.key === "?" && !typing) {
     event.preventDefault();
     app.els.help.showPopover();
@@ -3741,10 +3323,8 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     hideTooltip();
     // An open note closes first. The story itself stays open while stepping up.
-    if (app.selectedInteraction) {
-      closeNote();
-      recordHistory();
-    } else showParent();
+    if (app.selectedInteraction) closeNote();
+    else showParent();
   }
   if (event.key === "Backspace" && !typing && showParent()) {
     event.preventDefault();

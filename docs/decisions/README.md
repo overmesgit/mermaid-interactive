@@ -23,6 +23,7 @@ How an agent writes an explanation and hands it over.
 | [048](048-pack-files-into-the-content-file.md) | Pack code files into the content file, and preview it on the site | Current, partly replaced by 049 and 054 |
 | [049](049-export-without-a-server.md) | Export works without a server, so the preview page has one export button | Current, partly replaced by 054 |
 | [054](054-one-editor-page.md) | One page, the editor, which builds the template from the engine | Current |
+| [055](055-fewer-features.md) | Fewer features, and one form for content, so the engine stays small | Current |
 
 ## Finding and wiring shapes
 
@@ -41,28 +42,25 @@ Zooming the picture versus opening another diagram.
 
 | ADR | Decision | Status |
 | --- | --- | --- |
-| [003](003-two-zooms.md) | Double-click opens an inner diagram. The wheel only zooms the camera | Current, partly replaced by 014, 015, and 044 |
+| [003](003-two-zooms.md) | Double-click opens an inner diagram. The wheel only zooms the camera | Current, partly replaced by 014, 015, and 055 |
 | [014](014-selection-keeps-camera.md) | Clicking a shape keeps the zoom and the position | Current, partly replaced by 033 |
 | [015](015-drill-transition.md) | Animate opening an inner diagram, and remember each diagram's zoom | Current |
-| [044](044-back-undoes-every-move.md) | Back undoes every move | Current |
 
 ## Side panel
 
 | ADR | Decision | Status |
 | --- | --- | --- |
 | [009](009-panel-resize.md) | Drag the panel's border to resize it | Current, partly replaced by 014 |
-| [016](016-panel-links.md) | The panel links to the connected shapes and arrows | Current |
 | [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current, partly replaced by 041, 052, and 053 |
 | [041](041-story-links-to-parts.md) | The story points at parts where it talks about them | Current, partly replaced by 047 and 052 |
 | [047](047-story-reading-cues.md) | The panel says how to read it, in readable text | Current, partly replaced by 052 and 053 |
-| [052](052-one-color-per-type.md) | One color per type of thing, tables, a one-line note header, and no parts list under a story | Current |
-| [053](053-inline-and-peek-notes.md) | A note opens inline under its link, or as a peek card by its shape | Current |
+| [052](052-one-color-per-type.md) | One color per type of thing, tables, a one-line note header, and no parts list under a story | Current, partly replaced by 055 |
+| [053](053-inline-and-peek-notes.md) | A note opens inline under its link, or as a peek card by its shape | Current, partly replaced by 055 |
 
 ## Notes and code in the panel
 
 | ADR | Decision | Status |
 | --- | --- | --- |
-| [024](024-notes-name-functions.md) | How notes show a function by name instead of a pasted copy | Current. Nothing uses it since 054 |
 | [030](030-code-folder.md) | Show code from a code/ folder, packed into the page | Current, partly replaced by 035 and 048 |
 | [035](035-code-from-the-repo.md) | Read code files from the repo, not a code/ folder | Current |
 | [045](045-mark-lines-in-code.md) | A code note can mark the lines that matter | Current |
@@ -86,9 +84,9 @@ Prev and Next through the steps of a tab.
 | [010](010-label-frame.md) | Clicking a shape draws no box around its label | Current |
 | [017](017-compact-chrome.md) | Fewer bars above the diagram, shortcuts behind ?, one font | Current, partly replaced by 036 |
 | [032](032-shape-captions.md) | Each shape shows a short caption under its name | Current |
-| [036](036-floating-controls.md) | Controls float over a full-window diagram | Current |
-| [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current, partly replaced by 043 |
-| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current, partly replaced by 052 |
+| [036](036-floating-controls.md) | Controls float over a full-window diagram | Current, partly replaced by 055 |
+| [042](042-lit-arrows-flow.md) | A lit arrow flows from its start to its end | Current, partly replaced by 043 and 055 |
+| [043](043-status-and-weight.md) | Each part can show its status and how much it matters | Current, partly replaced by 052 and 055 |
 | [046](046-side-by-side-in-one-chart.md) | Show a change side by side in one chart | Current |
 
 ## Files and export

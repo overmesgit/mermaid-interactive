@@ -5,7 +5,7 @@
 
 ## Context
 
-A PR explanation often shows the same code in several notes, so the code had to be pasted into each one. Every copy then has to be changed by hand, and a note cannot show the rest of the file around a snippet. `source=` ([ADR-024](024-notes-name-functions.md)) avoids copying, but only for the engine's own code.
+A PR explanation often shows the same code in several notes, so the code had to be pasted into each one. Every copy then has to be changed by hand, and a note cannot show the rest of the file around a snippet. `source=` (ADR-024) avoids copying, but only for the engine's own code.
 
 The code also has to live inside the one HTML file ([ADR-027](027-one-file-from-a-template.md)), because a page opened from disk cannot read a folder next to it. Pasting code in as plain text breaks the page when the code contains `</script`, which HTML and JavaScript files often do.
 
