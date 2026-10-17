@@ -43,6 +43,8 @@ The editor builds the page from `page.html`, `styles.css`, and `js/` each time i
 
 `examples/oauth-pkce.js` explains OAuth 2.0 login with PKCE in sequence charts, with each kind of value in its own color. Every value in it comes from running golang.org/x/oauth2 against local test servers, in `examples/oauth-pkce/run/`, and its code notes show the library's PKCE code, cut to the lines they show, in `examples/oauth-pkce/`. Open `examples/oauth-pkce.packed.js` to see the code.
 
+To check a content file in Chrome, run `python3 tools/check.py examples/oauth-pkce.packed.js`. It opens the file in the editor, clicks every part and arrow of every view, and prints what missed and what the editor lists as a problem. From WSL it starts Windows Chrome on its own. In Claude Code, the `browser-check` agent runs it on a smaller model and reports only the result.
+
 After changing the engine, rebuild the skill's template: the editor's status line says when `skill/assets/explainer.html` is out of date. Press the download button by Preview and save the file there. See [ADR-054](docs/decisions/054-one-editor-page.md).
 
 ## Docs
