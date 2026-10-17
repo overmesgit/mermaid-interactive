@@ -1,6 +1,6 @@
 # ADR-019 Names show whether a thing is Mermaid's or ours
 
-- Status: accepted, script list superseded by [ADR-023](023-export-script-list.md)
+- Status: accepted, script list superseded by [ADR-054](054-one-editor-page.md)
 - Date: 2026-10-11
 - Supersedes: the script list in [ADR-011](011-split-scripts.md)
 

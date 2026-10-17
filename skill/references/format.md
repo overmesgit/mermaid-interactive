@@ -1,43 +1,16 @@
 # Content format
 
-One explanation is one content file. It is a classic script that sets `window.DIAGRAMS`. The engine loads before it, so `arrow()` and `md` are already defined. The engine reads nothing else from the content file.
+One explanation is one content file. It is a classic script that sets `window.DIAGRAMS`. Its helpers load before it, so `arrow()`, `md`, and `packFile()` are already defined. The engine reads nothing else from the content file.
 
 This is the only description of the format. The repo docs link here.
 
-Each explanation is its own file, and the page shows the one named in the link ([ADR-034](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/034-pick-the-content-file.md)). [`examples/starter.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/pr-checks.js) explains a real commit in four steps, with code from that commit.
+Each explanation is its own file. [`examples/starter.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/starter.js) is a one-diagram file to copy. [`examples/pr-checks.js`](https://github.com/overmesgit/mermaid-interactive/blob/main/examples/pr-checks.js) explains a real commit in four steps, with code from that commit.
 
-## Start here
+## Build and preview
 
-1. **Write `diagrams.js`.** Usually one tab with a lesson: a view per step, and notes on the shapes and arrows that matter. The sections below describe every field. The [example](#example) is a complete file to copy from.
-2. **Pack it, then put it into the page.** Run the commands below from the root of the repo the explanation is about, because that is where the `file=` paths start. Set `skill` to the skill's folder and `content` to your content file.
+[SKILL.md](../SKILL.md#build-it) has the steps that pack a content file and put it into the page. The page is the skill's `assets/explainer.html`, with one `/* DIAGRAMS */` line where the content goes ([ADR-037](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/037-fill-a-template.md)).
 
-   The first command packs: it copies the content file to `packed.js` and adds every file a note names to the end, whole, as gzip and base64. So `packed.js` is the complete explanation and needs no repo. See [Code files](#code-files). The second puts it into the page. The skill's `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes, and the command copies the page with `packed.js` in place of that line.
-
-   ```bash
-   {
-     cat "$content"
-     echo
-     sed -n 's/^[[:space:]]*~~~.*[[:space:]]file=\([^[:space:]]*\).*/\1/p' "$content" | sort -u |
-     while read -r f; do
-       printf 'packFile("%s", `\n' "$f"
-       case "$f" in
-         *:*) git show "$f" ;;
-         *)   cat "$f" ;;
-       esac | gzip -cn | base64
-       printf '`);\n'
-     done
-   } > packed.js
-   sed -e '/^\/\* DIAGRAMS \*\/$/r packed.js' -e '/^\/\* DIAGRAMS \*\/$/d' "$skill/assets/explainer.html" > explanation.html
-   ```
-
-   It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files. Pack from your own content file, not from `packed.js`, so the files are not added twice.
-3. **Look at it.** Open `explanation.html` in a browser. It opens from disk and needs no server, but it loads Mermaid from the network. An amber ⚠ chip by Find means the page found mistakes. Click it for the list. Walk every lesson step and open every inner diagram, because an arrow is only checked once its diagram is drawn. After an edit, run step 2 again and reload. Skip this if you cannot open a browser.
-4. **Check it** against [the checklist](#check-before-handing-it-over). If you could not open a browser, this is the only check. A mistake does not stop the page. It only leaves a shape that does nothing on click.
-5. **Hand over `explanation.html`.** Publishing it somewhere is a separate step, and this skill does not choose the host. `packed.js` is the same explanation in a smaller file. Anyone can drop it on the [preview page](https://overmesgit.github.io/mermaid-interactive/preview.html) to see it and download the HTML.
-
-The template is described in [ADR-037](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/037-fill-a-template.md).
-
-Inside this repo there is a quicker loop for step 3. Serve the repo folder with `python3 -m http.server 8765`, then open `http://127.0.0.1:8765/?src=` followed by the content file's path, like `?src=examples/starter.js`. Reload after each edit. No packing is needed, and files named with `file=` are read from the server.
+Inside this repo the [editor](https://overmesgit.github.io/mermaid-interactive/) shows a content file without packing it: serve the repo with `python3 -m http.server 8765`, open `http://127.0.0.1:8765/`, and open the file. Reload after each edit. Code notes show only once the file is packed.
 
 ## Shape
 
@@ -217,7 +190,7 @@ body: md`
 
 Code that exists as a file is named with `file=`, as in [Code files](#code-files). Write it in the note only when it is a short sketch that is in no file.
 
-A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code, which is how the How tab shows it. Code from the repo you explain is not loaded, so it would print `// name is not loaded`.
+A fence like `~~~js source=show` prints a function the page has loaded. That only works for the engine's own code. Code from the repo you explain is not loaded, so it would print `// name is not loaded`.
 
 ### Links to parts
 
@@ -260,7 +233,7 @@ Use a peek for a part with long code or wide facts, which need more width than t
 
 ## Code files
 
-The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and packing in step 2 finds every name, reads each file, and adds it whole to the end of the content file, so the page gets it with the content ([ADR-030](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/030-code-folder.md), [ADR-035](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/035-code-from-the-repo.md)).
+The finished page carries its code inside it, compressed, because a page opened from disk cannot read files next to it. You do not copy or list the files. A note names a file from the repo, and packing ([SKILL.md](../SKILL.md#build-it), step 2) finds every name, reads each file, and adds it whole to the end of the content file, so the page gets it with the content ([ADR-030](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/030-code-folder.md), [ADR-035](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/035-code-from-the-repo.md)).
 
 A note shows a file with an empty fence:
 
@@ -280,7 +253,7 @@ The lines are read when the content file is packed. If the file may change befor
 
 The panel shows the lines under a header with the path and the range. Clicking the header switches to the whole file, with the range highlighted, and back. Several notes can point at the same file, and it is packed once.
 
-While you preview with `?src=`, nothing is packed yet, so the page reads each file from the server. That works for files in the served repo. A revision path shows as missing until the content file is packed ([ADR-038](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/038-code-files-in-preview-and-export.md)). The Export button packs the files too.
+The page never reads files from a server, so in the editor a code note says the file is not packed until you pack the content file.
 
 Do not paste the files into `diagrams.js`. Packing adds them, and a packed file may hold whole files you did not write.
 
@@ -405,4 +378,4 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 13. Every `type`, and every `(~type)` in text, is named in `DIAGRAMS.types`, and there are at most four types.
 14. Every story links each part with a note that it adds, as above.
 
-On load the page runs checks 1, 3 to 6, and 8 to 12 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).
+On load the page runs checks 1, 3 to 6, and 8 to 14 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).

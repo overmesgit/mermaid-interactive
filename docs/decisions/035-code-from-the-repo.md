@@ -56,4 +56,4 @@ A path cannot contain a space, because the fence ends the path there. A path wit
 
 The page's check also reports a `file=` whose packed file is empty, which is what a missing path or a wrong revision leaves.
 
-Reading files while previewing with `?src=` ([ADR-034](034-pick-the-content-file.md)) is settled in [ADR-038](038-code-files-in-preview-and-export.md).
+Reading files while previewing with `?src=` (ADR-034) is settled in ADR-038.

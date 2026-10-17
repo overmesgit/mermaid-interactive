@@ -1,6 +1,6 @@
 # ADR-049 Export works without a server, so the preview page has one export button
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-054](054-one-editor-page.md): Export has only the copying mode, and the editor is the root page
 - Date: 2026-10-17
 - Supersedes: the Download HTML button and the page layout in [ADR-048](048-pack-files-into-the-content-file.md)
 

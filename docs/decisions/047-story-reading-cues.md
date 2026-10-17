@@ -1,6 +1,6 @@
 # ADR-047 The panel says how to read it, in readable text
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-052](052-one-color-per-type.md) and [ADR-053](053-inline-and-peek-notes.md): the note's header
 - Date: 2026-10-16
 
 ## Context

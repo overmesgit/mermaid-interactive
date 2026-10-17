@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="engine-fingerprint" content="0b5a538a" />
   <title>Interactive Mermaid</title>
   <style>:root {
   --ink: #0f172a;
@@ -1288,7 +1287,6 @@ line.is-edge.is-selected:not(.edge-hit) {
 </style>
 </head>
 <body>
-
   <div class="workspace" id="workspace">
     <section class="stage-wrap">
       <div id="viewport">
@@ -1302,61 +1300,61 @@ line.is-edge.is-selected:not(.edge-hit) {
         </div>
         <div class="island tools">
           <!-- Shown only when the content has a mistake. It opens the list of problems. -->
-          <button id="checks-open" type="button" popovertarget="checks" hidden="" title="Problems in this explanation">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2Z"></path><path d="M8 6.5v3M8 11.25v.1"></path></svg>
+          <button id="checks-open" type="button" popovertarget="checks" hidden title="Problems in this explanation">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2Z" /><path d="M8 6.5v3M8 11.25v.1" /></svg>
             <span id="checks-count"></span>
           </button>
           <label class="search">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 14 14"></path></svg>
-            <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off">
+            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
+            <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off" />
           </label>
           <button id="more-open" class="icon" type="button" popovertarget="more-menu" aria-label="More actions" title="More actions">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="0.75"></circle><circle cx="8" cy="8" r="0.75"></circle><circle cx="12.5" cy="8" r="0.75"></circle></svg>
+            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="0.75" /><circle cx="8" cy="8" r="0.75" /><circle cx="12.5" cy="8" r="0.75" /></svg>
           </button>
         </div>
         <div class="stage-meta">
           <div class="stage-title">
             <!-- The story is about this diagram, so its button sits before the diagram's name, where it stays put while names change length. It is lit while the panel shows the story. -->
             <button id="story-open" class="chip" type="button" aria-pressed="false" title="What this diagram shows, and its parts">
-              <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 5 3 2.5 3v9.5c2.5 0 4.3.4 5.5 1.5 1.2-1.1 3-1.5 5.5-1.5V3C11 3 9.2 3.4 8 4.5ZM8 4.5V14"></path></svg>
+              <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 5 3 2.5 3v9.5c2.5 0 4.3.4 5.5 1.5 1.2-1.1 3-1.5 5.5-1.5V3C11 3 9.2 3.4 8 4.5ZM8 4.5V14" /></svg>
               Story
             </button>
             <nav id="crumbs" aria-label="Zoom path"></nav>
           </div>
           <p id="summary"></p>
           <!-- What the colors in this picture mean. Only the statuses it uses are listed. -->
-          <p id="legend" hidden=""></p>
+          <p id="legend" hidden></p>
         </div>
       </div>
 
       <div class="float-bottom">
-        <div id="lesson" class="island" hidden="">
+        <div id="lesson" class="island" hidden>
           <button id="lesson-prev" type="button">Prev</button>
           <span id="lesson-count"></span>
           <button id="lesson-next" type="button">Next</button>
         </div>
         <div class="island camera-controls" aria-label="Camera">
           <button id="zoom-out" class="icon" type="button" aria-label="Zoom out" title="Zoom out">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10"></path></svg>
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10" /></svg>
           </button>
           <button id="fit" class="icon" type="button" aria-label="Fit diagram" title="Fit diagram">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"></path></svg>
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" /></svg>
           </button>
           <button id="zoom-in" class="icon" type="button" aria-label="Zoom in" title="Zoom in">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10M8 3v10"></path></svg>
+            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10M8 3v10" /></svg>
           </button>
           <button id="help-open" class="icon group" type="button" popovertarget="help" aria-label="How to use this page" title="How to use this page (?)">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"></circle><path d="M6.25 6.4a1.8 1.8 0 0 1 3.5.6c0 1.2-1.75 1.5-1.75 2.6"></path><path d="M8 11.6v.1"></path></svg>
+            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" /><path d="M6.25 6.4a1.8 1.8 0 0 1 3.5.6c0 1.2-1.75 1.5-1.75 2.6" /><path d="M8 11.6v.1" /></svg>
           </button>
         </div>
       </div>
 
       <p id="status" role="status" aria-live="polite"></p>
       <!-- Points from a peek note to its shape. -->
-      <div id="peek-caret" hidden=""></div>
+      <div id="peek-caret" hidden></div>
     </section>
 
-    <aside id="panel" hidden="" aria-hidden="true" aria-label="Details">
+    <aside id="panel" hidden aria-hidden="true" aria-label="Details">
       <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
       <!-- A part's note opens inline in the story or as a peek card on the canvas, so opening a detail never hides the whole picture. -->
       <section id="story-pane" class="panel-scroll" aria-label="Story">
@@ -1367,19 +1365,19 @@ line.is-edge.is-selected:not(.edge-hit) {
         <h2 id="panel-title" class="panel-title"></h2>
         <p id="panel-lead" class="panel-lead"></p>
         <div id="panel-body" class="panel-body"></div>
-        <section id="panel-parts" hidden="">
+        <section id="panel-parts" hidden>
           <h3>Parts, to open for detail</h3>
           <ol></ol>
         </section>
       </section>
       <!-- It waits here hidden. Under a card in the story it shows only its text, because the card names the part. -->
-      <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden="">
+      <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden>
         <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
         <div class="panel-top note-top">
           <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
           <span id="peek-places" role="group" aria-label="Where the card sits"></span>
           <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle><circle cx="8" cy="8" r="1.4" fill="currentColor"></circle><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"></path></svg>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"/></svg>
           </button>
           <button id="note-close" class="panel-close" type="button" aria-label="Close the note" title="Close the note (Esc)">×</button>
         </div>
@@ -1387,12 +1385,12 @@ line.is-edge.is-selected:not(.edge-hit) {
         <div id="note-body" class="panel-body"></div>
         <dl id="panel-facts"></dl>
         <dl id="panel-links" aria-label="Connections"></dl>
-        <button id="panel-zoom" type="button" hidden="">Open inner diagram</button>
+        <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
       </section>
     </aside>
   </div>
 
-  <div id="help" popover="" aria-label="How to use this page">
+  <div id="help" popover aria-label="How to use this page">
     <h2>How to use this page</h2>
     <dl>
       <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
@@ -1411,40 +1409,28 @@ line.is-edge.is-selected:not(.edge-hit) {
     </dl>
   </div>
 
-  <div id="more-menu" class="menu" popover="" aria-label="More actions">
+  <div id="more-menu" class="menu" popover aria-label="More actions">
     <button id="copy" type="button">
-      <svg aria-hidden="true" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"></path></svg>
+      <svg aria-hidden="true" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5" /></svg>
       Copy source
     </button>
     <button id="export" type="button">
-      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"></path></svg>
+      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" /></svg>
       Export HTML
     </button>
-    <!-- The editor lives next to this page on the site and in the repo. A joined page has no editor beside it, so boot.js hides this there. -->
-    <a id="edit-own" href="preview.html" hidden="">
-      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M10.5 2.5 13.5 5.5 5.5 13.5H2.5V10.5Z"></path><path d="M9 4l3 3"></path></svg>
-      Preview your own file
-    </a>
   </div>
 
-  <div id="checks" class="menu" popover="" aria-label="Problems in this explanation">
+  <div id="checks" class="menu" popover aria-label="Problems in this explanation">
     <h2>Problems in this explanation</h2>
     <p>Each line says what is wrong and what it breaks. The console lists them too.</p>
     <ul></ul>
   </div>
 
-  <div id="tooltip" role="tooltip" hidden=""></div>
+  <div id="tooltip" role="tooltip" hidden></div>
 
-  
-  
-  
-  
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
-<script>// Helpers a content file may call. They load before the content file, so every explanation can use them.
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+  <script>// Helpers a content file may call. They load before the content file, so every explanation can use them.
 
 function arrow(from, to, tooltip, body, facts, more) {
   return { from, to, kicker: "Arrow", tooltip, body, facts: facts || [], ...(more || {}) };
@@ -1466,11 +1452,13 @@ function packFile(path, base64) {
   packedFiles.set(path, base64);
 }
 </script>
-<script>
+  <!-- The content file goes here. The editor puts it in place of the marker line, and so does the skill's sed command. -->
+  <script>
 /* DIAGRAMS */
 </script>
-<script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the /* DIAGRAMS */ line was.";</script>
-<script>// Shared view, camera, and element refs. The other scripts read and write this object.
+  <script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the /* DIAGRAMS */ line was.";</script>
+  <!-- The engine, in load order. js/state.js reads DIAGRAMS at once, so it comes after the content. The editor inlines these to make the page one file. -->
+  <script>// Shared view, camera, and element refs. The other scripts read and write this object.
 
 const app = {
   views: DIAGRAMS.views,
@@ -1599,7 +1587,7 @@ function edgeInteractions() {
   });
 }
 </script>
-<script>// Pan and zoom of #camera. This does not change which diagram is shown.
+  <script>// Pan and zoom of #camera. This does not change which diagram is shown.
 
 function applyCam() {
   const { cam, els } = app;
@@ -1752,7 +1740,7 @@ function wireCamera() {
   );
 }
 </script>
-<script>// Hover dimming and the search filter. Both write is-dim on the wired SVG.
+  <script>// Hover dimming and the search filter. Both write is-dim on the wired SVG.
 
 // The visible stroke and the label of a wired arrow. The wide hit stroke has only the edge-hit class.
 const EDGE_PIECES = ".is-edge, .is-edge-label";
@@ -1918,7 +1906,7 @@ function applySearch() {
   });
 }
 </script>
-<script>// The details aside. A click on a shape or an arrow fills it.
+  <script>// The details aside. A click on a shape or an arrow fills it.
 
 const PANEL_MIN = 240;
 const PANEL_GAP = 280;
@@ -2473,7 +2461,7 @@ function wirePanel() {
   });
 }
 </script>
-<script>// A peek note: a card on the canvas, held against its part's shape, so the reader sees the note and the shape together.
+  <script>// A peek note: a card on the canvas, held against its part's shape, so the reader sees the note and the shape together.
 // It sits beside the shape, below it, or in the corner. A view sets its default with notePlace, and the card's buttons let the reader pick another.
 
 const NOTE_MODES = ["inline", "peek"];
@@ -2644,7 +2632,7 @@ function wirePeek() {
   new ResizeObserver(positionPeek).observe(app.els.stage);
 }
 </script>
-<script>// Code files a note names with ~~~go file=api/session.go lines=40-58. The panel shows those lines, and the header opens the whole file.
+  <script>// Code files a note names with ~~~go file=api/session.go lines=40-58. The panel shows those lines, and the header opens the whole file.
 // Packing adds each whole file to the content file as gzip and base64, with packFile() from js/helpers.js.
 
 const codeFiles = new Map();
@@ -2711,26 +2699,10 @@ function codeFile(path) {
   return codeFiles.get(path);
 }
 
-// An error with `preview` set is a limit of previewing, not a mistake in the content, so the checks do not list it.
-function codeFileError(message, preview) {
-  return Object.assign(new Error(message), { preview });
-}
-
+// The page never reads files from a server, so a file shows only when the content file was packed with it.
 async function loadCodeFile(path) {
   if (packedFiles.has(path)) return unpack(packedFiles.get(path));
-  // A content file opened through index.html?src= can read files from the server. Anywhere else, only packed files exist.
-  if (!document.querySelector("script[data-content]")) {
-    throw codeFileError(`${path} is not packed in this explanation. Pack the content file from the repo root, so the file is included.`, false);
-  }
-  if (path.includes(":")) {
-    throw codeFileError(`This preview cannot show ${path}, because it comes from git history. The joined page shows it.`, true);
-  }
-  if (!location.protocol.startsWith("http")) {
-    throw codeFileError(`A page opened from disk cannot read ${path}. Serve the folder over HTTP, or join the page.`, true);
-  }
-  const response = await fetch(new URL(path, location.href));
-  if (!response.ok) throw codeFileError(`${path} was not found on the server (${response.status}). Check the path from the repo root.`, false);
-  return response.text();
+  throw new Error(`${path} is not packed in this explanation. Pack the content file from the repo root, so the file is included.`);
 }
 
 function rangeText(fence) {
@@ -2799,7 +2771,7 @@ function codeFileView(fence) {
   return figure;
 }
 </script>
-<script>// Mermaid has already drawn the SVG. These functions find shapes and arrows. They do not attach listeners.
+  <script>// Mermaid has already drawn the SVG. These functions find shapes and arrows. They do not attach listeners.
 
 function norm(value) {
   return (value || "").replace(/\s+/g, " ").trim();
@@ -3018,7 +2990,7 @@ function endpointDistance(start, end, edge) {
   return (edge.from === "*" ? 0 : start.distance) + (edge.to === "*" ? 0 : end.distance);
 }
 </script>
-<script>// Join node and edge interactions to the Mermaid shapes and arrows already found.
+  <script>// Join node and edge interactions to the Mermaid shapes and arrows already found.
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -3200,7 +3172,7 @@ function bindEdgeInteractions(svg) {
   return edges.filter((edge) => !wired.has(edge));
 }
 </script>
-<script>// The page checks its own content, because a mistake does not stop it: a shape just does nothing on click.
+  <script>// The page checks its own content, because a mistake does not stop it: a shape just does nothing on click.
 // Problems show behind the ⚠ chip by Find, and in the console.
 // Two kinds: the content checks run once on load and cover every view. The draw checks run after each draw and say what was not found in the picture.
 
@@ -3374,7 +3346,7 @@ async function checkCodeFiles() {
     try {
       text = await codeFile(path);
     } catch (error) {
-      if (!error.preview) found.push({ viewId: fences[0].viewId, text: `${error.message} ${where}` });
+      found.push({ viewId: fences[0].viewId, text: `${error.message} ${where}` });
       continue;
     }
     if (!text) {
@@ -3402,8 +3374,8 @@ async function checkCodeFiles() {
 async function runChecks() {
   checks.content = checkContent();
   renderChecks();
-  const [charts, files, template] = await Promise.all([checkCharts(), checkCodeFiles(), checkTemplate()]);
-  checks.content.push(...charts, ...files, ...template);
+  const [charts, files] = await Promise.all([checkCharts(), checkCodeFiles()]);
+  checks.content.push(...charts, ...files);
   renderChecks();
 }
 
@@ -3445,7 +3417,7 @@ function renderChecks() {
   });
 }
 </script>
-<script>// show() is the only way to change the diagram.
+  <script>// show() is the only way to change the diagram.
 
 function pathTo(view) {
   const path = [view];
@@ -3624,129 +3596,31 @@ function wireTabs() {
   });
 }
 </script>
-<script>// Export inlines the local script tags of index.html, in page order. The CDN scripts stay links.
-// A joined or exported page has no script files to read, because every script is inline, so Export copies those as they are.
-// That needs no server, so Export works from disk and inside the preview page's frame.
-// With ?template in the link, Export saves the skill's template instead: the page with no content, and a marker line where the content file goes.
+  <script>// Export saves this page as one HTML file. The page already holds every script and its style inline, because the editor built it that way, so Export copies them.
+// That needs no server, so Export works from disk and inside the editor's frame. The CDN scripts stay links.
 
-const TEMPLATE_MARKER = "/* DIAGRAMS */";
-
-function localScripts() {
-  return [...document.querySelectorAll("script[src]")].filter((script) => !/^https?:/.test(script.getAttribute("src")));
-}
-
-// fetch resolves on a 404, so a missing file is an error here instead of an error page inlined as a script.
-// no-cache asks the server each time, so an export never inlines a file the browser kept from before an edit.
-async function readFile(path) {
-  const response = await fetch(path, { cache: "no-cache" });
-  if (!response.ok) throw new Error(`Export could not read ${path} (${response.status}).`);
-  return response.text();
-}
-
-// The files the template is made from: the CSS, the markup, and every local script except the content.
-function templateInputs() {
-  const scripts = localScripts().filter((script) => !script.hasAttribute("data-content"));
-  return Promise.all(["styles.css", "index.html", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
-}
-
-// A short hash of those files. It only has to change when a file changes, so FNV-1a is enough, and it needs no secure context.
-function fingerprint(texts) {
-  let hash = 0x811c9dc5;
-  texts.forEach((text) => {
-    for (let index = 0; index < text.length; index++) {
-      hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193) >>> 0;
-    }
-  });
-  return hash.toString(16).padStart(8, "0");
-}
-
-// The page served from this repo warns when the skill's template was made from older files, so an agent would get an old page.
-// A joined page, or a page opened from disk, has no template to compare.
-async function checkTemplate() {
-  if (!document.querySelector("script[data-content]") || !location.protocol.startsWith("http")) return [];
-  let template, inputs;
-  try {
-    [template, inputs] = await Promise.all([readFile("skill/assets/explainer.html"), templateInputs()]);
-  } catch {
-    return [];
-  }
-  const stamp = /<meta name="engine-fingerprint" content="([0-9a-f]+)"/.exec(template)?.[1];
-  if (stamp === fingerprint(inputs)) return [];
-  return [{ text: "skill/assets/explainer.html was made from older code than this page, so an agent would get an old page. Open this page with ?template, press Export HTML, and save the file there." }];
-}
-
-// Export packs every file a note names into the content script, the same way the pack command does, so the saved file shows them without the repo.
-async function packedCodeFiles() {
-  const calls = [];
-  for (const path of new Set(fileFences().map((fence) => fence.path))) {
-    // A packed content file already carries this one in its source.
-    if (packedFiles.has(path)) continue;
-    let text;
-    try {
-      text = await codeFile(path);
-    } catch {
-      continue;
-    }
-    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
-    const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
-    let binary = "";
-    bytes.forEach((byte) => (binary += String.fromCharCode(byte)));
-    calls.push(`packFile(${JSON.stringify(path)}, \`\n${btoa(binary).replace(/.{76}/g, "$&\n")}\n\`);`);
-  }
-  return calls.join("\n");
-}
-
-async function exportHtml() {
-  const scripts = localScripts();
-  const joined = !scripts.length;
-  const template = !joined && new URLSearchParams(location.search).has("template");
-  let css, sources, markup;
-  // The template carries a fingerprint of the files it was made from, so the page can tell when it is out of date.
-  let stamp = "";
-  // The template holds no content, so it packs no files. The pack command adds them to the content file.
-  const packed = template ? "" : await packedCodeFiles();
-  try {
-    if (joined) {
-      // The content script of a joined page is already packed. The script that opens the start view is written fresh below.
-      css = document.querySelector("head > style").textContent;
-      sources = [...document.querySelectorAll("script:not([src]):not([data-start-view])")].map((script) => script.textContent);
-    } else [css, ...sources] = await Promise.all(["styles.css", ...scripts.map((script) => script.getAttribute("src"))].map(readFile));
-    if (template) {
-      markup = await readFile("index.html");
-      stamp = `\n  <meta name="engine-fingerprint" content="${fingerprint(await templateInputs())}" />`;
-    }
-  } catch (error) {
-    // On file:// fetch itself rejects with a TypeError.
-    setStatus(error instanceof TypeError ? "Export needs a local server. Open the folder with a static server, then export." : error.message);
-    return;
-  }
+function exportHtml() {
+  const css = document.querySelector("head > style").textContent;
+  // The script that opens the start view is written fresh below, so an export of an export opens where the reader was.
+  const sources = [...document.querySelectorAll("script:not([src]):not([data-start-view])")].map((script) => script.textContent);
+  const cdn = [...document.querySelectorAll("script[src]")].map((script) => script.outerHTML);
   const hash = app.stack.map((view) => view.viewId).join("/");
   const safe = (source) => source.replace(/<\/script/gi, "<\\/script");
-  // The template starts from the markup in index.html, because the live page holds this content's tabs and diagram.
-  const body = template ? new DOMParser().parseFromString(markup, "text/html").body : document.body.cloneNode(true);
+  const body = document.body.cloneNode(true);
   body.querySelectorAll("script").forEach((script) => script.remove());
-  // The marker sits alone on its line, so one sed command can swap it for the content file.
-  const slot = `<script>
-${TEMPLATE_MARKER}
-<\/script>
-<script>if (!window.DIAGRAMS) document.getElementById("camera").textContent = "This page has no content. Put a content file where the ${TEMPLATE_MARKER} line was.";<\/script>`;
-  const inlined = joined ? sources.map((source) => `<script>${safe(source)}<\/script>`) : scripts.map((script, index) => {
-    if (!script.hasAttribute("data-content")) return `<script>${safe(sources[index])}<\/script>`;
-    return template ? slot : `<script>${safe(`${sources[index]}\n${packed}`)}<\/script>`;
-  });
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />${stamp}
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Interactive Mermaid</title>
   <style>${css}</style>
 </head>
 <body>
 ${body.innerHTML}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"><\/script>
-${template ? "" : `<script data-start-view>if (!location.hash) location.replace("#${hash}");<\/script>\n`}${inlined.join("\n")}
+${cdn.join("\n")}
+<script data-start-view>if (!location.hash) location.replace("#${hash}");<\/script>
+${sources.map((source) => `<script>${safe(source)}<\/script>`).join("\n")}
 </body>
 </html>
 `;
@@ -3754,14 +3628,14 @@ ${template ? "" : `<script data-start-view>if (!location.hash) location.replace(
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = template ? "explainer.html" : "interactive-diagrams.html";
+  link.download = "interactive-diagrams.html";
   link.click();
   // Firefox can cancel the download if the URL is revoked in the same task as the click.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  setStatus(template ? "Downloaded the skill's template. Save it as skill/assets/explainer.html." : "Downloaded a standalone HTML file.");
+  setStatus("Downloaded a standalone HTML file.");
 }
 </script>
-<script>// Mermaid setup, and the listeners that are not owned by the camera or the panel.
+  <script>// Mermaid setup, and the listeners that are not owned by the camera or the panel.
 
 mermaid.initialize({
   startOnLoad: false,
@@ -3819,8 +3693,6 @@ document.getElementById("copy").addEventListener("click", async () => {
 });
 
 document.getElementById("export").addEventListener("click", exportHtml);
-// Only a page that loads its content file through ?src= sits next to preview.html.
-document.getElementById("edit-own").hidden = !document.querySelector("script[data-content]");
 
 // The menu and the problem list open under their island, right edges aligned. The menu closes after a choice.
 ["more-menu", "checks"].forEach((id) => {

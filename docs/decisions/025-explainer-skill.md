@@ -1,6 +1,6 @@
 # ADR-025 The tool explains hard things, and agents use it through a skill
 
-- Status: accepted, skill layout superseded by [ADR-029](029-join-and-check-in-page.md) and [ADR-037](037-fill-a-template.md), how-to-explain part postponed by [ADR-040](040-skill-teaches-the-tool-first.md)
+- Status: accepted, skill layout superseded by [ADR-029](029-join-and-check-in-page.md) and [ADR-037](037-fill-a-template.md), how-to-explain part postponed by [ADR-040](040-skill-teaches-the-tool-first.md), and the bookshop and How tabs by [ADR-054](054-one-editor-page.md)
 - Date: 2026-10-11
 
 ## Context

@@ -1,4 +1,4 @@
-// A starting point for a new explanation. Copy this file, then open the page with ?src= and the copy's path.
+// A starting point for a new explanation. Copy this file, then open the copy in the editor.
 // The format is skill/references/format.md.
 
 window.DIAGRAMS = {

@@ -182,7 +182,7 @@ route 2   GET /posts/{id}   with id = new
 
 ### An analogy says it is imagined
 **Context:** "A mail room keeps its addresses sorted from the most exact to the least" read as a claim about real mail rooms. The reader stopped to wonder whether it was true, which does not matter to the point.
-**Rule:** Present an analogy as a picture, not as a fact about the world: "imagine", "picture", "suppose". The word is enough. A sentence saying that the real thing may differ only adds noise. Then the reader spends no attention checking it.
+**Rule:** Present an analogy as a picture, not as a fact about the world: "imagine", "picture", "suppose". The word is enough, so the reader spends no attention checking it. A general warning that the real thing may differ only adds noise. Where a difference matters, name that one difference, in the analogy's words, as the rule above says.
 **Example:** "Imagine a mail room that sorts its addresses from the most exact to the least, and sends each letter to the first one that fits."
 
 ### Use examples every reader knows

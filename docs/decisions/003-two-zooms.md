@@ -1,6 +1,6 @@
 # ADR-003 Double-click opens an inner diagram. The wheel only zooms the camera
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-014](014-selection-keeps-camera.md): `fit()` and the 220ms, [ADR-015](015-drill-transition.md): the + badge is now ↘, and [ADR-044](044-back-undoes-every-move.md): Back steps back inside the page
 - Date: 2026-10-10
 
 ## Context

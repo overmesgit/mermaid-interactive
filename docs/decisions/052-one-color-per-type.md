@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-10-17
-- Supersedes: the parts list under a story, from [ADR-033](033-story-panel.md) and [ADR-041](041-story-links-to-parts.md); the note's header from [ADR-051](051-note-hangs-under-its-card.md)
+- Supersedes: the parts list under a story, from [ADR-033](033-story-panel.md) and [ADR-041](041-story-links-to-parts.md); the note's header from ADR-051
 
 ## Context
 

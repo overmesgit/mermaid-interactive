@@ -1,6 +1,6 @@
 // A PR-style explanation of commit 4c92d28, which made the page check its own content.
 // Written with skill/SKILL.md, as an agent would. Pack it from the repo root, because its code notes name files at that commit.
-// examples/pr-checks.packed.js is this file packed, so the preview page can show its code. Pack it again after editing this file.
+// examples/pr-checks.packed.js is this file packed, so the editor can show its code. Pack it again after editing this file.
 
 window.DIAGRAMS = {
   tabs: [

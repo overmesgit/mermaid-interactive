@@ -1,6 +1,6 @@
 # ADR-041 The story points at parts where it talks about them
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-047](047-story-reading-cues.md): the list's heading, and [ADR-052](052-one-color-per-type.md): no list under a story
 - Date: 2026-10-15
 - Supersedes: in [ADR-033](033-story-panel.md), the list of every part under the story
 

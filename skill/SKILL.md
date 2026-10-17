@@ -13,7 +13,7 @@ This skill covers how to use the tool: what the page does, what to write, how to
 
 - **Tabs** across the top. Each opens one diagram.
 - **A lesson**, if the tab has one. Prev, Next, and the arrow keys walk its steps, one diagram per step.
-- **A story** in the side panel. It says what the diagram shows, and links each part where it talks about it, as a link or as a card between its sentences. There is no separate list of parts.
+- **A story** in the side panel. It says what the diagram shows, and links each part where it talks about it, as a link or as a card between its sentences. A diagram with no story lists its parts instead.
 - **Colors that mean something.** A part can be marked new, changed, removed, or a problem, and the word shows with the color. A key part has a heavy outline, a background part steps back, and a dot marks a part with more to read.
 - **One color per type of thing**, such as requests, routes, and handlers, in the diagram and in the text.
 - **Tables** in notes and stories, to line up what is compared.
@@ -106,43 +106,44 @@ window.DIAGRAMS = {
 };
 ```
 
-- **`tabs`** are the buttons across the top. `lesson` lists the steps in order, by view id.
-- **`views`** are the diagrams, keyed by id. A lesson step has `parent: null`. An inner diagram names the view it opens from as its `parent`.
-- **`chart`** is the Mermaid source. Flowchart, sequence, state, and C4 charts are clickable. Other Mermaid types draw, but nothing on them is clickable.
-- **`nodeInteractions`** are the notes on shapes, keyed by the shape's id in the chart: `api` in `api["API"]`.
-- **`edgeInteractions`** are the notes on arrows. `arrow(from, to, tooltip, body, facts, more)` makes one, and `[from, to]` is the short form.
-- **`md`** strips the indent from a note, so notes can be indented with the code.
-- **`status`** and **`weight`** on a note say what changed and what matters: `status: "new"`, `"changed"`, `"removed"`, or `"problem"`, and `weight: "key"` or `"background"`.
-- **Arrow labels** carry what an arrow means, as in `api -- reads --> db`. Most arrows need only `[from, to]`. Give an arrow a note only when it has real detail.
+A note is keyed by the shape's id in the chart, `api` in `api["API"]`, not by its label. Flowchart, sequence, state, and C4 charts are clickable; other Mermaid types draw, but nothing on them is. Most arrows need only `[from, to]`, with the meaning in the chart's arrow label, as in `api -- reads --> db`. [references/format.md](references/format.md) describes every field.
 
 ## Build it
 
 1. **Write `diagrams.js`.** Start from the file above, or from the complete example in `references/format.md`.
-2. **Pack it, then put it into the page.** The commands in step 2 of `references/format.md` first pack: they copy your file to `packed.js` and add every code file the notes name to its end. Then they put `packed.js` into `assets/explainer.html`, the whole page with one line, `/* DIAGRAMS */`, where the content goes. They write `packed.js` and `explanation.html`. Run them from the root of the repo the code comes from.
+2. **Pack it, then put it into the page.** Run these commands from the root of the repo the code comes from, because that is where the `file=` paths start. Set `skill` to this skill's folder and `content` to your content file.
+
+   The first command packs: it copies the content file to `packed.js` and adds every file a note names to the end, whole, as gzip and base64. So `packed.js` is the complete explanation and needs no repo. The second puts it into the page: `assets/explainer.html` is the whole page with one line, `/* DIAGRAMS */`, where the content goes, and the command copies the page with `packed.js` in place of that line.
+
+   ```bash
+   {
+     cat "$content"
+     echo
+     sed -n 's/^[[:space:]]*~~~.*[[:space:]]file=\([^[:space:]]*\).*/\1/p' "$content" | sort -u |
+     while read -r f; do
+       printf 'packFile("%s", `\n' "$f"
+       case "$f" in
+         *:*) git show "$f" ;;
+         *)   cat "$f" ;;
+       esac | gzip -cn | base64
+       printf '`);\n'
+     done
+   } > packed.js
+   sed -e '/^\/\* DIAGRAMS \*\/$/r packed.js' -e '/^\/\* DIAGRAMS \*\/$/d' "$skill/assets/explainer.html" > explanation.html
+   ```
+
+   It needs a POSIX shell: Linux, macOS, or Git Bash on Windows. With no `file=` fences it packs no files. Pack from your own content file, not from `packed.js`, so the files are not added twice.
 3. **Look at it.** Open `explanation.html` in a browser. It needs no server, but it loads Mermaid from the network. Walk every step and open every inner diagram, because an arrow is only checked once its diagram is drawn. Fix everything under the ⚠ chip, then run step 2 again and reload.
-4. **Check it by hand** if you cannot open a browser. `references/format.md` has the checklist.
-5. **Hand over `explanation.html`.** Say where it and `packed.js` are. Do not commit or publish them unless asked.
+4. **Check it by hand** if you cannot open a browser, with [the checklist](references/format.md#check-before-handing-it-over).
+5. **Hand over `explanation.html`.** Say where it and `packed.js` are. Do not commit or publish them unless asked, because this skill does not choose where they are hosted. `packed.js` is the same explanation in a smaller file: anyone can drop it on the [editor](https://overmesgit.github.io/mermaid-interactive/) to see it and export the HTML.
 
 ## Mistakes that are easy to make
 
-A mistake does not stop the page. It leaves a shape or an arrow that does nothing on click, so it looks broken. These cause most of them:
+A mistake does not stop the page. It leaves a shape or an arrow that does nothing on click, so it looks broken. The page lists most mistakes under the ⚠ chip, and [the checklist](references/format.md#check-before-handing-it-over) has all of them. Two more are not errors, so nothing lists them:
 
-- **A note key that is not the shape's id.** The key must be the id in the chart, not its label. In a C4 chart it is the alias, in a sequence chart the participant id, in a state chart the state id.
-- **An arrow the page cannot find.** In a flowchart the chart must draw `from --> to`. In a sequence or C4 chart the arrow needs `mermaidText`, the message or relation text. In a state chart both ends need a shape note, or `"*"` for the start and end dots.
-- **A view id that does not exist.** Every `opensView`, `parent`, tab `id`, and lesson entry must be a key in `views`, and each view's `viewId` must equal its key.
-- **Backticks in a note.** A note is a JavaScript template, so a backtick ends it. Fence code with `~~~`, write inline code as `` \`name\` ``, and write `${` as `\${`.
-- **A reserved id.** Mermaid fails on some ids, such as `end` in a flowchart or `Note` in a state chart. Use another id and keep the word as the label: `state "Note" as Selected`.
-- **`</script` in the content file.** It ends the page's script tag. Code files named with `file=` may contain it.
 - **A layout that jumps between steps.** Keep the same ids from one lesson step to the next, so Mermaid draws them in the same place and only the change moves.
 - **A comparison split across two steps.** To show before and after, draw both in one flowchart, as two `subgraph`s side by side. `references/format.md` shows how.
 
 ## Show code from the repo
 
-Name a file and a line range in an empty fence, and the page shows those lines:
-
-```md
-~~~go file=api/session.go lines=40-58
-~~~
-```
-
-The path starts at the repo root. Add `mark=44-47` to highlight the lines that matter inside a longer range. Clicking the code's header switches to the whole file, with the range highlighted. To show an older version, put a git revision first, as in `file=main:api/session.go`. Step 2 packs each named file whole into the content file, so the explanation works without the repo. `references/format.md` has the details.
+Name a file and a line range in an empty fence, like `~~~go file=api/session.go lines=40-58`, and the page shows those lines. Do not paste code that exists as a file. Step 2 packs each named file into the content file, so the explanation works without the repo. [Code files](references/format.md#code-files) has the rest: `mark=`, git revisions, and paths.

@@ -1,6 +1,6 @@
 # ADR-033 The side panel tells the diagram's story by default
 
-- Status: accepted, partly superseded by [ADR-041](041-story-links-to-parts.md): parts the story shows as cards are not listed again, and by [ADR-050](050-note-under-the-story.md): a note opens under the story instead of replacing it
+- Status: accepted, partly superseded by [ADR-041](041-story-links-to-parts.md): parts the story shows as cards are not listed again, [ADR-052](052-one-color-per-type.md): no parts list under a story, and [ADR-053](053-inline-and-peek-notes.md): a note opens inside the story or by its shape instead of replacing it
 - Date: 2026-10-12
 - Supersedes: `show()` closing the panel, from [ADR-014](014-selection-keeps-camera.md)
 

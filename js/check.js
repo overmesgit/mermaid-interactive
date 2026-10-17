@@ -172,7 +172,7 @@ async function checkCodeFiles() {
     try {
       text = await codeFile(path);
     } catch (error) {
-      if (!error.preview) found.push({ viewId: fences[0].viewId, text: `${error.message} ${where}` });
+      found.push({ viewId: fences[0].viewId, text: `${error.message} ${where}` });
       continue;
     }
     if (!text) {
@@ -200,8 +200,8 @@ async function checkCodeFiles() {
 async function runChecks() {
   checks.content = checkContent();
   renderChecks();
-  const [charts, files, template] = await Promise.all([checkCharts(), checkCodeFiles(), checkTemplate()]);
-  checks.content.push(...charts, ...files, ...template);
+  const [charts, files] = await Promise.all([checkCharts(), checkCodeFiles()]);
+  checks.content.push(...charts, ...files);
   renderChecks();
 }
 

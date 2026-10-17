@@ -4,7 +4,7 @@ A page for explaining hard things: a concept, a subsystem, a pull request. An ex
 
 There are two ways to make one.
 
-- **By hand.** Edit the content, run the page, and export.
+- **By hand.** Write a content file, open it in the editor, and export.
 - **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, packs the code it shows into it, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
 
 ## Install the skill
@@ -25,9 +25,9 @@ claude plugin update mermaid-interactive@mermaid-interactive
 
 The plugin is listed in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and it loads only the `skill/` folder.
 
-## Preview a content file
+## The editor
 
-To read a content file without this repo, open the [preview page](https://overmesgit.github.io/mermaid-interactive/preview.html) and paste the file, open it, or drop it on the page. Export HTML in the explanation's ⋯ menu saves it as one file. Nothing is uploaded. Code notes work when the file was packed, as the skill does. The examples list has one with code. See [ADR-048](docs/decisions/048-pack-files-into-the-content-file.md) and [ADR-049](docs/decisions/049-export-without-a-server.md).
+The [editor](https://overmesgit.github.io/mermaid-interactive/) shows a content file: paste it, open it, or drop it on the page. Export HTML in the explanation's ⋯ menu saves it as one file. Nothing is uploaded. Code notes show when the file was packed, as the skill does.
 
 ## Run it
 
@@ -37,13 +37,11 @@ Serve the folder over HTTP, then open `http://127.0.0.1:8765/`:
 python3 -m http.server 8765
 ```
 
-To open another content file, name it in the link: `http://127.0.0.1:8765/?src=examples/starter.js`. To start a new explanation, copy `examples/starter.js` and open the copy the same way.
+The editor builds the page from `page.html`, `styles.css`, and `js/` each time it loads, so an engine change shows on reload. Open a file from `examples/` to try it: `bookshop.js` has one tab per kind of diagram, and `go-router.js` is a full lesson. To start a new explanation, copy `examples/starter.js`.
 
-`examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, which only git has, so pack it instead of opening it with `?src=`. Run step 2 of the [format](skill/references/format.md) from the repo root with `content=examples/pr-checks.js`, then open `explanation.html`. `examples/pr-checks.packed.js` is the result of packing, kept so it opens with `?src=` and on the preview page. Copy `packed.js` over it after changing the example.
+`examples/pr-checks.js` explains a real commit, the way an agent would with the skill. Its code notes name files at that commit, so open `examples/pr-checks.packed.js` to see them. That is the same file after packing (step 2 of [SKILL.md](skill/SKILL.md#build-it), with `content=examples/pr-checks.js`). Copy `packed.js` over it after changing the example.
 
-The sample tabs are a bookshop. The How tab explains the tool itself, step by step. Export from this page needs that server. Export from a joined or exported file does not. The downloaded file still loads Mermaid from the network.
-
-After changing the engine, rebuild the skill's template: open `http://127.0.0.1:8765/?template`, press Export HTML, and save the file as `skill/assets/explainer.html`. Until you do, the page's ⚠ list says the template is out of date. See [ADR-037](docs/decisions/037-fill-a-template.md) and [ADR-039](docs/decisions/039-stale-template-warning.md).
+After changing the engine, rebuild the skill's template: the editor's status line says when `skill/assets/explainer.html` is out of date. Press the download button by Preview and save the file there. See [ADR-054](docs/decisions/054-one-editor-page.md).
 
 ## Docs
 
@@ -51,5 +49,4 @@ After changing the engine, rebuild the skill's template: open `http://127.0.0.1:
 - [Content format](skill/references/format.md) to write an explanation
 - [Matcher](docs/matcher.md)
 - [Decisions](docs/decisions/README.md)
-- [Feedback](docs/feedback.md)
 - [Rules](docs/rules.md) learned from reading real explanations

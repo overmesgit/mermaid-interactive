@@ -1,6 +1,6 @@
 # ADR-043 Each part can show its status and how much it matters
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-052](052-one-color-per-type.md): no parts list under a story
 - Date: 2026-10-16
 
 ## Context

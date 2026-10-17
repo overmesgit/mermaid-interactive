@@ -56,8 +56,6 @@ document.getElementById("copy").addEventListener("click", async () => {
 });
 
 document.getElementById("export").addEventListener("click", exportHtml);
-// Only a page that loads its content file through ?src= sits next to preview.html.
-document.getElementById("edit-own").hidden = !document.querySelector("script[data-content]");
 
 // The menu and the problem list open under their island, right edges aligned. The menu closes after a choice.
 ["more-menu", "checks"].forEach((id) => {

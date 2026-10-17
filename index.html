@@ -4,188 +4,385 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Interactive Mermaid</title>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #e2e8f0;
+      --tint: #f1f5f9;
+      --paper: #ffffff;
+      --canvas: #f8fafc;
+      --accent: #1d4ed8;
+      --accent-soft: #e6eefd;
+      --accent-ink: #ffffff;
+      --problem: #b91c1c;
+      --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, Consolas, monospace;
+      --control: 32px;
+      --drawer: 380px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      font: 14px/1.5 var(--sans);
+      color: var(--ink);
+      background: var(--canvas);
+    }
+    [hidden] { display: none !important; }
+    button {
+      height: var(--control);
+      font: inherit;
+      color: inherit;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      border: 0;
+      background: transparent;
+      white-space: nowrap;
+    }
+    button:hover { background: var(--tint); }
+    button.primary { background: var(--accent); color: var(--accent-ink); }
+    button.icon { width: var(--control); padding: 0; justify-content: center; color: var(--muted); }
+    button.icon:hover { color: var(--ink); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    svg {
+      width: 16px;
+      height: 16px;
+      flex: none;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* The rail is the only part that stays when the editor is closed: one button that opens it. */
+    #rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 4px;
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+    }
+    #toggle[aria-expanded="true"] { color: var(--accent); background: var(--accent-soft); }
+
+    #drawer {
+      position: relative;
+      display: grid;
+      /* minmax(0, 1fr) keeps the column at the drawer's width. Left to auto, it grows to the widest child, and the editor spills past its own edge. */
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      flex: none;
+      width: var(--drawer);
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+    }
+    #drawer header { display: flex; align-items: center; gap: 4px; padding: 12px 8px 8px; }
+    #save-template { margin-left: auto; }
+    textarea {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 8px 12px;
+      border: 0;
+      border-top: 1px solid var(--line);
+      resize: none;
+      font: 12px/1.5 var(--mono);
+      color: var(--ink);
+      background: var(--paper);
+      white-space: pre;
+    }
+    textarea:focus-visible { outline-offset: -2px; }
+    #status { margin: 0; padding: 6px 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+    #status.error { color: var(--problem); }
+    #resize { position: absolute; top: 0; right: -4px; bottom: 0; width: 8px; cursor: col-resize; z-index: 1; }
+    #resize:hover, body.resizing #resize { background: var(--accent-soft); }
+
+    #stage { position: relative; flex: 1; min-width: 0; }
+    /* When nothing can be shown, the reason sits where the explanation would be, so it cannot be missed. */
+    #notice {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      gap: 8px;
+      padding: 24px;
+      max-width: 60ch;
+      margin: auto;
+      color: var(--ink);
+    }
+    #notice h2 { margin: 0; font-size: 18px; text-wrap: balance; }
+    #notice-text { display: grid; gap: 8px; color: var(--muted); }
+    #notice-text p { margin: 0; }
+    #notice a { color: var(--accent); }
+    #notice code { padding: 2px 6px; border-radius: 4px; background: var(--tint); font: 13px var(--mono); white-space: nowrap; }
+    #notice pre { margin: 0; padding: 8px 12px; border-radius: 6px; background: var(--tint); color: var(--ink); font: 13px var(--mono); overflow-x: auto; }
+    iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--paper); }
+    /* A drag or a resize over the frame would go to the frame's page, so the frame lets it through to this one. */
+    body.dragging iframe, body.resizing iframe { pointer-events: none; }
+    body.resizing { cursor: col-resize; user-select: none; }
+    body.dragging::after {
+      content: "Drop a content file to show it";
+      position: fixed;
+      inset: 8px;
+      display: grid;
+      place-items: center;
+      border: 3px dashed var(--accent);
+      border-radius: 12px;
+      background: rgba(230, 238, 253, 0.85);
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    /* On a phone the editor covers the explanation instead of squeezing it. */
+    @media (max-width: 720px) {
+      #drawer { position: fixed; top: 0; bottom: 0; left: 41px; width: calc(100vw - 41px); z-index: 2; }
+      #resize { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <div class="workspace" id="workspace">
-    <section class="stage-wrap">
-      <div id="viewport">
-        <div id="camera"></div>
-      </div>
-
-      <!-- Floating controls over the canvas. The two rows are layout only and let pointer events through to the canvas. -->
-      <div class="float-top">
-        <div class="island">
-          <nav id="tabs" aria-label="Diagrams"></nav>
-        </div>
-        <div class="island tools">
-          <!-- Shown only when the content has a mistake. It opens the list of problems. -->
-          <button id="checks-open" type="button" popovertarget="checks" hidden title="Problems in this explanation">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2Z" /><path d="M8 6.5v3M8 11.25v.1" /></svg>
-            <span id="checks-count"></span>
-          </button>
-          <label class="search">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
-            <input id="search" type="search" aria-label="Find" placeholder="Find a shape" autocomplete="off" />
-          </label>
-          <button id="more-open" class="icon" type="button" popovertarget="more-menu" aria-label="More actions" title="More actions">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="0.75" /><circle cx="8" cy="8" r="0.75" /><circle cx="12.5" cy="8" r="0.75" /></svg>
-          </button>
-        </div>
-        <div class="stage-meta">
-          <div class="stage-title">
-            <!-- The story is about this diagram, so its button sits before the diagram's name, where it stays put while names change length. It is lit while the panel shows the story. -->
-            <button id="story-open" class="chip" type="button" aria-pressed="false" title="What this diagram shows, and its parts">
-              <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 5 3 2.5 3v9.5c2.5 0 4.3.4 5.5 1.5 1.2-1.1 3-1.5 5.5-1.5V3C11 3 9.2 3.4 8 4.5ZM8 4.5V14" /></svg>
-              Story
-            </button>
-            <nav id="crumbs" aria-label="Zoom path"></nav>
-          </div>
-          <p id="summary"></p>
-          <!-- What the colors in this picture mean. Only the statuses it uses are listed. -->
-          <p id="legend" hidden></p>
-        </div>
-      </div>
-
-      <div class="float-bottom">
-        <div id="lesson" class="island" hidden>
-          <button id="lesson-prev" type="button">Prev</button>
-          <span id="lesson-count"></span>
-          <button id="lesson-next" type="button">Next</button>
-        </div>
-        <div class="island camera-controls" aria-label="Camera">
-          <button id="zoom-out" class="icon" type="button" aria-label="Zoom out" title="Zoom out">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10" /></svg>
-          </button>
-          <button id="fit" class="icon" type="button" aria-label="Fit diagram" title="Fit diagram">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" /></svg>
-          </button>
-          <button id="zoom-in" class="icon" type="button" aria-label="Zoom in" title="Zoom in">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 8h10M8 3v10" /></svg>
-          </button>
-          <button id="help-open" class="icon group" type="button" popovertarget="help" aria-label="How to use this page" title="How to use this page (?)">
-            <svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" /><path d="M6.25 6.4a1.8 1.8 0 0 1 3.5.6c0 1.2-1.75 1.5-1.75 2.6" /><path d="M8 11.6v.1" /></svg>
-          </button>
-        </div>
-      </div>
-
-      <p id="status" role="status" aria-live="polite"></p>
-      <!-- Points from a peek note to its shape. -->
-      <div id="peek-caret" hidden></div>
-    </section>
-
-    <aside id="panel" hidden aria-hidden="true" aria-label="Details">
-      <div id="panel-resize" role="separator" aria-orientation="vertical" aria-label="Resize details" title="Drag to resize"></div>
-      <!-- A part's note opens inline in the story or as a peek card on the canvas, so opening a detail never hides the whole picture. -->
-      <section id="story-pane" class="panel-scroll" aria-label="Story">
-        <div class="panel-top">
-          <p id="panel-kicker" class="panel-kicker"></p>
-          <button id="panel-close" class="panel-close" type="button">Close</button>
-        </div>
-        <h2 id="panel-title" class="panel-title"></h2>
-        <p id="panel-lead" class="panel-lead"></p>
-        <div id="panel-body" class="panel-body"></div>
-        <section id="panel-parts" hidden>
-          <h3>Parts, to open for detail</h3>
-          <ol></ol>
-        </section>
-      </section>
-      <!-- It waits here hidden. Under a card in the story it shows only its text, because the card names the part. -->
-      <section id="note-pane" class="panel-scroll" aria-label="Note" tabindex="-1" hidden>
-        <!-- One header line: the part's name and status, what kind of part it is, the icon that finds it in the picture, and close. -->
-        <div class="panel-top note-top">
-          <p class="note-head"><span id="note-title" class="note-title" role="heading" aria-level="2"></span><span id="note-kicker" class="note-kicker"></span></p>
-          <span id="peek-places" role="group" aria-label="Where the card sits"></span>
-          <button id="note-locate" class="note-locate" type="button" aria-label="Show in the diagram" title="Show in the diagram. It is outlined there in this color.">
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" stroke="currentColor" stroke-width="1.6"/></svg>
-          </button>
-          <button id="note-close" class="panel-close" type="button" aria-label="Close the note" title="Close the note (Esc)">×</button>
-        </div>
-        <p id="note-lead" class="note-lead"></p>
-        <div id="note-body" class="panel-body"></div>
-        <dl id="panel-facts"></dl>
-        <dl id="panel-links" aria-label="Connections"></dl>
-        <button id="panel-zoom" type="button" hidden>Open inner diagram</button>
-      </section>
-    </aside>
-  </div>
-
-  <div id="help" popover aria-label="How to use this page">
-    <h2>How to use this page</h2>
-    <dl>
-      <dt>Click</dt><dd>Open the details for a shape or an arrow</dd>
-      <dt>Story</dt><dd>Show what this diagram is about, and its parts</dd>
-      <dt>Dot</dt><dd>The part has more to read than its tooltip</dd>
-      <dt>Double-click or ↘</dt><dd>Open the shape's inner diagram</dd>
-      <dt>Drag</dt><dd>Pan empty space</dd>
-      <dt>Scroll</dt><dd>Zoom the camera</dd>
-      <dt><kbd>/</kbd></dt><dd>Find</dd>
-      <dt><kbd>Esc</kbd></dt><dd>Close the note, then step up</dd>
-      <dt><kbd>Backspace</kbd></dt><dd>Step up one diagram</dd>
-      <dt>Prev, Next</dt><dd>Move through the lesson</dd>
-      <dt><kbd>←</kbd>, <kbd>→</kbd></dt><dd>Previous or next lesson step</dd>
-      <dt><kbd>Tab</kbd>, <kbd>Enter</kbd></dt><dd>Move to a shape, open its details</dd>
-      <dt><kbd>?</kbd></dt><dd>Show this list</dd>
-    </dl>
-  </div>
-
-  <div id="more-menu" class="menu" popover aria-label="More actions">
-    <button id="copy" type="button">
-      <svg aria-hidden="true" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5" /></svg>
-      Copy source
-    </button>
-    <button id="export" type="button">
-      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" /></svg>
-      Export HTML
-    </button>
-    <!-- The editor lives next to this page on the site and in the repo. A joined page has no editor beside it, so boot.js hides this there. -->
-    <a id="edit-own" href="preview.html" hidden>
+  <nav id="rail">
+    <button id="toggle" class="icon" type="button" aria-controls="drawer" aria-expanded="true" title="Close the editor">
       <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M10.5 2.5 13.5 5.5 5.5 13.5H2.5V10.5Z" /><path d="M9 4l3 3" /></svg>
-      Preview your own file
-    </a>
-  </div>
-
-  <div id="checks" class="menu" popover aria-label="Problems in this explanation">
-    <h2>Problems in this explanation</h2>
-    <p>Each line says what is wrong and what it breaks. The console lists them too.</p>
-    <ul></ul>
-  </div>
-
-  <div id="tooltip" role="tooltip" hidden></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
-  <script src="js/helpers.js"></script>
+    </button>
+  </nav>
+  <aside id="drawer" aria-label="Content file">
+    <header>
+      <button id="open" type="button" title="Open a content file from your computer">
+        <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 4.5v8h11v-6.5h-6l-1.5-1.5Z" /></svg>
+        Open
+      </button>
+      <input id="file" type="file" accept=".js,text/javascript" hidden />
+      <button id="save-template" class="icon" type="button" title="Save the skill's template, made from the engine as it is now">
+        <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" /></svg>
+      </button>
+      <button id="preview" class="primary" type="button" title="Show this file (Ctrl+Enter)">Preview</button>
+    </header>
+    <textarea id="content" spellcheck="false" aria-label="Content file" placeholder="Paste a content file here, or drop one anywhere on the page."></textarea>
+    <p id="status" role="status" aria-live="polite">Nothing leaves your browser.</p>
+    <div id="resize" role="separator" aria-orientation="vertical" aria-label="Resize the editor" title="Drag to resize"></div>
+  </aside>
+  <main id="stage">
+    <div id="notice" hidden>
+      <h2 id="notice-title"></h2>
+      <div id="notice-text"></div>
+    </div>
+    <!-- A content file is a script, so it runs in a sandbox: it can draw its page, but it cannot reach this site. -->
+    <iframe id="frame" title="The explanation" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads" allow="clipboard-write"></iframe>
+  </main>
   <script>
-    // The content file comes from ?src=, so one page can show any explanation. The engine starts after it, because js/state.js reads DIAGRAMS at once.
-    // Export inlines these scripts in this order, so this list is the only one.
-    (() => {
-      const engine = ["state", "camera", "highlight", "panel", "peek", "code", "mermaid-svg", "bind", "check", "nav", "export", "boot"].map((name) => `js/${name}.js`);
-      const src = new URLSearchParams(location.search).get("src") || "diagrams.js";
-      const fail = (text) => {
-        document.getElementById("camera").textContent = text;
-        console.error(text);
-      };
-      // Only a file from this site. A link with ?src=https://... could otherwise run anyone's script on this page.
-      const url = new URL(src, location.href);
-      if (url.origin !== location.origin || url.protocol !== location.protocol) {
-        fail(`Not loading ${src}. ?src= takes a path on this site, like examples/starter.js.`);
+    // The editor builds the skill's template from page.html, styles.css, and js/, so an engine change shows on the next reload.
+    // It fills the template the same way the skill's sed command does, and shows the result. Export HTML in the page's own menu saves it.
+    // A packed content file carries its code files, so code notes work here too.
+    const els = {
+      content: document.getElementById("content"),
+      file: document.getElementById("file"),
+      status: document.getElementById("status"),
+      drawer: document.getElementById("drawer"),
+      toggle: document.getElementById("toggle"),
+      frame: document.getElementById("frame"),
+      notice: document.getElementById("notice"),
+    };
+    let template = null;
+    let frameUrl = null;
+
+    // Whether the editor is open, and its width, are kept for the next visit. Storage can be off, so each use is guarded.
+    const saved = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("preview-editor")) || {};
+      } catch {
+        return {};
+      }
+    })();
+    function save() {
+      try {
+        localStorage.setItem("preview-editor", JSON.stringify({ closed: els.drawer.hidden, width: saved.width }));
+      } catch {}
+    }
+
+    function setStatus(text, error) {
+      els.status.textContent = text;
+      els.status.classList.toggle("error", Boolean(error));
+      if (error) setOpen(true);
+    }
+
+    // A problem that stops the preview replaces the explanation, with what to do about it.
+    // `html` is only ever this page's own fixed text. Anything else goes in as plain text.
+    function showNotice(title, text, html) {
+      document.getElementById("notice-title").textContent = title;
+      document.getElementById("notice-text")[html ? "innerHTML" : "textContent"] = text;
+      els.notice.hidden = false;
+      els.frame.hidden = true;
+    }
+
+    function setOpen(open) {
+      els.drawer.hidden = !open;
+      els.toggle.setAttribute("aria-expanded", String(open));
+      els.toggle.title = open ? "Close the editor" : "Edit the content file";
+      save();
+    }
+
+    async function readText(path) {
+      const response = await fetch(path, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`Could not read ${path} (${response.status}).`);
+      return response.text();
+    }
+
+    // A script's text goes inside a script tag, so a closing script tag inside it is escaped, the way Export does.
+    function escapeScript(text) {
+      return text.replace(/<\/script/gi, "<\\/script");
+    }
+
+    // The template is page.html with the style and every js/ script put inline. The CDN scripts stay links.
+    // Line ends are made \n, so the build matches the saved template whatever line ends the files were checked out with.
+    async function buildTemplate() {
+      const page = (await readText("page.html")).replace(/\r\n/g, "\n");
+      const link = '<link rel="stylesheet" href="styles.css" />';
+      const local = /<script src="(js\/[^"]+)"><\/script>/g;
+      if (!page.includes(link)) throw new Error(`page.html has no ${link} line.`);
+      const paths = ["styles.css", ...[...page.matchAll(local)].map((match) => match[1])];
+      const texts = new Map((await Promise.all(paths.map(readText))).map((text, index) => [paths[index], text.replace(/\r\n/g, "\n")]));
+      return page.replace(link, () => `<style>${texts.get("styles.css")}</style>`).replace(local, (tag, path) => `<script>${escapeScript(texts.get(path))}<\/script>`);
+    }
+
+    // The marker is alone on its line, as the sed command expects. A function as the replacement keeps $ in the content as written.
+    function fill(content) {
+      const marker = /^\/\* DIAGRAMS \*\/\r?$/m;
+      if (!marker.test(template)) throw new Error("The template has no /* DIAGRAMS */ line.");
+      return template.replace(marker, () => escapeScript(content));
+    }
+
+    function saveTemplate() {
+      const url = URL.createObjectURL(new Blob([template], { type: "text/html" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "explainer.html";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus("Downloaded explainer.html. Save it over skill/assets/explainer.html, so the skill gets this engine.");
+    }
+
+    function preview() {
+      if (!template) return;
+      const content = els.content.value;
+      if (!content.trim()) {
+        setStatus("Paste a content file first.", true);
         return;
       }
-      const add = (path, onload) => {
-        const script = document.createElement("script");
-        script.src = path;
-        script.async = false;
-        if (onload) script.onload = onload;
-        script.onerror = () => fail(`Could not load ${path}.`);
-        document.body.append(script);
-        return script;
+      // The page writes each move into the link's #, so Back undoes it. A srcdoc frame refuses that, and a blob URL allows it.
+      // Each preview gets a new frame, so the browser's Back does not step into the previous one.
+      const frame = els.frame.cloneNode(false);
+      if (frameUrl) URL.revokeObjectURL(frameUrl);
+      frameUrl = URL.createObjectURL(new Blob([fill(content)], { type: "text/html" }));
+      frame.src = frameUrl;
+      frame.hidden = false;
+      els.frame.replaceWith(frame);
+      els.frame = frame;
+      els.notice.hidden = true;
+      setStatus("Shown. The ⚠ chip in the page lists mistakes, and its ⋯ menu exports HTML.");
+    }
+
+    function load(text) {
+      els.content.value = text;
+      preview();
+    }
+
+    async function openFile(file) {
+      if (!file) return;
+      load(await file.text());
+    }
+
+    els.toggle.addEventListener("click", () => setOpen(els.drawer.hidden));
+    document.getElementById("preview").addEventListener("click", preview);
+    document.getElementById("open").addEventListener("click", () => els.file.click());
+    els.file.addEventListener("change", () => {
+      openFile(els.file.files[0]);
+      els.file.value = "";
+    });
+    document.getElementById("save-template").addEventListener("click", () => template && saveTemplate());
+    els.content.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        preview();
+      }
+    });
+
+    // Dragging the editor's edge resizes it. The width is kept within reach of both sides.
+    document.getElementById("resize").addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      document.body.classList.add("resizing");
+      const left = els.drawer.getBoundingClientRect().left;
+      const move = (moveEvent) => {
+        saved.width = Math.round(Math.min(Math.max(moveEvent.clientX - left, 240), window.innerWidth * 0.7));
+        document.documentElement.style.setProperty("--drawer", `${saved.width}px`);
       };
-      // Export with ?template leaves this one script out and puts a marker in its place.
-      add(src, () => {
-        if (!window.DIAGRAMS) fail(`${src} loaded but did not set window.DIAGRAMS. The console shows why.`);
-        else engine.forEach((path) => add(path));
-      }).dataset.content = "";
+      const stop = () => {
+        document.body.classList.remove("resizing");
+        removeEventListener("pointermove", move);
+        removeEventListener("pointerup", stop);
+        save();
+      };
+      addEventListener("pointermove", move);
+      addEventListener("pointerup", stop);
+    });
+
+    // A drop anywhere on the page opens the file. dragover must be cancelled, or the browser opens the file itself.
+    let depth = 0;
+    document.addEventListener("dragenter", (event) => {
+      event.preventDefault();
+      depth++;
+      document.body.classList.add("dragging");
+    });
+    document.addEventListener("dragleave", () => {
+      if (--depth === 0) document.body.classList.remove("dragging");
+    });
+    document.addEventListener("dragover", (event) => event.preventDefault());
+    document.addEventListener("drop", (event) => {
+      event.preventDefault();
+      depth = 0;
+      document.body.classList.remove("dragging");
+      openFile(event.dataTransfer.files[0]);
+    });
+
+    if (saved.width) document.documentElement.style.setProperty("--drawer", `${saved.width}px`);
+    // On a phone the open editor covers the explanation, so a first visit there starts with it closed.
+    setOpen(saved.closed === undefined ? !matchMedia("(max-width: 720px)").matches : !saved.closed);
+
+    // The page starts empty, with where to begin in place of the explanation.
+    // It also says when the skill's template is older than the engine here, because an agent would then make pages with the old engine.
+    (async () => {
+      try {
+        let saved;
+        [template, saved] = await Promise.all([buildTemplate(), readText("skill/assets/explainer.html").catch(() => "")]);
+        showNotice(
+          "Open a content file",
+          "<p>Press Open, drop a file on the page, or paste one into the editor and press Preview. To try one, open <code>examples/bookshop.js</code> from this repo.</p>",
+          true,
+        );
+        if (saved.replace(/\r\n/g, "\n") !== template) setStatus("skill/assets/explainer.html is older than the engine here. Press the download button by Preview, and save the file there.", true);
+      } catch (error) {
+        // Opened from disk, the browser refuses to read the files next to this page.
+        if (error instanceof TypeError) {
+          showNotice(
+            "This page needs a server",
+            '<p>A page opened from disk cannot read the files next to it. Use the <a href="https://overmesgit.github.io/mermaid-interactive/">editor on GitHub Pages</a>, or start a server in the repo folder:</p>' +
+              "<pre>python3 -m http.server 8765</pre>" +
+              "<p>Then open <code>http://127.0.0.1:8765/</code>.</p>",
+            true,
+          );
+        } else showNotice("The editor could not start", error.message);
+        setStatus("Nothing can be shown until the page loads.", true);
+      }
     })();
   </script>
 </body>

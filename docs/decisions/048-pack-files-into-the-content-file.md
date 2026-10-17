@@ -1,8 +1,8 @@
 # ADR-048 Pack code files into the content file, and preview it on the site
 
-- Status: accepted, partly superseded by [ADR-049](049-export-without-a-server.md): Download HTML and the page layout
+- Status: accepted, partly superseded by [ADR-049](049-export-without-a-server.md): Download HTML and the page layout, and [ADR-054](054-one-editor-page.md): the preview page is now the editor at the site's root
 - Date: 2026-10-16
-- Supersedes: where the files go in [ADR-030](030-code-folder.md) and [ADR-038](038-code-files-in-preview-and-export.md). They were packed into the page as script tags. Now they are packed into the content file.
+- Supersedes: where the files go in [ADR-030](030-code-folder.md) and ADR-038. They were packed into the page as script tags. Now they are packed into the content file.
 
 ## Context
 

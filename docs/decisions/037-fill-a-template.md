@@ -1,6 +1,6 @@
 # ADR-037 Fill one template by replacing a marker line
 
-- Status: accepted, partly superseded by [ADR-039](039-stale-template-warning.md): the page now warns when the template is stale
+- Status: accepted, partly superseded by [ADR-048](048-pack-files-into-the-content-file.md): code files are packed into the content file, and [ADR-054](054-one-editor-page.md): the editor builds the template and says when the saved one is stale
 - Date: 2026-10-15
 - Supersedes: the two halves and the `cat` join in [ADR-029](029-join-and-check-in-page.md). The checks in the page still hold.
 

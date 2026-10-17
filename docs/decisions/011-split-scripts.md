@@ -1,8 +1,8 @@
 # ADR-011 Split app.js into one script per job, still with no build
 
-- Status: accepted. The script list is superseded by [ADR-019](019-interaction-naming.md).
+- Status: accepted, partly superseded by [ADR-019](019-interaction-naming.md): the names, and [ADR-054](054-one-editor-page.md): the script list lives in `page.html`, and Export reads no files
 - Date: 2026-10-11
-- Supersedes: [ADR-002](002-static-page.md)
+- Supersedes: ADR-002
 
 ## Context
 

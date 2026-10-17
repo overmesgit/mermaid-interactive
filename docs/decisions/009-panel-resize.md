@@ -1,6 +1,6 @@
 # ADR-009 Drag the panel's border to resize it
 
-- Status: accepted
+- Status: accepted, partly superseded by [ADR-014](014-selection-keeps-camera.md): no `fit()` after a drag
 - Date: 2026-10-10
 
 ## Context

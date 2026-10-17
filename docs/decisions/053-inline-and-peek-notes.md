@@ -2,11 +2,11 @@
 
 - Status: accepted
 - Date: 2026-10-17
-- Supersedes: [ADR-050](050-note-under-the-story.md), and what is left of [ADR-051](051-note-hangs-under-its-card.md) apart from its thin scrollbars
+- Supersedes: ADR-050, and what is left of ADR-051 apart from its thin scrollbars
 
 ## Context
 
-With the note in a pane under the story ([ADR-050](050-note-under-the-story.md)), the story and the note shared the panel's height. Both were short, so a code note scrolled early, and the note still looked like a separate panel. Under a card it also repeated the card: the part's name, its status, and its tooltip were in the card and again in the note's header.
+With the note in a pane under the story (ADR-050), the story and the note shared the panel's height. Both were short, so a code note scrolled early, and the note still looked like a separate panel. Under a card it also repeated the card: the part's name, its status, and its tooltip were in the card and again in the note's header.
 
 Six layouts were tried side by side on one page: the split, the note inside the story, a second column, a sheet over the story, a card on the canvas, and a drawer along the bottom. A ranked the note inside the story and the card on the canvas above the rest.
 
