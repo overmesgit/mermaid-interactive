@@ -67,7 +67,7 @@ An explanation is usually one tab with a lesson, whether it covers a concept, a 
 | `parent` | The viewId this view was drilled from, or `null`. It builds the breadcrumb. Escape and Backspace go up to it. A lesson step has `parent: null`. |
 | `title` | The breadcrumb text. The Next button shows the next step's title. |
 | `summary` | One sentence under the title. |
-| `story` | Optional. Markdown, like a note. The side panel shows it when nothing is selected, above a list of the view's shapes and arrows. Say what the diagram shows and why, so a reader can follow it without opening every shape. Put a part's card where the text talks about it, with a [link to the part](#links-to-parts). |
+| `story` | Optional. Markdown, like a note. The side panel shows it on top, and a part's note opens under it. Say what the diagram shows and why, so a reader can follow it without opening every shape. A view with a story has no list of its parts, so link each part that has a note where the text talks about it, with a [link to the part](#links-to-parts). |
 | `chart` | The Mermaid source. Mermaid is the only reader. |
 | `nodeInteractions` | An object keyed by chartId. |
 | `edgeInteractions` | An array, one entry per arrow. |
@@ -123,6 +123,26 @@ flowchart LR
 
 Here `redis` would get `status: "new"` and `newApi` `status: "changed"`.
 
+## Types
+
+An explanation keeps naming a few types of thing, such as requests, routes, and handlers. Give each its own color, in the diagram and in the text, so the reader can tell them apart at a glance. Name the types once, at the top of `DIAGRAMS`, with the word the legend shows:
+
+```js
+window.DIAGRAMS = {
+  types: { request: "Request", route: "Route", handler: "Handler" },
+  tabs: [...],
+  views: {...},
+};
+```
+
+- A shape takes `type: "route"`, and gets that type's border and tint.
+- In a story or a note, `[GET /posts/{id}](~route)` shows the words in the same color. A [link to a part](#links-to-parts) that has a type has its color too.
+- The page gives the colors in order, from four fixed ones that are never a status color. A fifth type gets no color.
+- A `status` wins over a type, so a problem stays red.
+- The legend under the summary names the types the diagram shows.
+
+Use the same type for the same thing in every step. Leave parts with no clear type untyped.
+
 ## Node interaction
 
 The key is the chartId. Do not repeat it inside the object.
@@ -131,7 +151,8 @@ The key is the chartId. Do not repeat it inside the object.
 | --- | --- |
 | `label` | The panel title. Arrows use it to name their ends. |
 | `tooltip` | One sentence on hover. It is also the panel's lead line. |
-| `kicker` | One word above the title, such as `Service` or `Changed`. |
+| `kicker` | One word or two, such as `Service` or `Your code`, in small text after the note's title. |
+| `type` | Optional. One of the [types](#types) the file names, such as `route`. The shape takes that type's color. |
 | `body` | The panel note, in markdown. |
 | `facts` | Rows of `[term, value]` under the note. |
 | `opensView` | Optional. The viewId that double-click or the ↘ badge opens. |
@@ -152,7 +173,7 @@ arrow(from, to, tooltip, body, facts, more)
 
 `from` and `to` are chartIds. `more` merges extra fields: `mermaidText`, `label`, `opensView`, `status`, and `weight`. Without a `label`, the panel title is `From → To`, made from the two node labels.
 
-Say what an arrow means in its label on the picture, as in `api -- reads --> db`. Most arrows need nothing more. Write those as `[from, to]`, so hover still lights them. Give an arrow a `body` only when it has real detail, such as code. The list under the story leaves out arrows with no `body`, `facts`, `opensView`, or `status`.
+Say what an arrow means in its label on the picture, as in `api -- reads --> db`. Most arrows need nothing more. Write those as `[from, to]`, so hover still lights them. Give an arrow a `body` only when it has real detail, such as code. On a view with no story, the parts list leaves out arrows with no `body`, `facts`, `opensView`, or `status`.
 
 How an arrow is found depends on the chart type:
 
@@ -165,7 +186,16 @@ An arrow with `opensView` has no ↘ badge. Its tooltip should say to double-cli
 
 ## Notes
 
-`body` is markdown. The panel renders paragraphs, headings, lists, blockquotes, code fences, inline code, bold, italic, `http`/`https` links, and [links to parts](#links-to-parts) of the view. HTML and images are dropped.
+`body` is markdown. The panel renders paragraphs, headings, lists, tables, blockquotes, code fences, inline code, bold, italic, `http`/`https` links, [links to parts](#links-to-parts) of the view, and words colored as a [type](#types). HTML and images are dropped.
+
+A table lines up things that are compared, so the difference stands out. Leave the header row empty to show no header:
+
+```md
+| | | |
+| --- | --- | --- |
+| request | [`GET /posts/new`](~request) | |
+| route 2 | [`GET /posts/{id}`](~route) | with `id = new` |
+```
 
 Write a note that holds code with the `md` tag and `~~~` fences. A backtick fence would end the JavaScript template. `md` strips the shared indent and does nothing else. For the same reason, inline code needs escaped backticks: write `` \`cache\` `` to show `cache`. `${` also needs escaping, as `\${`.
 
@@ -202,7 +232,7 @@ The [API](#api) loads the session, which costs one query per call.
 - A line that holds only such links shows each part as a card in that place: the part's name and tooltip. The link text is not shown, so it can be empty, but the name keeps the source readable. Links on lines next to each other each get a card.
 - A link inside a sentence shows as a link.
 - Both open the part's note on click, and light the part in the picture on hover.
-- A part shown as a card in the story is left out of the list under it.
+- A view with a story has no list of its parts, so link every part that has a `body`, `facts`, or `opensView`. The checks name the ones a story misses. On a lesson step, a part the step before already showed does not need a link again.
 - The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first.
 
 So a story can walk the picture: a sentence, the part it is about, the next sentence. On a lesson step, the arrows the step adds already flow in the picture, so the story can name them in the order they matter.
@@ -351,5 +381,7 @@ A mistake does not stop the page. It leaves a shape or an arrow that does nothin
 10. No flowchart arrow has an id, like `e1@-->`.
 11. Every `status` and `weight` is one of the values above.
 12. Every `mark` is inside the lines its fence shows.
+13. Every `type`, and every `(~type)` in text, is named in `DIAGRAMS.types`, and there are at most four types.
+14. Every story links each part with a note that it adds, as above.
 
 On load the page runs checks 1, 3 to 6, and 8 to 12 on every view, and tries to parse every chart. After each draw it also lists every shape and arrow it could not find in the picture, which covers check 2 for the views drawn so far. An agent that cannot open a browser checks by hand. One that can opens each step once, so every view is drawn, and reads the list ([ADR-029](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/029-join-and-check-in-page.md)).

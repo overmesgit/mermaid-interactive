@@ -13,12 +13,15 @@ This skill covers how to use the tool: what the page does, what to write, how to
 
 - **Tabs** across the top. Each opens one diagram.
 - **A lesson**, if the tab has one. Prev, Next, and the arrow keys walk its steps, one diagram per step.
-- **A story** in the side panel, shown when nothing is selected. It says what the diagram shows, and can put a part's card between its sentences, where it talks about that part.
+- **A story** in the side panel. It says what the diagram shows, and links each part where it talks about it, as a link or as a card between its sentences. There is no separate list of parts.
 - **Colors that mean something.** A part can be marked new, changed, removed, or a problem, and the word shows with the color. A key part has a heavy outline, a background part steps back, and a dot marks a part with more to read.
+- **One color per type of thing**, such as requests, routes, and handlers, in the diagram and in the text.
+- **Tables** in notes and stories, to line up what is compared.
 - **A tooltip** on hover over any shape or arrow you wrote a note for. The arrows it lights flow from start to end, and so do the arrows a lesson step adds.
 - **A note** in the side panel on click. It can hold markdown, code from the repo, and facts, and it links to the connected shapes.
 - **An inner diagram** on double-click, or the ↘ badge, for a shape or arrow that has one. Backspace goes back up.
 - **Find** to filter shapes by name, and pan and zoom with the mouse.
+- **A note under the story.** Opening a part shows its note under the story, which keeps its place. A target icon by the note's title finds the part in the diagram.
 - **Back and Forward** in the browser undo and redo each step, drill-down, and opened note.
 - **An amber ⚠ chip** by Find when the content has a mistake. It lists each one.
 

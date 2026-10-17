@@ -55,9 +55,12 @@ Zooming the picture versus opening another diagram.
 | --- | --- | --- |
 | [009](009-panel-resize.md) | Drag the panel's border to resize it | Current, partly replaced by 014 |
 | [016](016-panel-links.md) | The panel links to the connected shapes and arrows | Current |
-| [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current, partly replaced by 041 |
-| [041](041-story-links-to-parts.md) | The story points at parts where it talks about them | Current |
-| [047](047-story-reading-cues.md) | The panel says how to read it, in readable text | Current |
+| [033](033-story-panel.md) | The side panel tells the diagram's story by default | Current, partly replaced by 041, 050, and 052 |
+| [041](041-story-links-to-parts.md) | The story points at parts where it talks about them | Current, partly replaced by 052 |
+| [047](047-story-reading-cues.md) | The panel says how to read it, in readable text | Current, partly replaced by 051 |
+| [050](050-note-under-the-story.md) | A note opens under the story instead of replacing it | Current |
+| [051](051-note-hangs-under-its-card.md) | The note hangs under its card, with a compact header and thin scrollbars | Current, partly replaced by 052 |
+| [052](052-one-color-per-type.md) | One color per type of thing, tables, a one-line note header, and no parts list under a story | Current |
 
 ## Notes and code in the panel
 
