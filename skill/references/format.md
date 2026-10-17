@@ -209,6 +209,8 @@ The [API](#api) loads the session, which costs one query per call.
 - A line that holds only such links shows each part as a card in that place: the part's name, and its tooltip if it has one. The link text is not shown, so it can be empty, but the name keeps the source readable. Links on lines next to each other each get a card.
 - A link inside a sentence shows as a link.
 - Both open the part's note on click, and light the part in the picture on hover.
+- As the reader scrolls, the paragraph at their eye lights every part it links, and the rest of the picture fades ([ADR-058](https://github.com/overmesgit/mermaid-interactive/blob/main/docs/decisions/058-story-drives-the-picture.md)). So link the parts each paragraph talks about. A paragraph with no links leaves the whole picture.
+- In a sequence chart with `autonumber`, a link to a message starts with its number, in a dot like the picture's. So the text need not say "message 3".
 - A view with a story has no list of its parts, so link every part that has a `body`, `facts`, or `opensView`. The checks name the ones a story misses. On a lesson step, a part an earlier step already showed does not need a link again.
 - The view needs a note for the part. Two arrows between the same shapes are one part, and the link opens the first. Two participants in a sequence chart often trade several messages, so put the detail a story links to on the first message between them, or on a participant.
 

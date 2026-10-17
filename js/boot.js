@@ -44,6 +44,7 @@ mermaid.initialize({
 wireTabs();
 wireCamera();
 wirePanel();
+wireReading();
 wirePeek();
 runChecks();
 

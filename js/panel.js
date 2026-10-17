@@ -70,6 +70,7 @@ function renderNote(el, source) {
   el.querySelectorAll("li[data-href]").forEach((li) => li.replaceWith(partItem(linkedPart(li.dataset.href), noteHow(li.dataset.title))));
   el.querySelectorAll("button.part-link").forEach((button) => wirePart(button, linkedPart(button.dataset.href), noteHow(button.dataset.title)));
   el.querySelectorAll("figure[data-fence]").forEach((figure) => figure.replaceWith(codeFileView(fileFence(figure.dataset.fence))));
+  numberLinks(el);
   // The panel's table style sets text-align, which beats the align attribute marked writes.
   el.querySelectorAll("[align]").forEach((cell) => {
     cell.style.textAlign = cell.getAttribute("align");
@@ -294,6 +295,7 @@ function openPanel(interaction, how) {
   note.pane.focus({ preventScroll: true });
   const selected = markSelected(interaction);
   markStepFlow();
+  followReading();
   requestAnimationFrame(() => reveal(selected));
 }
 
@@ -305,6 +307,7 @@ function closeNote() {
   markStepFlow();
   markOpenCard();
   layoutPanel();
+  followReading();
 }
 
 // Shapes and arrows share this. `interaction` is the node or edge interaction.

@@ -1,6 +1,6 @@
 # Rules
 
-Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last eleven came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17: two from writing it, and nine from a reader's reviews of it. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
+Rules that came from reading real explanations. Each says where it came from and what to do. The first set came from the Go router example (`examples/go-router.js`) on 2026-10-15. The last twelve came from the OAuth PKCE example (`examples/oauth-pkce.js`) on 2026-10-17: two from writing it, and ten from a reader's reviews of it. Most are advice for writing an explanation. Where the page helps, a **How** line says with what. An **Example** says what the reader saw before the rule, and what replaced it. The format is in `skill/references/format.md`.
 
 ### Color carries meaning
 **Context:** The page and the diagrams are almost all gray, so nothing tells the eye where to look.
@@ -268,3 +268,9 @@ flowchart TB
 **Context:** Steps 1 to 3 of the OAuth lesson were sequence charts with the same players in the same places, but step 4 was a flowchart of two boxes side by side. The reader had to learn a new picture for the last point, instead of seeing what changed in the one they knew.
 **Rule:** Keep the same kind of diagram, the same players in the same places, and the same bands and colors from step to step, so each step reads as the one before with something added or changed. Change the kind of diagram only when the new point cannot be drawn in the old one.
 **Example:** step 4 is now step 2's theft against step 3's login: the same sequence chart and bands, with the verifier and challenge from step 3, and the attacker's two failed tries where step 2 had its success.
+
+### Keep the text and the picture in step
+**Context:** The story sat in the side panel and the diagram in the middle, and they met only when the reader pointed at a link. A reader who simply read saw a picture that never changed, and had to find each message the text named, such as "the redirect back to the app", by themselves.
+**Rule:** Whatever the text is talking about should stand out in the picture at that moment, and the two should name each thing the same way.
+**How:** link the parts each paragraph is about. As the reader scrolls, the paragraph at their eye lights its parts and fades the rest ([ADR-058](decisions/058-story-drives-the-picture.md)). In a sequence chart, `autonumber` numbers the messages, and each link to one shows the same number.
+**Example:** reading "One login, without PKCE", the picture lights only messages 2 and 4, and the links read "2 sends her browser to the login server" and "4 sends her browser back to the app", with the same dark dots as the arrows.

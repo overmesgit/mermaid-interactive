@@ -803,6 +803,36 @@ button.code-file-head:hover { background: #475569; }
 
 .part-link:hover { background: transparent; text-decoration: underline; }
 
+/* The block of the story at the reader's eye, whose parts the picture lights. A tint with no layout shift, so the text never moves. */
+#panel-body > *,
+#panel-body > :is(ul, ol) > li {
+  border-radius: 3px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+#panel-body .is-reading {
+  background: var(--tint);
+  box-shadow: 0 0 0 4px var(--tint);
+}
+
+/* The number of a sequence message, drawn like Mermaid's dot by the arrow, so the text and the picture name it the same way. */
+.message-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.45em;
+  height: 1.45em;
+  margin-right: 0.3em;
+  padding: 0 0.25em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: 0.12em;
+}
+
 #panel-facts {
   display: grid;
   grid-template-columns: 96px 1fr;
@@ -980,6 +1010,9 @@ text.is-edge-label:is(.type-0, .type-1, .type-2, .type-3) { fill: var(--c) !impo
 }
 
 .is-dim { opacity: 0.72; }
+
+/* While the story lights what it talks about, the rest fades further, because the reader's eyes are on the text, not on the picture. */
+#camera.is-following .is-dim { opacity: 0.3; }
 
 /* The shape under the pointer, or under a hovered part card. */
 .is-hover > :is(rect, polygon, circle, path, ellipse) {
@@ -1415,6 +1448,12 @@ function partKeysOf(view) {
   return new Set([...Object.keys(view.nodeInteractions || {}), ...view.edgeInteractions.map((edge) => `${edge.from}->${edge.to}`)]);
 }
 
+// The keys of every part the steps of a lesson before `index` showed. A part any of them showed is not new,
+// even when the step just before left it out, as a step on an attack leaves out the normal login.
+function partKeysBefore(views, lesson, index) {
+  return new Set(lesson.slice(0, index).filter((id) => views[id]).flatMap((id) => [...partKeysOf(views[id])]));
+}
+
 // The node interactions for the diagram on screen. chartId is the Mermaid id, copied from the map key.
 function nodeInteractions() {
   const stored = (app.view && app.view.nodeInteractions) || {};
@@ -1442,7 +1481,6 @@ function edgeInteractions() {
     return {
       kicker: "Arrow",
       label: `${fromLabel} → ${toLabel}`,
-      tooltip: `${fromLabel} to ${toLabel}`,
       ...edge,
       edgeId: `${edge.from}-${edge.to}-${index}`,
       kind: "edge",
@@ -1616,12 +1654,14 @@ function setStatus(text) {
   }, 2400);
 }
 
+// A tooltip is optional, so a part without one only lights up on hover.
 function tooltipText(interaction) {
-  return interaction.opensView ? `${interaction.tooltip} Double-click to open the inner diagram.` : interaction.tooltip;
+  return [interaction.tooltip, interaction.opensView && "Double-click to open the inner diagram."].filter(Boolean).join(" ");
 }
 
 function placeTooltip(event) {
   const tooltip = app.els.tooltip;
+  if (!tooltip.textContent) return;
   tooltip.hidden = false;
   const rect = tooltip.getBoundingClientRect();
   let x = event.clientX + 14;
@@ -1634,6 +1674,7 @@ function placeTooltip(event) {
 
 function showTooltip(event, interaction) {
   app.els.tooltip.textContent = tooltipText(interaction);
+  app.els.tooltip.hidden = true;
   placeTooltip(event);
   highlightAround(interaction);
 }
@@ -1643,34 +1684,46 @@ function hideTooltip() {
   clearHighlight();
 }
 
-// Back to no highlight: every shape and arrow at full strength.
+// Back to no hover highlight. What the story is at stays lit, so the picture follows the reader again.
 function clearHighlight() {
   app.els.camera.querySelectorAll(".is-dim, .is-hover, .is-hot").forEach((el) => el.classList.remove("is-dim", "is-hover", "is-hot"));
+  app.els.camera.classList.toggle("is-following", Boolean(app.reading));
+  if (app.reading) lightParts(app.reading);
 }
 
 function highlightAround(interaction) {
+  app.els.camera.classList.remove("is-following");
+  lightParts([interaction], interaction);
+}
+
+
+// Lights the parts and dims the rest. An arrow lights with its two ends, and a shape with its arrows.
+// `hovered` is the part under the pointer, if any, and a shape there gets an outline.
+function lightParts(parts, hovered) {
   const edges = edgeInteractions();
   const litEdgeIds = new Set();
   const litChartIds = new Set();
-  if (interaction.kind === "edge") {
-    litEdgeIds.add(interaction.edgeId);
-    litChartIds.add(interaction.from);
-    litChartIds.add(interaction.to);
-  } else {
-    litChartIds.add(interaction.chartId);
+  parts.forEach((part) => {
+    if (part.kind === "edge") {
+      litEdgeIds.add(part.edgeId);
+      litChartIds.add(part.from);
+      litChartIds.add(part.to);
+      return;
+    }
+    litChartIds.add(part.chartId);
     edges.forEach((edge) => {
-      if (edge.from === interaction.chartId || edge.to === interaction.chartId) {
+      if (edge.from === part.chartId || edge.to === part.chartId) {
         litEdgeIds.add(edge.edgeId);
         litChartIds.add(edge.from);
         litChartIds.add(edge.to);
       }
     });
-  }
+  });
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {
     const on = litChartIds.has(el.dataset.chartId);
     el.classList.toggle("is-dim", !on);
     // The hovered shape gets an outline. The fade on the others is light, and colored fills hide it further.
-    el.classList.toggle("is-hover", interaction.kind === "node" && el.dataset.chartId === interaction.chartId);
+    el.classList.toggle("is-hover", hovered?.kind === "node" && el.dataset.chartId === hovered.chartId);
   });
   app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
     const on = litEdgeIds.has(el.dataset.edgeId);
@@ -1802,6 +1855,7 @@ function renderNote(el, source) {
   el.querySelectorAll("li[data-href]").forEach((li) => li.replaceWith(partItem(linkedPart(li.dataset.href), noteHow(li.dataset.title))));
   el.querySelectorAll("button.part-link").forEach((button) => wirePart(button, linkedPart(button.dataset.href), noteHow(button.dataset.title)));
   el.querySelectorAll("figure[data-fence]").forEach((figure) => figure.replaceWith(codeFileView(fileFence(figure.dataset.fence))));
+  numberLinks(el);
   // The panel's table style sets text-align, which beats the align attribute marked writes.
   el.querySelectorAll("[align]").forEach((cell) => {
     cell.style.textAlign = cell.getAttribute("align");
@@ -1902,13 +1956,13 @@ function markOpenCard() {
   });
 }
 
-// What a lesson step adds to the step before it, as part keys. Null outside a lesson step, and on the first step.
+// What a lesson step adds to the steps before it, as part keys. Null outside a lesson step, and on the first step.
 function addedInStep() {
   const step = lessonStep();
   if (!step || !step.index || step.lesson[step.index] !== app.view.viewId) return null;
-  const seen = partKeysOf(app.views[step.lesson[step.index - 1]]);
+  const seen = partKeysBefore(app.views, step.lesson, step.index);
   const keys = [...partKeysOf(app.view)];
-  // A step with a new picture shares nothing with the step before. Marking all of it New would say nothing.
+  // A step with a new picture shares nothing with the steps before. Marking all of it New would say nothing.
   if (!keys.some((key) => seen.has(key))) return null;
   return new Set(keys.filter((key) => !seen.has(key)));
 }
@@ -1946,7 +2000,7 @@ function wirePart(button, interaction, how) {
   button.addEventListener("pointerleave", clearHighlight);
 }
 
-// The part's name, its status, and its tooltip. A part with more to read has the same dot as in the picture.
+// The part's name, its status, and its tooltip if it has one. A part with more to read has the same dot as in the picture.
 function partItem(interaction, how = {}) {
   const li = document.createElement("li");
   li.dataset.part = partKey(interaction);
@@ -1959,9 +2013,12 @@ function partItem(interaction, how = {}) {
   name.textContent = interaction.label;
   const status = partStatus(interaction);
   if (status) name.append(statusChip(status));
-  const line = document.createElement("span");
-  line.textContent = interaction.tooltip;
-  button.append(name, line);
+  button.append(name);
+  if (interaction.tooltip) {
+    const line = document.createElement("span");
+    line.textContent = interaction.tooltip;
+    button.append(line);
+  }
   li.append(button);
   return li;
 }
@@ -2005,7 +2062,8 @@ function openPanel(interaction, how) {
   const status = partStatus(interaction);
   if (status) note.title.append(statusChip(status));
   note.kicker.textContent = interaction.kicker || "";
-  note.lead.textContent = interaction.tooltip;
+  note.lead.textContent = interaction.tooltip || "";
+  note.lead.hidden = !interaction.tooltip;
   renderNote(note.body, interaction.body || "");
   note.facts.replaceChildren();
   (interaction.facts || []).forEach(([term, detail]) => {
@@ -2022,6 +2080,7 @@ function openPanel(interaction, how) {
   note.pane.focus({ preventScroll: true });
   const selected = markSelected(interaction);
   markStepFlow();
+  followReading();
   requestAnimationFrame(() => reveal(selected));
 }
 
@@ -2033,6 +2092,7 @@ function closeNote() {
   markStepFlow();
   markOpenCard();
   layoutPanel();
+  followReading();
 }
 
 // Shapes and arrows share this. `interaction` is the node or edge interaction.
@@ -2092,6 +2152,87 @@ function wirePanel() {
     if (app.selectedInteraction && app.selectedInteraction.opensView) {
       show(app.selectedInteraction.opensView, app.selectedInteraction);
     }
+  });
+}
+</script>
+  <script>// The story and the picture read together. The block of the story at the reader's eye lights the parts it links,
+// and a link to a numbered sequence message shows the number the picture draws by that message.
+
+// Where the reader's eye is taken to be, as a share of the story pane's height: near the top before scrolling, near the bottom at the end.
+// So the first paragraphs and the last ones each get their turn.
+const READING_FROM = 0.2;
+const READING_TO = 0.8;
+
+// The pieces of a story a reader takes in one at a time: paragraphs, list items, tables, and cards.
+function storyBlocks() {
+  return [...app.panel.body.querySelectorAll(":scope > p, :scope > ul > li, :scope > ol > li, :scope > .table-wrap, :scope > blockquote")];
+}
+
+// The parts a block links to, from its links and its cards.
+function blockParts(block) {
+  const hrefs = [
+    ...[...block.querySelectorAll("button.part-link")].map((button) => button.dataset.href),
+    ...[...block.querySelectorAll("li[data-part]"), ...(block.matches("li[data-part]") ? [block] : [])].map((li) => `#${li.dataset.part}`),
+  ];
+  return hrefs.map(linkedPart).filter(Boolean);
+}
+
+// The block at the reader's eye. None while a note is open, because the note's part is what the reader looks at then,
+// and none when the whole story fits, because the reader is not moving through it.
+function readingBlock() {
+  const pane = app.panel.pane;
+  if (app.els.panel.hidden || app.selectedInteraction || app.shownViewId !== app.view?.viewId) return null;
+  const room = pane.scrollHeight - pane.clientHeight;
+  if (room <= 2) return null;
+  const box = pane.getBoundingClientRect();
+  const eye = box.top + box.height * (READING_FROM + (READING_TO - READING_FROM) * (pane.scrollTop / room));
+  let current = null;
+  for (const block of storyBlocks()) {
+    if (block.getBoundingClientRect().top > eye) break;
+    current = block;
+  }
+  return current;
+}
+
+// Lights what the block at the reader's eye links, and marks that block in the story. A block with no links lights nothing,
+// so the whole picture shows while the story talks about it in general.
+function followReading() {
+  const block = readingBlock();
+  const parts = block ? blockParts(block) : [];
+  app.panel.body.querySelectorAll(".is-reading").forEach((el) => el.classList.remove("is-reading"));
+  app.reading = parts.length ? parts : null;
+  if (app.reading) block.classList.add("is-reading");
+  clearHighlight();
+}
+
+function wireReading() {
+  let queued = false;
+  const follow = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      followReading();
+    });
+  };
+  app.panel.pane.addEventListener("scroll", follow, { passive: true });
+  window.addEventListener("resize", follow);
+}
+
+// A link or card for a numbered sequence message gets that number in a dot like the picture's, so "the redirect" in the text
+// and message 2 in the picture are plainly the same thing. It runs once the picture is drawn, because the numbers come from it.
+function numberLinks(root) {
+  if (app.shownViewId !== app.view?.viewId) return;
+  root.querySelectorAll("button.part-link, li[data-part] > .part-card").forEach((el) => {
+    if (el.querySelector(".message-number")) return;
+    const part = linkedPart(el.dataset.href || `#${el.parentElement.dataset.part}`);
+    if (!part || part.kind !== "edge") return;
+    const line = app.els.camera.querySelector(`[data-edge-id="${CSS.escape(part.edgeId)}"][data-number]`);
+    if (!line) return;
+    const dot = document.createElement("span");
+    dot.className = "message-number";
+    dot.textContent = line.dataset.number;
+    (el.querySelector("strong") || el).prepend(dot);
   });
 }
 </script>
@@ -2517,6 +2658,7 @@ function nearestFlowchartLabel(path, labels) {
 
 // Sequence diagrams emit messageText, then messageLine, as siblings. The text is how arrows are told apart.
 // A message written over two lines with <br> is one messageText per line, so its label joins them with a space.
+// With autonumber, a sequenceNumber follows the line, and the message keeps its number.
 function sequenceMessages(svg) {
   const messages = [];
   let texts = [];
@@ -2526,7 +2668,7 @@ function sequenceMessages(svg) {
     else if (cls.includes("messageLine")) {
       messages.push({ line: el, texts, label: norm(texts.map((text) => text.textContent).join(" ")), wired: false });
       texts = [];
-    }
+    } else if (cls.includes("sequenceNumber") && messages.length) messages[messages.length - 1].number = el.textContent.trim();
   });
   return messages;
 }
@@ -2784,7 +2926,10 @@ function bindEdgeInteractions(svg) {
     });
   }
 
-  claimByText(sequenceMessages(svg), (message) => [message.line, ...message.texts]);
+  claimByText(sequenceMessages(svg), (message) => {
+    if (message.number) message.line.dataset.number = message.number;
+    return [message.line, ...message.texts];
+  });
   claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
 
   const paths = [...svg.querySelectorAll("path.transition")].filter((path) => !path.dataset.wired);
@@ -2838,25 +2983,25 @@ function checkContent() {
   if (DIAGRAMS.notePlace !== undefined && !PEEK_PLACES.includes(DIAGRAMS.notePlace)) {
     found.push({ text: `notePlace is "${DIAGRAMS.notePlace}". It takes "beside", "below", or "corner", so notes open beside their shapes instead.` });
   }
-  // The lesson step before each step. A part that step already showed was introduced there, so the story need not link it again.
-  const stepBefore = new Map();
+  // The parts the lesson steps before each step showed. A part one of them showed was introduced there, so the story need not link it again.
+  const shownBefore = new Map();
   tabs.forEach((tab) => {
     if (!isView(tab.id)) found.push({ text: `Tab "${tab.label}" opens ${tab.id}, which is not a view.` });
     (tab.lesson || []).forEach((id, index) => {
       if (!isView(id)) found.push({ text: `Tab "${tab.label}" has the lesson step ${id}, which is not a view.` });
-      else if (index && isView(tab.lesson[index - 1])) stepBefore.set(id, DIAGRAMS.views[tab.lesson[index - 1]]);
+      else if (index) shownBefore.set(id, partKeysBefore(DIAGRAMS.views, tab.lesson, index));
     });
   });
   Object.entries(DIAGRAMS.views).forEach(([viewId, view]) => {
     const say = (text) => ({ viewId, text: `${viewId}: ${text}` });
-    found.push(...checkView(view, stepBefore.get(viewId)).map(say));
+    found.push(...checkView(view, shownBefore.get(viewId)).map(say));
     checks.chartIds[viewId] = checkChartIds(view).map(say);
   });
   return found;
 }
 
-// Everything about one view except whether its chart has each shape and arrow. `before` is the lesson step before it, if any.
-function checkView(view, before) {
+// Everything about one view except whether its chart has each shape and arrow. `seen` is the parts the lesson steps before it showed, if any.
+function checkView(view, seen) {
   const problems = [];
   const parts = viewParts(view);
   const kind = chartKind(view.chart);
@@ -2892,7 +3037,7 @@ function checkView(view, before) {
       problems.push(`the arrow id ${id}@ hides the arrow's ends from the page, so its note cannot be found. Write the arrow without an id. The page animates lit arrows itself.`);
     }
   }
-  problems.push(...checkLinks(view, parts), ...checkStoryLinks(view, parts, before));
+  problems.push(...checkLinks(view, parts), ...checkStoryLinks(view, parts, seen));
   return problems;
 }
 
@@ -2919,9 +3064,8 @@ function checkLinks(view, parts) {
 
 // A story has no parts list, so a part with something to open must be linked where the story talks about it.
 // On a lesson step, only the parts the step adds.
-function checkStoryLinks(view, parts, before) {
+function checkStoryLinks(view, parts, seen = new Set()) {
   if (!view.story) return [];
-  const seen = before ? partKeysOf(before) : new Set();
   const linked = new Set([...prose(view.story).matchAll(/\]\(#([^)\s]+)/g)].map(([, key]) => key));
   const left = [...new Set(parts.filter(({ note, key }) => hasMore(note) && !linked.has(key) && !seen.has(key)).map(({ key }) => key))];
   return left.length ? [`the story never links ${left.join(", ")}, so a reader finds their notes only by the dot in the picture. Link each where the story talks about it, like [Name](#${left[0]}).`] : [];
@@ -3125,6 +3269,8 @@ async function show(viewId, fromInteraction) {
     relaxLabels(svgEl);
     markStatuses();
     markStepFlow();
+    numberLinks(app.panel.body);
+    followReading();
   } catch (error) {
     if (token !== app.renderToken) return;
     app.els.camera.classList.remove("is-leaving");
@@ -3283,6 +3429,7 @@ mermaid.initialize({
 wireTabs();
 wireCamera();
 wirePanel();
+wireReading();
 wirePeek();
 runChecks();
 

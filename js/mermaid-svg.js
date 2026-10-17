@@ -112,6 +112,7 @@ function nearestFlowchartLabel(path, labels) {
 
 // Sequence diagrams emit messageText, then messageLine, as siblings. The text is how arrows are told apart.
 // A message written over two lines with <br> is one messageText per line, so its label joins them with a space.
+// With autonumber, a sequenceNumber follows the line, and the message keeps its number.
 function sequenceMessages(svg) {
   const messages = [];
   let texts = [];
@@ -121,7 +122,7 @@ function sequenceMessages(svg) {
     else if (cls.includes("messageLine")) {
       messages.push({ line: el, texts, label: norm(texts.map((text) => text.textContent).join(" ")), wired: false });
       texts = [];
-    }
+    } else if (cls.includes("sequenceNumber") && messages.length) messages[messages.length - 1].number = el.textContent.trim();
   });
   return messages;
 }

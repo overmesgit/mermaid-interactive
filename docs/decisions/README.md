@@ -57,6 +57,7 @@ Zooming the picture versus opening another diagram.
 | [047](047-story-reading-cues.md) | The panel says how to read it, in readable text | Current, partly replaced by 052 and 053 |
 | [052](052-one-color-per-type.md) | One color per type of thing, tables, a one-line note header, and no parts list under a story | Current, partly replaced by 055 and 057 |
 | [053](053-inline-and-peek-notes.md) | A note opens inline under its link, or as a peek card by its shape | Current, partly replaced by 055 |
+| [058](058-story-drives-the-picture.md) | The picture follows the story, and a link to a numbered message shows its number | Current |
 
 ## Notes and code in the panel
 

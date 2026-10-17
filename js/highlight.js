@@ -41,34 +41,46 @@ function hideTooltip() {
   clearHighlight();
 }
 
-// Back to no highlight: every shape and arrow at full strength.
+// Back to no hover highlight. What the story is at stays lit, so the picture follows the reader again.
 function clearHighlight() {
   app.els.camera.querySelectorAll(".is-dim, .is-hover, .is-hot").forEach((el) => el.classList.remove("is-dim", "is-hover", "is-hot"));
+  app.els.camera.classList.toggle("is-following", Boolean(app.reading));
+  if (app.reading) lightParts(app.reading);
 }
 
 function highlightAround(interaction) {
+  app.els.camera.classList.remove("is-following");
+  lightParts([interaction], interaction);
+}
+
+
+// Lights the parts and dims the rest. An arrow lights with its two ends, and a shape with its arrows.
+// `hovered` is the part under the pointer, if any, and a shape there gets an outline.
+function lightParts(parts, hovered) {
   const edges = edgeInteractions();
   const litEdgeIds = new Set();
   const litChartIds = new Set();
-  if (interaction.kind === "edge") {
-    litEdgeIds.add(interaction.edgeId);
-    litChartIds.add(interaction.from);
-    litChartIds.add(interaction.to);
-  } else {
-    litChartIds.add(interaction.chartId);
+  parts.forEach((part) => {
+    if (part.kind === "edge") {
+      litEdgeIds.add(part.edgeId);
+      litChartIds.add(part.from);
+      litChartIds.add(part.to);
+      return;
+    }
+    litChartIds.add(part.chartId);
     edges.forEach((edge) => {
-      if (edge.from === interaction.chartId || edge.to === interaction.chartId) {
+      if (edge.from === part.chartId || edge.to === part.chartId) {
         litEdgeIds.add(edge.edgeId);
         litChartIds.add(edge.from);
         litChartIds.add(edge.to);
       }
     });
-  }
+  });
   app.els.camera.querySelectorAll(".is-node").forEach((el) => {
     const on = litChartIds.has(el.dataset.chartId);
     el.classList.toggle("is-dim", !on);
     // The hovered shape gets an outline. The fade on the others is light, and colored fills hide it further.
-    el.classList.toggle("is-hover", interaction.kind === "node" && el.dataset.chartId === interaction.chartId);
+    el.classList.toggle("is-hover", hovered?.kind === "node" && el.dataset.chartId === hovered.chartId);
   });
   app.els.camera.querySelectorAll(EDGE_PIECES).forEach((el) => {
     const on = litEdgeIds.has(el.dataset.edgeId);

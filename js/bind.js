@@ -169,7 +169,10 @@ function bindEdgeInteractions(svg) {
     });
   }
 
-  claimByText(sequenceMessages(svg), (message) => [message.line, ...message.texts]);
+  claimByText(sequenceMessages(svg), (message) => {
+    if (message.number) message.line.dataset.number = message.number;
+    return [message.line, ...message.texts];
+  });
   claimByText(c4Relations(svg), (relation) => [...relation.strokes, ...relation.texts]);
 
   const paths = [...svg.querySelectorAll("path.transition")].filter((path) => !path.dataset.wired);

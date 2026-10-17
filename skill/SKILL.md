@@ -13,7 +13,7 @@ This skill covers how to use the tool: what the page does, what to write, how to
 
 - **Tabs** across the top. Each opens one diagram.
 - **A lesson**, if the tab has one. Prev, Next, and the arrow keys walk its steps, one diagram per step.
-- **A story** in the side panel. It says what the diagram shows, and links each part where it talks about it, as a link or as a card between its sentences. A diagram with no story lists its parts instead.
+- **A story** in the side panel. It says what the diagram shows, and links each part where it talks about it, as a link or as a card between its sentences. As the reader scrolls, the paragraph they are at lights the parts it links, and a link to a numbered sequence message shows its number. A diagram with no story lists its parts instead.
 - **Colors that mean something.** A part can be marked new, changed, removed, or a problem, and the word shows with the color. A dot marks a part with more to read.
 - **One color per type of thing**, such as requests, routes, and handlers, in the diagram and in the text.
 - **Tables** in notes and stories, to line up what is compared.

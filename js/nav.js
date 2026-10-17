@@ -72,6 +72,8 @@ async function show(viewId, fromInteraction) {
     relaxLabels(svgEl);
     markStatuses();
     markStepFlow();
+    numberLinks(app.panel.body);
+    followReading();
   } catch (error) {
     if (token !== app.renderToken) return;
     app.els.camera.classList.remove("is-leaving");

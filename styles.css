@@ -797,6 +797,36 @@ button.code-file-head:hover { background: #475569; }
 
 .part-link:hover { background: transparent; text-decoration: underline; }
 
+/* The block of the story at the reader's eye, whose parts the picture lights. A tint with no layout shift, so the text never moves. */
+#panel-body > *,
+#panel-body > :is(ul, ol) > li {
+  border-radius: 3px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+#panel-body .is-reading {
+  background: var(--tint);
+  box-shadow: 0 0 0 4px var(--tint);
+}
+
+/* The number of a sequence message, drawn like Mermaid's dot by the arrow, so the text and the picture name it the same way. */
+.message-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.45em;
+  height: 1.45em;
+  margin-right: 0.3em;
+  padding: 0 0.25em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: 0.12em;
+}
+
 #panel-facts {
   display: grid;
   grid-template-columns: 96px 1fr;
@@ -974,6 +1004,9 @@ text.is-edge-label:is(.type-0, .type-1, .type-2, .type-3) { fill: var(--c) !impo
 }
 
 .is-dim { opacity: 0.72; }
+
+/* While the story lights what it talks about, the rest fades further, because the reader's eyes are on the text, not on the picture. */
+#camera.is-following .is-dim { opacity: 0.3; }
 
 /* The shape under the pointer, or under a hovered part card. */
 .is-hover > :is(rect, polygon, circle, path, ellipse) {
