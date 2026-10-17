@@ -1,6 +1,6 @@
 # ADR-040 The skill teaches the tool first. How to explain comes later
 
-- Status: accepted
+- Status: accepted, the later how-to-explain part done by [ADR-059](059-explain-skill.md)
 - Date: 2026-10-15
 - Postpones: the how-to-explain part of `SKILL.md` in [ADR-025](025-explainer-skill.md)
 

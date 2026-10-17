@@ -19,11 +19,12 @@ How an agent writes an explanation and hands it over.
 | [028](028-pinned-cdn.md) | Pin exact versions of Mermaid and marked | Current |
 | [029](029-join-and-check-in-page.md) | No Python: join the files with a shell command, and let the page check them | Current, partly replaced by 037 and 048 |
 | [037](037-fill-a-template.md) | Fill one template by replacing a marker line | Current, partly replaced by 048 and 054 |
-| [040](040-skill-teaches-the-tool-first.md) | The skill teaches the tool first. How to explain comes later | Current |
+| [040](040-skill-teaches-the-tool-first.md) | The skill teaches the tool first. How to explain comes later | Current, partly replaced by 059 |
 | [048](048-pack-files-into-the-content-file.md) | Pack code files into the content file, and preview it on the site | Current, partly replaced by 049 and 054 |
 | [049](049-export-without-a-server.md) | Export works without a server, so the preview page has one export button | Current, partly replaced by 054 |
 | [054](054-one-editor-page.md) | One page, the editor, which builds the template from the engine | Current |
 | [055](055-fewer-features.md) | Fewer features, and one form for content, so the engine stays small | Current |
+| [059](059-explain-skill.md) | A second skill, explain-clearly, holds the rules for explaining | Current |
 
 ## Finding and wiring shapes
 

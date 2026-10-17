@@ -6,10 +6,11 @@ Read this before changing the product. It is the shared context for the page: wh
 
 A tool for explaining hard things: a concept, a subsystem, a pull request. An explanation is a series of Mermaid diagrams. The page draws them in the browser and adds the interactions Mermaid does not provide: a tooltip, a details panel, drill-down into another diagram, a lesson walked with Prev and Next, and camera pan and zoom. The same page can export one HTML file.
 
-The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
+The product is three parts ([ADR-025](docs/decisions/025-explainer-skill.md), [ADR-059](docs/decisions/059-explain-skill.md)):
 
 - **The engine.** The page an explanation runs in: `page.html`, `styles.css`, and `js/`. The editor, `index.html`, shows a content file in it.
 - **The skill.** `skill/`, a folder an agent loads. It holds the content format, the workflow, and the engine as one template page with a marker line where the content goes. With it an agent writes one content file, like `diagrams.js`, puts it in place of the marker, and hands over one HTML file, for example as a link in a PR.
+- **The explain skill.** `explain/`, a second folder an agent loads, named explain-clearly. It holds the rules for explaining clearly, and when to use each one while planning, writing, and reviewing a lesson.
 
 `examples/` holds sample content files. `bookshop.js` has one tab per kind of diagram, `go-router.js` is a full lesson, `pr-checks.js` explains a real commit the way the skill would, and `oauth-pkce.js` explains a protocol with sequence charts.
 
@@ -17,7 +18,7 @@ The product is two parts ([ADR-025](docs/decisions/025-explainer-skill.md)):
 
 - The author, a software engineer, who builds the tool. The useful way to work is in the code, in small steps, with the page still running after each step.
 - The reader of an explanation. For a PR that is a reviewer who opens the link cold and has a few minutes.
-- The agent that writes an explanation. It does not see the page, so everything it needs is written in `skill/`.
+- The agent that writes an explanation. It does not see the page, so everything it needs is written in `skill/` and `explain/`.
 
 ## Requirements that still hold
 
@@ -62,7 +63,8 @@ Open the editor through a local server, because it reads `page.html` and `js/`, 
 | Implementation | The source. |
 | Matcher | `docs/matcher.md`. How a note is found in the SVG Mermaid drew. |
 | Content format | `skill/references/format.md`. The only description of what a content file holds. |
-| How to explain | `docs/rules.md`. Rules learned from reading real explanations, each with its example. `explain-difficult-things/` holds the research notes behind them. |
+| How to explain | `explain/references/rules.md`. Rules learned from reading real explanations, each with when to apply it. `docs/rules-context.md` has the example behind each rule: what a reader saw before it, and what replaced it. `explain-difficult-things/` holds the research notes behind them. |
+| Page design | `docs/page-design.md`. Rules the page follows so a reader can find their way, which a change to the page must keep true. |
 
 There is no ticket system, chat archive, or wiki connected to this repo. The conversation that produced the page is captured in the decision log.
 

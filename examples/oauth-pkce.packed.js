@@ -4,7 +4,7 @@
 // named app.example, login.example, and api.example. The program and its output are in examples/oauth-pkce/run/.
 // The code notes show the library's PKCE code from examples/oauth-pkce/pkce.go.
 // examples/oauth-pkce.packed.js is this file packed from the repo root, so the editor can show the code. Pack it again after editing this file.
-// It follows docs/rules.md, and gives each kind of value one color: codes, tokens, verifiers, and challenges, in the diagrams and the text.
+// It follows explain/references/rules.md, and gives each kind of value one color: codes, tokens, verifiers, and challenges, in the diagrams and the text.
 // Its sequence charts shade the messages that pass through the browser red, and the direct ones green, with rect.
 
 window.DIAGRAMS = {

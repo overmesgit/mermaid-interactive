@@ -5,25 +5,25 @@ A page for explaining hard things: a concept, a subsystem, a pull request. An ex
 There are two ways to make one.
 
 - **By hand.** Write a content file, open it in the editor, and export.
-- **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, packs the code it shows into it, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it.
+- **With an agent.** Point the agent at [`skill/SKILL.md`](skill/SKILL.md). It tells the agent how to use the tool: the format, how to build the file, and how to check it. The agent writes one content file, like `diagrams.js`, packs the code it shows into it, and puts it into the template in `skill/assets/`, which gives one HTML file, for example to link from a PR. See [ADR-025](docs/decisions/025-explainer-skill.md) and [ADR-037](docs/decisions/037-fill-a-template.md). Where that link should point is still open. [TODO](TODO.md) lists it. A second skill, [`explain/SKILL.md`](explain/SKILL.md), tells the agent how to explain the subject clearly, with rules learned from readers of real lessons ([ADR-059](docs/decisions/059-explain-skill.md)).
 
-## Install the skill
+## Install the skills
 
-The repo is a Claude Code plugin marketplace, so Claude Code can install the skill straight from GitHub. Run both commands in a shell:
+The repo is a Claude Code plugin marketplace, so Claude Code can install both skills straight from GitHub. Run both commands in a shell:
 
 ```bash
 claude plugin marketplace add overmesgit/mermaid-interactive
 claude plugin install mermaid-interactive@mermaid-interactive
 ```
 
-The skill then runs as `/mermaid-interactive:interactive-explainer`, because a plugin's skills carry the plugin's name in front. Claude also picks it up without the command when asked for an explanation. To get a newer version after a push, refresh the marketplace, then update the plugin:
+The skills then run as `/mermaid-interactive:interactive-explainer` and `/mermaid-interactive:explain-clearly`, because a plugin's skills carry the plugin's name in front. Claude also picks them up without the command when asked for an explanation. To get a newer version after a push, refresh the marketplace, then update the plugin:
 
 ```bash
 claude plugin marketplace update mermaid-interactive
 claude plugin update mermaid-interactive@mermaid-interactive
 ```
 
-The plugin is listed in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and it loads only the `skill/` folder.
+The plugin is listed in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and it loads only the `skill/` and `explain/` folders.
 
 ## The editor
 
@@ -53,4 +53,5 @@ After changing the engine, rebuild the skill's template: the editor's status lin
 - [Content format](skill/references/format.md) to write an explanation
 - [Matcher](docs/matcher.md)
 - [Decisions](docs/decisions/README.md)
-- [Rules](docs/rules.md) learned from reading real explanations
+- [Rules for explaining](explain/references/rules.md) learned from reading real explanations, and [where each came from](docs/rules-context.md)
+- [Page design rules](docs/page-design.md) the page itself follows

@@ -7,7 +7,7 @@ description: Build an interactive explanation as one HTML file with this diagram
 
 A Mermaid diagram on its own is a flat picture: the reader cannot ask what a box does, see the code behind an arrow, or step through a process. This tool adds that. You write one content file, and the page turns it into a lesson of clickable diagrams, saved as one HTML file that opens in any browser.
 
-This skill covers how to use the tool: what the page does, what to write, how to build the file, and how to check it. [references/format.md](references/format.md) describes every field in full.
+This skill covers how to use the tool: what the page does, what to write, how to build the file, and how to check it. [references/format.md](references/format.md) describes every field in full. What to say and draw, so the reader follows it, is in the explain-clearly skill. Use the two together.
 
 ## What the reader gets
 

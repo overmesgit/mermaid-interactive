@@ -2,7 +2,7 @@
 // The change is proposal golang/go#61410, landed as about 20 commits by Jonathan Amsterdam in September 2023.
 // Its code notes show Go's source from the go1.21.0 and go1.22.0 tags, shortened to the lines they show, in examples/go-router/.
 // examples/go-router.packed.js is this file packed from the repo root, so the editor can show the code. Pack it again after editing this file.
-// It follows docs/rules.md: an overview first, the change side by side, processes instead of sentences, arrow labels instead of arrow notes,
+// It follows explain/references/rules.md: an overview first, the change side by side, processes instead of sentences, arrow labels instead of arrow notes,
 // and one color per type of thing: requests, routes, handlers, and the router, in the diagrams and the text.
 
 window.DIAGRAMS = {
